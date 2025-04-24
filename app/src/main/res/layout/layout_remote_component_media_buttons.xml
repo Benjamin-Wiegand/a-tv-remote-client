@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:orientation="vertical">
+
+            <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+                android:id="@+id/volume_up_button"
+                style="@style/Widget.Theme.ATVRemote.RemoteButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:contentDescription="@string/button_volume_up"
+                app:srcCompat="@android:drawable/ic_lock_silent_mode_off" />
+
+            <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+                android:id="@+id/volume_down_button"
+                style="@style/Widget.Theme.ATVRemote.RemoteButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:contentDescription="@string/button_volume_down"
+                app:srcCompat="@android:drawable/ic_lock_silent_mode_off" />
+
+        </LinearLayout>
+
+        <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+            android:id="@+id/mute_button"
+            style="@style/Widget.Theme.ATVRemote.RemoteButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:contentDescription="@string/button_mute_toggle"
+            app:srcCompat="@android:drawable/ic_lock_silent_mode" />
+
+        <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+            android:id="@+id/quick_settings_button"
+            style="@style/Widget.Theme.ATVRemote.RemoteButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:contentDescription="@string/button_quick_settings"
+            app:srcCompat="@android:drawable/ic_menu_manage" />
+
+    </LinearLayout>
+
+    <!-- todo -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:visibility="gone"
+        android:orientation="horizontal">
+
+        <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+            android:id="@+id/skip_backward_button"
+            style="@style/Widget.Theme.ATVRemote.RemoteButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:contentDescription="@string/button_skip_backward"
+            app:srcCompat="@android:drawable/ic_media_rew" />
+
+        <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+            android:id="@+id/prev_track_button"
+            style="@style/Widget.Theme.ATVRemote.RemoteButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:contentDescription="@string/button_previous_track"
+            app:srcCompat="@android:drawable/ic_media_previous" />
+
+        <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+            android:id="@+id/pause_button"
+            style="@style/Widget.Theme.ATVRemote.RemoteButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:contentDescription="@string/button_toggle_playing"
+            app:srcCompat="@android:drawable/ic_media_pause" />
+
+        <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+            android:id="@+id/next_track_button"
+            style="@style/Widget.Theme.ATVRemote.RemoteButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:contentDescription="@string/button_next_track"
+            app:srcCompat="@android:drawable/ic_media_next" />
+
+        <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+            android:id="@+id/skip_forward_button"
+            style="@style/Widget.Theme.ATVRemote.RemoteButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:contentDescription="@string/button_skip_forward"
+            app:srcCompat="@android:drawable/ic_media_ff" />
+
+    </LinearLayout>
+
+</LinearLayout>

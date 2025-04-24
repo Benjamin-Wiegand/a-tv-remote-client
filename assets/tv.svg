@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="512"
+   height="512"
+   viewBox="0 0 512 512"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   sodipodi:docname="tv.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     inkscape:zoom="0.80737785"
+     inkscape:cx="822.41543"
+     inkscape:cy="222.94394"
+     inkscape:window-width="1920"
+     inkscape:window-height="1014"
+     inkscape:window-x="0"
+     inkscape:window-y="16"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g1414"
+     showgrid="false" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g1414"
+       transform="translate(0,-32.640507)">
+      <g
+         id="g1544">
+        <g
+           id="g1560"
+           transform="translate(0,32.621935)">
+          <path
+             id="rect1426"
+             style="fill:none;fill-opacity:0;stroke:#000000;stroke-width:42;stroke-linecap:square;stroke-linejoin:round"
+             d="m 73.5,113.88708 h 365 v 225 h -365 z"
+             sodipodi:nodetypes="ccccc" />
+          <rect
+             style="fill:#000000;fill-opacity:0.990475;stroke:#000000;stroke-width:30.8342;stroke-linecap:square;stroke-linejoin:round"
+             id="rect1430"
+             width="155.74879"
+             height="0.48464262"
+             x="178.12561"
+             y="403.24832" />
+          <path
+             style="fill:#000000;fill-opacity:0.990475;stroke:#000000;stroke-width:35.1098;stroke-linecap:square;stroke-linejoin:round"
+             d="M 256,392.91821 V 348.84562"
+             id="path1555"
+             sodipodi:nodetypes="cc" />
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

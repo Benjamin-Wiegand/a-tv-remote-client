@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.TVDiscoveryActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="48dp"
+            android:layout_marginBottom="12dp"
+            android:layout_marginHorizontal="12dp"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline4"
+            android:text="@string/title_tvdiscovery"
+            />
+
+        <ProgressBar
+            android:id="@+id/service_discovery_indicator"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:indeterminate="true"
+            android:indeterminateOnly="true"
+            android:visibility="invisible"
+            tools:visibility="visible" />
+
+
+        <LinearLayout
+            android:id="@+id/discovery_result_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <TextView
+            android:id="@+id/service_discovery_notice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="invisible"
+            tools:visibility="visible"
+            android:layout_gravity="center"
+            android:layout_margin="12dp"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+            android:text="@string/searching_for_tvs"
+            />
+
+        <Button
+            android:id="@+id/manual_connection_button"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/button_manual_connection"
+            android:textColor="?android:attr/textColorSecondary"
+            />
+
+    </LinearLayout>
+
+</ScrollView>

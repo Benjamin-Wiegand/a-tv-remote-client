@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+        android:id="@+id/back_button"
+        style="@style/Widget.Theme.ATVRemote.RemoteButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:contentDescription="@string/button_navigate_back"
+        app:srcCompat="@drawable/back" />
+
+    <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+        android:id="@+id/home_button"
+        style="@style/Widget.Theme.ATVRemote.RemoteButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:contentDescription="@string/button_navigate_home"
+        app:srcCompat="@drawable/home" />
+
+    <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+        android:id="@+id/recent_button"
+        style="@style/Widget.Theme.ATVRemote.RemoteButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:contentDescription="@string/button_navigate_recent"
+        app:srcCompat="@drawable/recent" />
+</LinearLayout>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/dpad_selector_button"
+        android:icon="@drawable/dpad"
+        android:title="@string/nav_button_dpad"
+        android:contentDescription="@string/nav_button_accessibility_dpad"
+        />
+
+    <item
+        android:id="@+id/trackpad_selector_button"
+        android:icon="@drawable/trackpad"
+        android:title="@string/nav_button_mouse"
+        android:contentDescription="@string/nav_button_accessibility_mouse"
+        />
+</menu>

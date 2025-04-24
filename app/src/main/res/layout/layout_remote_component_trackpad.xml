@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <io.benwiegand.atvremote.phone.ui.view.TrackpadSurface
+        android:id="@+id/trackpad_surface"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:alpha="0.4"
+        android:background="@drawable/trackpad_surface" />
+
+    <io.benwiegand.atvremote.phone.ui.view.TrackpadButton
+        android:id="@+id/trackpad_click_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="80dp"
+        android:layout_marginTop="8dp"
+        android:alpha="0.4"
+        android:background="@drawable/trackpad_mono_button"
+        android:contentDescription="@string/button_trackpad_left_click"
+        tools:ignore="RedundantDescriptionCheck,VisualLintButtonSize" />
+
+</LinearLayout>

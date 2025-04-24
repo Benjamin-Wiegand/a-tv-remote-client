@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp">
+
+    <TableRow
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center_horizontal">
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+        <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+            android:id="@+id/up_button"
+            style="@style/Widget.Theme.ATVRemote.RemoteButton"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:contentDescription="@string/button_up"
+            android:rotation="-90"
+            app:srcCompat="@drawable/arrow" />
+
+        <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+            android:id="@+id/notifications_button"
+            style="@style/Widget.Theme.ATVRemote.RemoteButton"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:contentDescription="@string/button_notifications"
+            android:padding="30dp"
+            app:srcCompat="@android:drawable/ic_popup_reminder" />
+
+    </TableRow>
+
+    <TableRow
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center_horizontal">
+
+        <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+            android:id="@+id/left_button"
+            style="@style/Widget.Theme.ATVRemote.RemoteButton"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:contentDescription="@string/button_left"
+            android:rotation="180"
+            app:srcCompat="@drawable/arrow" />
+
+        <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+            android:id="@+id/select_button"
+            style="@style/Widget.Theme.ATVRemote.RemoteButton"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:contentDescription="@string/button_select"
+            app:srcCompat="@drawable/circle" />
+
+        <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+            android:id="@+id/right_button"
+            style="@style/Widget.Theme.ATVRemote.RemoteButton"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:contentDescription="@string/button_right"
+            app:srcCompat="@drawable/arrow" />
+
+    </TableRow>
+
+    <TableRow
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center_horizontal">
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+        <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+            android:id="@+id/down_button"
+            style="@style/Widget.Theme.ATVRemote.RemoteButton"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:contentDescription="@string/button_down"
+            android:rotation="90"
+            app:srcCompat="@drawable/arrow" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+    </TableRow>
+
+</TableLayout>

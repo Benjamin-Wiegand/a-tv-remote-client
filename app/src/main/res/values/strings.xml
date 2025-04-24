@@ -1,0 +1,87 @@
+<resources>
+    <string name="app_name">A TV Remote</string>
+
+    <!-- common ui -->
+    <string name="button_cancel">Cancel</string>
+    <string name="button_next">next</string>
+    <string name="button_back">go back</string>
+    <string name="button_retry">retry</string>
+
+    <!-- general connection failures -->
+    <string name="init_failure">failed to initialize</string>
+    <string name="init_failure_desc_general">Failed to initialize cryptographic secrets:{0}</string>
+    <string name="init_failure_desc_corrupted_keystore">Failed to load cryptographic secrets used to secure the connection to your TV, they might be corrupted:{0}</string>
+    <string name="init_failure_desc_unsupported">One or more algorithms required for a secure connection to your TV are not supported by your device:{0}</string>
+    <string name="init_failure_desc_unexpected_error">Encountered an unexpected error while trying to initialize cryptographic secrets:{0}</string>
+    <string name="negotiation_failure">failed to initialize</string>
+    <string name="negotiation_failure_desc_unexpected_error">Encountered an unexpected error while negotiating with the TV:{0}</string>
+
+    <!-- connection status -->
+    <string name="connection_status_connecting">connecting…</string>
+    <string name="connection_status_hand_shaking">negotiating…</string>
+    <string name="connection_status_unready">connected (TV not ready)</string>
+    <string name="connection_status_ready">connected</string>
+    <string name="connection_status_connection_lost">connection lost</string>
+
+    <!-- tv discovery -->
+    <string name="title_tvdiscovery">connect to TV</string>
+    <string name="searching_for_tvs">searching for TVs running the receiver app</string>
+    <string name="button_manual_connection">connect manually</string>
+
+    <!-- remote buttons -->
+    <!-- the remote buttons don't actually have text, these are accessibility hints -->
+    <string name="button_up">up</string>
+    <string name="button_notifications">notifications</string>
+    <string name="button_left">left</string>
+    <string name="button_select">select</string>
+    <string name="button_right">right</string>
+    <string name="button_down">down</string>
+    <string name="button_volume_up">volume up</string>
+    <string name="button_volume_down">volume down</string>
+    <string name="button_mute_toggle">toggle mute</string>
+    <string name="button_quick_settings">quick settings</string>
+    <string name="button_skip_backward">skip backward</string>
+    <string name="button_previous_track">previous track</string>
+    <string name="button_toggle_playing">pause/play</string>
+    <string name="button_next_track">next track</string>
+    <string name="button_skip_forward">skip forward</string>
+    <string name="button_navigate_back">back</string>
+    <string name="button_navigate_home">home</string>
+    <string name="button_navigate_recent">recent</string>
+    <string name="button_trackpad_left_click">left click</string>
+
+    <!-- remote nav bar (for control method switching) -->
+    <string name="nav_button_dpad">dpad</string>
+    <string name="nav_button_accessibility_dpad">directional pad</string>
+    <string name="nav_button_mouse">mouse</string>
+    <string name="nav_button_accessibility_mouse">mouse control</string>
+
+    <!-- pairing -->
+    <string name="title_pairing_connecting">connecting…</string>
+    <string name="description_pairing_connecting">connecting to {0}</string>
+
+    <string name="title_pairing_hand_shaking">hand-shaking…</string>
+    <string name="description_pairing_hand_shaking">asking to pair with {0}</string>
+
+    <string name="title_pairing_authenticating">pairing…</string>
+    <string name="description_pairing_authenticating">authenticating with {0}</string>
+
+    <!-- pairing errors -->
+    <string name="title_pairing_error">pairing failed</string>
+    <string name="description_pairing_error_connection_lost">lost connection with {0}</string>
+    <string name="description_pairing_error_fingerprint_differs">failed to verify connection security. someone may have intercepted your connection! please secure your network before trying again.</string>
+
+    <!-- pairing code entry -->
+    <string name="title_pairing_code_entry">Pairing code</string>
+    <string name="description_pairing_code_entry">Please enter the 6 digit pairing code displayed on your TV</string>
+    <string name="hint_pairing_code">000000</string>
+    <string name="accessibility_pairing_code">pairing code</string>
+    <string name="error_pairing_code_length">must be 6 digits</string>
+
+    <!-- fingerprint verification -->
+    <string name="title_fingerprint_verification">Verify authenticity</string>
+    <string name="description_fingerprint_verficiation">Please verify that the code below matches the one on your TV.</string>
+    <string name="button_fingerprints_match">they match</string>
+    <string name="button_fingerprints_differ">they\'re different!</string>
+
+</resources>
