@@ -40,8 +40,6 @@ public class TVDiscoveryActivity extends AppCompatActivity implements ServiceDis
                     startActivity(intent);
                 });
 
-        NsdManager nsdManager = getSystemService(NsdManager.class);
-        serviceExplorer = new ServiceExplorer(nsdManager, this);
     }
 
     @SuppressLint("SetTextI18n")
@@ -118,18 +116,27 @@ public class TVDiscoveryActivity extends AppCompatActivity implements ServiceDis
         });
     }
 
+    private void ensureDiscoveryStopped() {
+        if (serviceExplorer == null) return;
+        serviceExplorer.stopDiscovery();
+        serviceExplorer = null;
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
         Log.d(TAG, "onPause()");
-        serviceExplorer.stopDiscovery();
+        ensureDiscoveryStopped();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         Log.d(TAG, "onResume()");
-        // todo: make a new service explorer here (there are edge cases that break state)
+        NsdManager nsdManager = getSystemService(NsdManager.class);
+        ensureDiscoveryStopped();
+
+        serviceExplorer = new ServiceExplorer(nsdManager, this);
         serviceExplorer.startDiscovery(MDNS_SERVICE_TYPE);
     }
 
