@@ -95,6 +95,10 @@ public class TVDiscoveryActivity extends AppCompatActivity implements ServiceDis
                     .setVisibility(View.VISIBLE);
             findViewById(R.id.service_discovery_notice)
                     .setVisibility(View.VISIBLE);
+
+            // gray out existing entries as they are "stale"
+            for (View view : discoveredServiceViewMap.values())
+                view.setAlpha(0.5f);
         });
     }
 
