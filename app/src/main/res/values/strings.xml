@@ -23,6 +23,9 @@
     <string name="connection_status_ready">connected</string>
     <string name="connection_status_connection_lost">connection lost</string>
 
+    <!-- protocol errors -->
+    <string name="protocol_error_unspecified">tv replied: unspecified error</string>
+
     <!-- tv discovery -->
     <string name="title_tvdiscovery">connect to TV</string>
     <string name="searching_for_tvs">searching for TVs running the receiver app</string>

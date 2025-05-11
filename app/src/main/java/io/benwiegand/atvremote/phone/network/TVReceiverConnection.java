@@ -5,6 +5,8 @@ import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.*;
 
 import android.util.Log;
 
+import com.google.gson.Gson;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.SocketException;
@@ -17,16 +19,21 @@ import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLSocket;
 
+import io.benwiegand.atvremote.phone.R;
 import io.benwiegand.atvremote.phone.auth.ssl.CorruptedKeystoreException;
 import io.benwiegand.atvremote.phone.auth.ssl.KeyUtil;
 import io.benwiegand.atvremote.phone.async.Sec;
 import io.benwiegand.atvremote.phone.async.SecAdapter;
 import io.benwiegand.atvremote.phone.control.InputHandler;
 import io.benwiegand.atvremote.phone.control.OperationQueueEntry;
+import io.benwiegand.atvremote.phone.protocol.RemoteProtocolException;
 import io.benwiegand.atvremote.phone.protocol.RequiresPairingException;
+import io.benwiegand.atvremote.phone.protocol.json.ErrorDetails;
 
 public class TVReceiverConnection implements Closeable {
     private static final String TAG = TVReceiverConnection.class.getSimpleName();
+
+    private static final Gson gson = new Gson();
 
     private static final int SOCKET_AUTH_TIMEOUT = 3000;
     private static final long KEEPALIVE_INTERVAL = 5000;
@@ -248,17 +255,26 @@ public class TVReceiverConnection implements Closeable {
             operationQueue.notifyAll();
 
             return secWithAdapter.sec()
-                    .map(r -> switch (r) {
-                        case OP_CONFIRM -> null;
-                        case OP_ERR -> {
-                            Log.e(TAG, "operation failed");
-                            throw new RuntimeException("tv replied: error");
-                        }
-                        case OP_UNSUPPORTED -> {
-                            Log.e(TAG, "operation unsupported");
-                            throw new UnsupportedOperationException("operation not supported by tv");
-                        }
-                        default -> throw new RuntimeException("unexpected response from tv");
+                    .map(r -> {
+                        String[] response = r.split(" ", 2);
+                        if (response.length == 0) throw new RuntimeException("empty response from TV");
+
+                        return switch (response[0]) {
+                            case OP_CONFIRM -> null;
+                            case OP_ERR -> {
+                                Log.e(TAG, "error response: " + r);
+
+                                if (response.length == 2)
+                                    throw gson.fromJson(response[1], ErrorDetails.class).toException();
+
+                                throw new RemoteProtocolException(R.string.protocol_error_unspecified, "tv gave no error details");
+                            }
+                            case OP_UNSUPPORTED -> {
+                                Log.e(TAG, "operation unsupported");
+                                throw new UnsupportedOperationException("operation not supported by tv");
+                            }
+                            default -> throw new RuntimeException("unexpected response from tv");
+                        };
                     });
         }
     }
