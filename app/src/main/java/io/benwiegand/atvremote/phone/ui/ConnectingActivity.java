@@ -1,7 +1,6 @@
 package io.benwiegand.atvremote.phone.ui;
 
 import static io.benwiegand.atvremote.phone.network.SocketUtil.tryClose;
-import static io.benwiegand.atvremote.phone.util.ErrorUtil.generateErrorDescription;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -14,7 +13,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.security.KeyManagementException;
-import java.text.MessageFormat;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -23,6 +21,7 @@ import io.benwiegand.atvremote.phone.auth.ssl.CorruptedKeystoreException;
 import io.benwiegand.atvremote.phone.network.ConnectionService;
 import io.benwiegand.atvremote.phone.network.TVReceiverConnection;
 import io.benwiegand.atvremote.phone.protocol.RequiresPairingException;
+import io.benwiegand.atvremote.phone.util.UiUtil;
 
 public abstract class ConnectingActivity extends AppCompatActivity {
     private static final String TAG = ConnectingActivity.class.getSimpleName();
@@ -65,27 +64,41 @@ public abstract class ConnectingActivity extends AppCompatActivity {
         timer = new Timer();
 
         // connection
+        // todo: an error in here needs to stop child from continuing
+        initConnectionService();
+    }
+
+    private void initConnectionService() {
+        // error actions
+        UiUtil.ButtonPreset retryButton = new UiUtil.ButtonPreset(R.string.button_retry, v -> initConnectionService());
+        UiUtil.ButtonPreset cancelButton = new UiUtil.ButtonPreset(R.string.button_cancel, v -> finish());
+        UiUtil.ButtonPreset deleteKeystoreAndRetry = new UiUtil.ButtonPreset(R.string.button_keystore_delete_and_retry, v -> {
+            // todo: prompt for confirmation
+            connectionService.getKeystoreManager().deleteKeystore();
+            initConnectionService();
+        });
+
         connectionService = new ConnectionService(this);
         try {
             connectionService.initializeSSL();
-
         } catch (IOException e) {
             Log.e(TAG, "failed to load keystore", e);
-            showError(R.string.init_failure, MessageFormat.format(getString(R.string.init_failure_desc_general), generateErrorDescription(e)));
-            // todo: also allow delete/retry, the keystore might be corrupted
+            showError(R.string.init_failure, R.string.init_failure_desc_general, e,
+                    retryButton, cancelButton, deleteKeystoreAndRetry);
         } catch (KeyManagementException | CorruptedKeystoreException e) {
             Log.e(TAG, "keystore is corrupted", e);
-            // todo: delete/retry
-            showError(R.string.init_failure, MessageFormat.format(getString(R.string.init_failure_desc_corrupted_keystore), generateErrorDescription(e)));
+            showError(R.string.init_failure, R.string.init_failure_desc_corrupted_keystore, e,
+                    deleteKeystoreAndRetry, cancelButton, retryButton);
         } catch (UnsupportedOperationException e) {
             Log.e(TAG, "device unsupported?", e);
-            showError(R.string.init_failure, MessageFormat.format(getString(R.string.init_failure_desc_unsupported), generateErrorDescription(e)));
+            showError(R.string.init_failure, R.string.init_failure_desc_unsupported, e,
+                    retryButton, cancelButton, null);
         } catch (RuntimeException e) {
             Log.e(TAG, "unexpected error", e);
-            showError(R.string.init_failure, MessageFormat.format(getString(R.string.init_failure_desc_unexpected_error), generateErrorDescription(e)));
+            showError(R.string.init_failure, R.string.init_failure_desc_unexpected_error, e,
+                    retryButton, cancelButton, null);
         }
     }
-
 
     @Override
     protected void onDestroy() {
@@ -95,7 +108,17 @@ public abstract class ConnectingActivity extends AppCompatActivity {
         if (connection != null) tryClose(connection);
     }
 
-    protected abstract void showError(@StringRes int title, String description);
+    protected abstract void showError(
+            @StringRes int title, Throwable t,
+            UiUtil.ButtonPreset positiveAction,
+            UiUtil.ButtonPreset neutralAction,
+            UiUtil.ButtonPreset negativeAction);
+
+    protected abstract void showError(
+            @StringRes int title, @StringRes int description, Throwable t,
+            UiUtil.ButtonPreset positiveAction,
+            UiUtil.ButtonPreset neutralAction,
+            UiUtil.ButtonPreset negativeAction);
 
     protected void scheduleConnect(long delay) {
         try {
@@ -127,7 +150,10 @@ public abstract class ConnectingActivity extends AppCompatActivity {
             finish();   // assume termination
         } catch (RuntimeException e) {
             Log.e(TAG, "unexpected error", e);
-            showError(R.string.negotiation_failure, MessageFormat.format(getString(R.string.negotiation_failure_desc_unexpected_error), generateErrorDescription(e)));
+            showError(R.string.negotiation_failure, R.string.negotiation_failure_desc_unexpected_error, e,
+                    new UiUtil.ButtonPreset(R.string.button_retry, v -> initConnectionService()),
+                    new UiUtil.ButtonPreset(R.string.button_cancel, v -> finish()),
+                    null);
         } catch (RequiresPairingException e) {
             Log.i(TAG, "not paired, starting pairing: " + e.getMessage());
             Intent intent = new Intent(this, PairingActivity.class)

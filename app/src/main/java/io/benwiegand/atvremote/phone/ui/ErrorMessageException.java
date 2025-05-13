@@ -1,5 +1,7 @@
 package io.benwiegand.atvremote.phone.ui;
 
+import android.content.Context;
+
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 
@@ -29,5 +31,9 @@ public class ErrorMessageException extends RuntimeException {
     @StringRes
     public Integer getStringResMessage() {
         return stringResMessage;
+    }
+
+    public String getLocalizedMessage(Context context) {
+        return stringResMessage != null ? context.getString(stringResMessage) : getLocalizedMessage();
     }
 }

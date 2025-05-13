@@ -1,6 +1,13 @@
 package io.benwiegand.atvremote.phone.util;
 
 import android.animation.TimeInterpolator;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+
+import androidx.annotation.StringRes;
+
+import io.benwiegand.atvremote.phone.R;
 
 public class UiUtil {
     public static final TimeInterpolator EASE_OUT = t -> 1-(t-1f)*(t-1f);
@@ -14,6 +21,73 @@ public class UiUtil {
             tf = x -> func.getInterpolation(prevTf.getInterpolation(x));
         }
         return tf;
+    }
+
+    public record ButtonPreset(
+            @StringRes int text,
+            View.OnClickListener clickListener
+    ) {}
+
+    public static void inflateButtonPreset(Button button, ButtonPreset preset) {
+        if (preset == null) {
+            button.setVisibility(View.GONE);
+            return;
+        }
+
+        button.setText(preset.text());
+        button.setOnClickListener(preset.clickListener());
+        button.setVisibility(View.VISIBLE);
+    }
+
+    private static class DropdownHandler {
+        private static final long DROPDOWN_ANIMATION_DURATION = 200;
+        private final Object stateLock = new Object();
+        private final View content;
+        @StringRes private final int expandText;
+        @StringRes private final int retractText;
+
+        public DropdownHandler(View content, int expandText, int retractText) {
+            this.content = content;
+            this.expandText = expandText;
+            this.retractText = retractText;
+        }
+
+        private void animateArrow(View arrow, float rotation) {
+            arrow.animate()
+                    .setDuration(DROPDOWN_ANIMATION_DURATION)
+                    .setInterpolator(EASE_OUT)
+                    .rotation(rotation)
+                    .start();
+        }
+
+        public void retract(View dropdown) {
+            View dropdownArrow = dropdown.findViewById(R.id.dropdown_arrow);
+            TextView dropdownText = dropdown.findViewById(R.id.dropdown_text);
+            synchronized (stateLock) {
+                content.setVisibility(View.GONE);
+                animateArrow(dropdownArrow, 0);
+                dropdownText.setText(expandText);
+                dropdown.setOnClickListener(this::expand);
+            }
+        }
+
+        public void expand(View dropdown) {
+            View dropdownArrow = dropdown.findViewById(R.id.dropdown_arrow);
+            TextView dropdownText = dropdown.findViewById(R.id.dropdown_text);
+            synchronized (stateLock) {
+                content.setVisibility(View.VISIBLE);
+                animateArrow(dropdownArrow, 90);
+                dropdownText.setText(retractText);
+                dropdown.setOnClickListener(this::retract);
+            }
+        }
+    }
+
+    public static void inflateDropdown(View dropdown, View content, @StringRes int expandText, @StringRes int retractText) {
+        DropdownHandler handler = new DropdownHandler(content, expandText, retractText);
+
+        // retract by default
+        handler.retract(dropdown);
     }
 
 }

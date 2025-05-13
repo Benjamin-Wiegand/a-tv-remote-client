@@ -7,14 +7,17 @@
     <string name="button_back">go back</string>
     <string name="button_retry">retry</string>
 
+    <!-- misc actions -->
+    <string name="button_keystore_delete_and_retry">delete keys</string>
+
     <!-- general connection failures -->
     <string name="init_failure">failed to initialize</string>
-    <string name="init_failure_desc_general">Failed to initialize cryptographic secrets:{0}</string>
-    <string name="init_failure_desc_corrupted_keystore">Failed to load cryptographic secrets used to secure the connection to your TV, they might be corrupted:{0}</string>
-    <string name="init_failure_desc_unsupported">One or more algorithms required for a secure connection to your TV are not supported by your device:{0}</string>
-    <string name="init_failure_desc_unexpected_error">Encountered an unexpected error while trying to initialize cryptographic secrets:{0}</string>
+    <string name="init_failure_desc_general">Failed to initialize cryptographic secrets.</string>
+    <string name="init_failure_desc_corrupted_keystore">Failed to load cryptographic secrets used to secure the connection to your TV, they might be corrupted.</string>
+    <string name="init_failure_desc_unsupported">One or more algorithms required for a secure connection to your TV are not supported by your device.</string>
+    <string name="init_failure_desc_unexpected_error">Encountered an unexpected error while trying to initialize cryptographic secrets.</string>
     <string name="negotiation_failure">failed to initialize</string>
-    <string name="negotiation_failure_desc_unexpected_error">Encountered an unexpected error while negotiating with the TV:{0}</string>
+    <string name="negotiation_failure_desc_unexpected_error">Encountered an unexpected error while negotiating with the TV.</string>
 
     <!-- connection status -->
     <string name="connection_status_connecting">connecting…</string>
@@ -71,7 +74,7 @@
 
     <!-- pairing errors -->
     <string name="title_pairing_error">pairing failed</string>
-    <string name="description_pairing_error_connection_lost">lost connection with {0}</string>
+    <string name="description_pairing_error_connection_lost">lost connection with your TV</string>
     <string name="description_pairing_error_fingerprint_differs">failed to verify connection security. someone may have intercepted your connection! please secure your network before trying again.</string>
 
     <!-- pairing code entry -->
@@ -86,5 +89,12 @@
     <string name="description_fingerprint_verficiation">Please verify that the code below matches the one on your TV.</string>
     <string name="button_fingerprints_match">they match</string>
     <string name="button_fingerprints_differ">they\'re different!</string>
+
+    <!-- error screen -->
+    <string name="dropdown_expand_stack_trace">show stack trace</string>
+    <string name="dropdown_retract_stack_trace">hide stack trace</string>
+    <string name="exception_line">{0}: {1}</string>
+    <string name="exception_line_error_message">error: {1}</string>
+    <string name="exception_caused_by">caused by {0}</string>
 
 </resources>

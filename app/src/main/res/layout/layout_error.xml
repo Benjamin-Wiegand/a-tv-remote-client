@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    >
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_margin="24dp"
+            >
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="48dp"
+                android:layout_marginBottom="12dp"
+                tools:ignore="UseCompoundDrawables"
+                > <!-- compound drawables can't align top. it's insignificant but it bugs me -->
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="6dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/x"
+                    app:tint="@color/red"
+                    />
+
+                <TextView
+                    android:id="@+id/title_text"
+                    style="@style/TextAppearance.MaterialComponents.Headline4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:drawable="@drawable/x"
+                    tools:text="Something happened"
+                    />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/description_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="24dp"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                tools:text="the moon has exploded (literally detonated)" />
+
+            <include
+                layout="@layout/layout_dropdown"
+                android:id="@+id/stack_trace_dropdown"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                />
+
+            <TextView
+                android:id="@+id/stack_trace_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                tools:visibility="visible"
+                android:textDirection="ltr"
+                android:textIsSelectable="true"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                tools:text="java.lang.Exception: something happened\n    at some.some.some.some(SomeFile.java:187)\n    at really.really.really.really(SomeOtherFile.java:142)\n    at long.long.long.long.long.long.long.long.long(YetAnotherFile.java:390)\n    at stack.stack.stack.stack.stack(TheSameFileTwice.java:230)\n    at trace.trace.trace.trace.trace.trace(TheSameFileTwice.java:212)\n    at some.really.reallyreallylongpackagenameasisthememewithjava.AndThenYetAnEvenLongerClassNameBecauseWhyNot(AndThenYetAnEvenLongerClassNameBecauseWhyNot.java:436)\n	at none.of.this.stack.trace.really.makes.canonical.sense(ButWhoCares.java:420)\n    at some.some.some.some(SomeFile.java:187)\n    at really.really(SomeOtherFile.java:142)\n    at long.long.long.long.long.long.long.long.long(YetAnotherFile.java:390)\n    at stack.stack.stack.stack.stack(TheSameFileTwice.java:230)\n    at trace.trace.trace.trace.trace.trace(TheSameFileTwice.java:212)\n    at some.some.some.some(SomeFile.java:187)\n    at really.really.really.really(SomeOtherFile.java:142)\n    at long.long.long.long.long.long(YetAnotherFile.java:390)\n    at stack.stack.stack(TheSameFileTwice.java:230)\n    at trace.trace.trace.trace.trace.trace(TheSameFileTwice.java:212)\n    at some.some.some.some(SomeFile.java:187)\n    at really.really.really(SomeOtherFile.java:142)\n    at long.long.long.long.long.long.long.long.long(YetAnotherFile.java:390)\n    at stack.stack.stack.stack.stack(TheSameFileTwice.java:230)\n    at trace.trace.trace(TheSameFileTwice.java:212)\n    at some.some.some.some(SomeFile.java:187)\n    at really.really.really.really(SomeOtherFile.java:142)\n    at long.long.long.long.long.long.long.long(YetAnotherFile.java:390)\n    at stack.stack.stack.stack.stack(TheSameFileTwice.java:230)\n    at trace.trace.trace.trace.trace.trace(TheSameFileTwice.java:212)\n    at some.some.some.some(SomeFile.java:187)\n    at really.really.really.really(SomeOtherFile.java:142)\n    at long.long.long.long.long.long(YetAnotherFile.java:390)\n    at stack.stack.stack.stack.stack(TheSameFileTwice.java:230)\n    at trace.trace(TheSameFileTwice.java:212)\nCaused by: java.lang.RuntimeException: some other thing that happened\n    at some.some.some.some(SomeFile.java:187)\n    at really.really.really.really(SomeOtherFile.java:142)\n    at long.long.long.long.long.long.long.long.long(YetAnotherFile.java:390)\n    at stack.stack.stack.stack.stack(TheSameFileTwice.java:230)\n    at trace.trace.trace.trace.trace.trace(TheSameFileTwice.java:212)\n    at some.some.some.some(SomeFile.java:187)\n    at really.really.really.really(SomeOtherFile.java:142)\n    at long.long.long.long.long.long.long.long.long(YetAnotherFile.java:390)\n    at stack.stack.stack.stack.stack(TheSameFileTwice.java:230)\n    at trace.trace.trace.trace.trace.trace(TheSameFileTwice.java:212)\n    at some.some.some.some(SomeFile.java:187)\n    at really.really.really.really(SomeOtherFile.java:142)\n    at long.long.long.long.long.long.long.long.long(YetAnotherFile.java:390)\n    at stack.stack.stack.stack.stack(TheSameFileTwice.java:230)\n    at trace.trace.trace.trace.trace.trace(TheSameFileTwice.java:212)"
+                />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <Space
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="0"
+        />
+
+    <!-- same layout as AlertDialog -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_margin="24dp"
+        >
+
+        <Button
+            android:id="@+id/neutral_button"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            tools:visibility="visible"
+            tools:text="@string/button_cancel"
+            />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            />
+
+        <Button
+            android:id="@+id/negative_button"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            />
+
+        <Button
+            android:id="@+id/positive_button"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            tools:visibility="visible"
+            tools:text="@string/button_retry"
+            />
+
+    </LinearLayout>
+
+</LinearLayout>

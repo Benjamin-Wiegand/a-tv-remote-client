@@ -134,8 +134,6 @@ public class KeystoreManager {
     }
 
     public boolean deleteKeystore() {
-        if (keystore != null) throw new IllegalStateException("keystore already loaded, refusing to delete");
-
         return !keystoreFile.isFile() || keystoreFile.delete();
     }
 

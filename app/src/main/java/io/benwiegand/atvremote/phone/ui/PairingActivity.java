@@ -3,7 +3,6 @@ package io.benwiegand.atvremote.phone.ui;
 import static android.view.inputmethod.EditorInfo.IME_ACTION_DONE;
 
 import static io.benwiegand.atvremote.phone.network.SocketUtil.tryClose;
-import static io.benwiegand.atvremote.phone.util.ErrorUtil.generateErrorDescription;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -32,10 +31,15 @@ import io.benwiegand.atvremote.phone.network.TVReceiverConnectionCallback;
 import io.benwiegand.atvremote.phone.protocol.PairingData;
 import io.benwiegand.atvremote.phone.protocol.PairingManager;
 import io.benwiegand.atvremote.phone.util.ByteUtil;
+import io.benwiegand.atvremote.phone.util.ErrorUtil;
 import io.benwiegand.atvremote.phone.util.UiUtil;
 
 public class PairingActivity extends ConnectingActivity {
     private static final String TAG = PairingActivity.class.getSimpleName();
+
+    // global error actions
+    private final UiUtil.ButtonPreset RETRY_PAIRING_ACTION = new UiUtil.ButtonPreset(R.string.button_retry, v -> startConnecting());
+    private final UiUtil.ButtonPreset CANCEL_PAIRING_ACTION = new UiUtil.ButtonPreset(R.string.button_cancel, v -> finish());
 
     // ui
     private View layoutView = null;
@@ -68,11 +72,6 @@ public class PairingActivity extends ConnectingActivity {
         super.onDestroy();
     }
 
-    @Override
-    protected void showError(int title, String description) {
-        showErrorScreen(title, description);
-    }
-
     private void startConnecting() {
         showLoadingScreen(R.string.title_pairing_connecting, MessageFormat.format(getString(R.string.description_pairing_connecting), deviceName));
         scheduleConnect(0L);
@@ -85,7 +84,8 @@ public class PairingActivity extends ConnectingActivity {
                 .doOnError(t -> {
                     Log.e(TAG, "failed to get token", t);
                     tryClose(connection);
-                    showErrorScreen(R.string.title_pairing_error, generateErrorDescription(t));
+                    showError(R.string.title_pairing_error, t,
+                            RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null);
                 })
                 .doOnResult(token -> {
                     Log.d(TAG, "received token");
@@ -95,7 +95,9 @@ public class PairingActivity extends ConnectingActivity {
                         boolean committed = pairingManager.addNewDevice(certificate, new PairingData(token, fingerprint, deviceName, remoteHostname, Instant.now().getEpochSecond()));
                         if (!committed) throw new RuntimeException("failed to commit pairing data");
                     } catch (Throwable t) {
-                        showErrorScreen(R.string.title_pairing_error, generateErrorDescription(t));
+                        // todo: might not be localized
+                        showError(R.string.title_pairing_error, t,
+                                RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null);
                         return;
                     }
 
@@ -166,7 +168,8 @@ public class PairingActivity extends ConnectingActivity {
         @Override
         public void onDisconnected() {
             if (isInvalid()) return;
-            showErrorScreen(R.string.title_pairing_error, MessageFormat.format(getString(R.string.description_pairing_error_connection_lost), deviceName));
+            showError(R.string.title_pairing_error, R.string.description_pairing_error_connection_lost, null,
+                    RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null);
         }
     }
 
@@ -227,7 +230,8 @@ public class PairingActivity extends ConnectingActivity {
 
             Button noMatchButton = layout.findViewById(R.id.no_match_button);
             noMatchButton.setOnClickListener(v ->
-                    showErrorScreen(R.string.title_pairing_error, R.string.description_pairing_error_fingerprint_differs));
+                    showError(R.string.title_pairing_error, R.string.description_pairing_error_fingerprint_differs, null,
+                            RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null));
 
             // don't immediately enable buttons to prevent user from skipping through this part.
             // they probably will anyway, but I tried.
@@ -241,25 +245,19 @@ public class PairingActivity extends ConnectingActivity {
         });
     }
 
-    private void showErrorScreen(@StringRes int title, @StringRes int description) {
-        showErrorScreen(title, getString(description));
+    @Override
+    protected void showError(int title, Throwable t, UiUtil.ButtonPreset positiveAction, UiUtil.ButtonPreset neutralAction, UiUtil.ButtonPreset negativeAction) {
+        runOnUiThread(() -> {
+            View layout = switchLayout(R.layout.layout_error);
+            ErrorUtil.inflateErrorScreen(layout, title, t, positiveAction, neutralAction, negativeAction);
+        });
     }
 
-    private void showErrorScreen(@StringRes int title, String description) {
+    @Override
+    protected void showError(int title, int description, Throwable t, UiUtil.ButtonPreset positiveAction, UiUtil.ButtonPreset neutralAction, UiUtil.ButtonPreset negativeAction) {
         runOnUiThread(() -> {
-            View layout = switchLayout(R.layout.layout_pairing_failure);
-
-            TextView titleText = layout.findViewById(R.id.title_text);
-            titleText.setText(title);
-
-            TextView descriptionText = layout.findViewById(R.id.description_text);
-            descriptionText.setText(description);
-
-            layout.findViewById(R.id.cancel_button)
-                    .setOnClickListener(v -> finish());
-
-            layout.findViewById(R.id.retry_button)
-                    .setOnClickListener(v -> startConnecting());
+            View layout = switchLayout(R.layout.layout_error);
+            ErrorUtil.inflateErrorScreen(layout, title, description, t, positiveAction, neutralAction, negativeAction);
         });
     }
 
