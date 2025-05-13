@@ -8,6 +8,7 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.IOException;
@@ -73,11 +74,15 @@ public abstract class ConnectingActivity extends AppCompatActivity {
         // error actions
         UiUtil.ButtonPreset retryButton = new UiUtil.ButtonPreset(R.string.button_retry, v -> initConnectionService());
         UiUtil.ButtonPreset cancelButton = new UiUtil.ButtonPreset(R.string.button_cancel, v -> finish());
-        UiUtil.ButtonPreset deleteKeystoreAndRetry = new UiUtil.ButtonPreset(R.string.button_keystore_delete_and_retry, v -> {
-            // todo: prompt for confirmation
-            connectionService.getKeystoreManager().deleteKeystore();
-            initConnectionService();
-        });
+        UiUtil.ButtonPreset deleteKeystoreAndRetry = new UiUtil.ButtonPreset(R.string.button_keystore_delete_and_retry, v -> new AlertDialog.Builder(this)
+                .setTitle(R.string.title_confirm)
+                .setMessage(R.string.description_confirm_delete_keystore)
+                .setPositiveButton(R.string.button_confirm_delete, (d, w) -> {
+                    connectionService.getKeystoreManager().deleteKeystore();
+                    initConnectionService();
+                })
+                .setNeutralButton(R.string.button_cancel, null)
+                .show());
 
         connectionService = new ConnectionService(this);
         try {

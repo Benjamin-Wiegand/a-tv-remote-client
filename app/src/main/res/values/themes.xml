@@ -18,8 +18,9 @@
         <item name="android:textColorHint">@color/gray_400</item>         <!-- fix text hint -->
 
         <!-- edge to edge is overrated -->
-        <item name="android:statusBarColor">?android:attr/windowBackground</item>
-        <item name="android:navigationBarColor">?android:attr/windowBackground</item>
+        <!-- note: setting these to "?android:attr/windowBackground" breaks AlertDialogs for some reason -->
+        <item name="android:statusBarColor">@color/material_gary</item>
+        <item name="android:navigationBarColor">@color/material_gary</item>
 
         <!-- no action bar -->
         <item name="windowActionBar">false</item>

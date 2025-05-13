@@ -19,6 +19,11 @@
     <string name="negotiation_failure">failed to initialize</string>
     <string name="negotiation_failure_desc_unexpected_error">Encountered an unexpected error while negotiating with the TV.</string>
 
+    <!-- confirmation -->
+    <string name="title_confirm">are you sure?</string>
+    <string name="description_confirm_delete_keystore">You will have to pair your TV again.</string>
+    <string name="button_confirm_delete">delete</string>
+
     <!-- connection status -->
     <string name="connection_status_connecting">connecting…</string>
     <string name="connection_status_hand_shaking">negotiating…</string>
