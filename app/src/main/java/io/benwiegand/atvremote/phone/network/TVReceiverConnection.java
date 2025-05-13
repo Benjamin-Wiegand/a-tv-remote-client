@@ -205,17 +205,22 @@ public class TVReceiverConnection implements Closeable {
 
             SecAdapter<String> secAdapter = entry.responseAdapter();
 
-            writer.sendLine(entry.operation());
-            String result = reader.nextLine(RESPONSE_TIMEOUT);
+            try {
+                writer.sendLine(entry.operation());
+                String result = reader.nextLine(RESPONSE_TIMEOUT);
 
-            if (result == null) {
-                IOException exception = new IOException("response timed out");
-                resultCallbackThreadPool.execute(() -> secAdapter.throwError(exception));
-                throw exception;
+                if (result == null) {
+                    IOException exception = new IOException("response timed out");
+                    resultCallbackThreadPool.execute(() -> secAdapter.throwError(exception));
+                    throw exception;
+                }
+
+                // thread pool so the socket loop doesn't block here
+                resultCallbackThreadPool.execute(() -> secAdapter.provideResult(result));
+            } catch (Throwable t) {
+                resultCallbackThreadPool.execute(() -> secAdapter.throwError(t));
+                throw t;
             }
-
-            // thread pool so the socket loop doesn't block here
-            resultCallbackThreadPool.execute(() -> secAdapter.provideResult(result));
 
         }
     }
