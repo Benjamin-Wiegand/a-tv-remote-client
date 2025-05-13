@@ -64,9 +64,10 @@ public abstract class ConnectingActivity extends AppCompatActivity {
         timer = new Timer();
 
         // connection
-        // todo: an error in here needs to stop child from continuing
         initConnectionService();
     }
+
+    protected abstract void onReady();
 
     private void initConnectionService() {
         // error actions
@@ -81,6 +82,7 @@ public abstract class ConnectingActivity extends AppCompatActivity {
         connectionService = new ConnectionService(this);
         try {
             connectionService.initializeSSL();
+            onReady();
         } catch (IOException e) {
             Log.e(TAG, "failed to load keystore", e);
             showError(R.string.init_failure, R.string.init_failure_desc_general, e,

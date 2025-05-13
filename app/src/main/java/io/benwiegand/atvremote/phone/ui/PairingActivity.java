@@ -60,9 +60,10 @@ public class PairingActivity extends ConnectingActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pairing);
+    }
 
+    protected void onReady() {
         pairingManager = new PairingManager(this, connectionService.getKeystoreManager());
-
         startConnecting();
     }
 

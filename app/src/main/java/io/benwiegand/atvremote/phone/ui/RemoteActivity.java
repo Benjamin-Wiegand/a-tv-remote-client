@@ -59,7 +59,9 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
 
         vibrator = getSystemService(Vibrator.class);
         setupButtons();
+    }
 
+    protected void onReady() {
         // connect to tv
         scheduleConnect(0L);
     }
