@@ -276,9 +276,9 @@ public class TVReceiverConnection implements Closeable {
                             }
                             case OP_UNSUPPORTED -> {
                                 Log.e(TAG, "operation unsupported");
-                                throw new UnsupportedOperationException("operation not supported by tv");
+                                throw new RemoteProtocolException(R.string.protocol_error_unspecified, "operation not supported by tv");
                             }
-                            default -> throw new RuntimeException("unexpected response from tv");
+                            default -> throw new RemoteProtocolException(R.string.protocol_error_response_invalid, "unexpected response from tv");
                         };
                     });
         }
@@ -299,11 +299,11 @@ public class TVReceiverConnection implements Closeable {
                     .map(r -> switch (r) {
                         case OP_UNAUTHORIZED -> {
                             Log.e(TAG, "bad pairing code");
-                            throw new RuntimeException("pairing code rejected");
+                            throw new RemoteProtocolException(R.string.protocol_error_pairing_code_invalid, "bad pairing code");
                         }
                         case OP_UNSUPPORTED -> {
                             Log.e(TAG, "operation unsupported");
-                            throw new UnsupportedOperationException("operation not supported by tv");
+                            throw new RemoteProtocolException(R.string.protocol_error_unspecified, "operation not supported by tv");
                         }
                         default -> r;
                     });
