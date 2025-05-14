@@ -82,9 +82,8 @@
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/control_method_selector"
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="wrap_content"
         android:layout_weight="0"
-        android:minHeight="64dp"
         android:background="?android:attr/windowBackground"
         app:menu="@menu/control_method_selector_menu"
         />
