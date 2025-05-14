@@ -45,6 +45,7 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
 
     // ui
     private final List<View> tvControlButtons = new ArrayList<>(/* todo: define size */);
+    private AlertDialog errorDialog = null;
     private Vibrator vibrator;
 
     @Override
@@ -62,18 +63,33 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
     }
 
     protected void onReady() {
+        hideError();
+
         // connect to tv
         scheduleConnect(0L);
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        hideError();
+    }
+
+    private void hideError() {
+        runOnUiThread(() -> {
+            if (errorDialog == null || !errorDialog.isShowing()) return;
+            errorDialog.cancel();
+        });
+    }
+
+    @Override
     protected void showError(int title, Throwable t, UiUtil.ButtonPreset positiveAction, UiUtil.ButtonPreset neutralAction, UiUtil.ButtonPreset negativeAction) {
         runOnUiThread(() -> {
+            hideError();
+
             View view = getLayoutInflater().inflate(R.layout.layout_error, null, false);
-
             ErrorUtil.inflateErrorScreen(view, title, t, positiveAction, neutralAction, negativeAction);
-
-            new AlertDialog.Builder(this, R.style.Theme_ATVRemote)
+            errorDialog = new AlertDialog.Builder(this, R.style.Theme_ATVRemote)
                     .setView(view)
                     .show();
         });
@@ -82,11 +98,11 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
     @Override
     protected void showError(int title, int description, Throwable t, UiUtil.ButtonPreset positiveAction, UiUtil.ButtonPreset neutralAction, UiUtil.ButtonPreset negativeAction) {
         runOnUiThread(() -> {
+            hideError();
+
             View view = getLayoutInflater().inflate(R.layout.layout_error, null, false);
-
             ErrorUtil.inflateErrorScreen(view, title, description, t, positiveAction, neutralAction, negativeAction);
-
-            new AlertDialog.Builder(this, R.style.Theme_ATVRemote)
+            errorDialog = new AlertDialog.Builder(this, R.style.Theme_ATVRemote)
                     .setView(view)
                     .show();
         });
