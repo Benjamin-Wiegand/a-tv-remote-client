@@ -4,6 +4,8 @@ import static io.benwiegand.atvremote.phone.network.SocketUtil.tryClose;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -36,6 +38,7 @@ public abstract class ConnectingActivity extends AppCompatActivity {
 
     // threads
     private Timer timer = null;
+    private final Handler handler = new Handler(Looper.getMainLooper());
 
     // connection
     protected ConnectionService connectionService;
@@ -65,7 +68,8 @@ public abstract class ConnectingActivity extends AppCompatActivity {
         timer = new Timer();
 
         // connection
-        initConnectionService();
+        // run this in a handler so onCreate() finishes for child
+        handler.post(this::initConnectionService);
     }
 
     protected abstract void onReady();
