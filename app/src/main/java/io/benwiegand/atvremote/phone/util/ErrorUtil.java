@@ -109,7 +109,7 @@ public class ErrorUtil {
             top = false;
 
             sb.append(t.getClass().getName())
-                    .append(":")
+                    .append(": ")
                     .append(t.getMessage())
                     .append("\n");
 
