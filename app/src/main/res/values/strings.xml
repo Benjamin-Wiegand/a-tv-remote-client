@@ -3,6 +3,7 @@
 
     <!-- common ui -->
     <string name="button_cancel">Cancel</string>
+    <string name="button_ok">ok</string>
     <string name="button_next">next</string>
     <string name="button_back">go back</string>
     <string name="button_retry">retry</string>
@@ -18,6 +19,7 @@
     <string name="init_failure_desc_unexpected_error">Encountered an unexpected error while trying to initialize cryptographic secrets.</string>
     <string name="negotiation_failure">failed to initialize</string>
     <string name="negotiation_failure_desc_unexpected_error">Encountered an unexpected error while negotiating with the TV.</string>
+    <string name="action_failure">action error</string>
 
     <!-- confirmation -->
     <string name="title_confirm">are you sure?</string>

@@ -30,12 +30,14 @@ import io.benwiegand.atvremote.phone.ui.view.RemoteButton;
 import io.benwiegand.atvremote.phone.ui.view.TrackpadButton;
 import io.benwiegand.atvremote.phone.ui.view.TrackpadSurface;
 import io.benwiegand.atvremote.phone.util.ErrorUtil;
+import io.benwiegand.atvremote.phone.util.UiUtil;
 
 public class RemoteActivity extends ConnectingActivity implements TVReceiverConnectionCallback {
     private static final String TAG = RemoteActivity.class.getSimpleName();
 
     private static final VibrationEffect CLICK_VIBRATION_EFFECT = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK);
     private static final VibrationEffect LONG_CLICK_VIBRATION_EFFECT = VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK);
+    private static final VibrationEffect ATTENTION_VIBRATION_EFFECT = VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK);
 
     private static final int BUTTON_REPEAT_DELAY = 420;
 
@@ -129,6 +131,18 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
         setupRemoteButtons();
     }
 
+    private void handleActionError(Throwable t) {
+        Log.d(TAG, "action failed", t);
+        if (t instanceof ErrorMessageException e) {
+            vibrator.vibrate(ATTENTION_VIBRATION_EFFECT);
+            showError(new ErrorUtil.ErrorSpec(
+                    R.string.action_failure, e,
+                    new UiUtil.ButtonPreset(R.string.button_ok, v -> hideError()),
+                    null, null));
+        }
+
+    }
+
     private View setupBasicButton(@IdRes int buttonId, Function<InputHandler, Sec<Void>> action) {
         View button = findViewById(buttonId);
         if (button == null) return null;
@@ -136,7 +150,7 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
         button.setOnClickListener(v -> {
             if (inputHandler == null) return;
             action.apply(inputHandler)
-                    .doOnError(t -> Log.d(TAG, "button action failed", t))
+                    .doOnError(this::handleActionError)
                     .callMeWhenDone();
             vibrator.vibrate(CLICK_VIBRATION_EFFECT);
         });
@@ -149,7 +163,7 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
         button.setOnLongClickListener(v -> {
             if (inputHandler == null) return false;
             longPressAction.apply(inputHandler)
-                    .doOnError(t -> Log.d(TAG, "button action failed", t))
+                    .doOnError(this::handleActionError)
                     .callMeWhenDone();
             vibrator.vibrate(LONG_CLICK_VIBRATION_EFFECT);
             return true;
