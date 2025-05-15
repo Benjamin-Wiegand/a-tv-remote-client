@@ -16,22 +16,56 @@ import io.benwiegand.atvremote.phone.ui.ErrorMessageException;
 
 public class ErrorUtil {
 
-    public static void inflateErrorScreen(
-            View root, @StringRes int title, String description, Throwable t,
+    public record ErrorSpec(
+            @StringRes int title, String descriptionStr, @StringRes Integer descriptionRes, Throwable throwable,
             UiUtil.ButtonPreset positiveAction,
             UiUtil.ButtonPreset neutralAction,
-            UiUtil.ButtonPreset negativeAction) {
+            UiUtil.ButtonPreset negativeAction
+    ) {
+        public ErrorSpec(
+                @StringRes int title, @StringRes int descriptionRes, Throwable t,
+                UiUtil.ButtonPreset positiveAction,
+                UiUtil.ButtonPreset neutralAction,
+                UiUtil.ButtonPreset negativeAction) {
+            this(title, null, descriptionRes, t, positiveAction, neutralAction, negativeAction);
+        }
 
+        public ErrorSpec(
+                @StringRes int title, String description, Throwable t,
+                UiUtil.ButtonPreset positiveAction,
+                UiUtil.ButtonPreset neutralAction,
+                UiUtil.ButtonPreset negativeAction) {
+            this(title, description, null, t, positiveAction, neutralAction, negativeAction);
+        }
+
+        public ErrorSpec(
+                @StringRes int title, Throwable t,
+                UiUtil.ButtonPreset positiveAction,
+                UiUtil.ButtonPreset neutralAction,
+                UiUtil.ButtonPreset negativeAction) {
+            this(title, null, null, t, positiveAction, neutralAction, negativeAction);
+        }
+
+        public String description(Context context) {
+            // always prefer the higher-level error message if available
+            if (descriptionRes() != null) return context.getString(descriptionRes());
+            if (descriptionStr() != null) return descriptionStr();
+            if (throwable() instanceof ErrorMessageException e) return e.getLocalizedMessage(context);
+            return generateErrorDescription(context, throwable());
+        }
+    }
+
+    public static void inflateErrorScreen(View root, ErrorSpec error) {
         TextView titleText = root.findViewById(R.id.title_text);
-        titleText.setText(title);
+        titleText.setText(error.title());
 
         TextView descriptionText = root.findViewById(R.id.description_text);
-        descriptionText.setText(description);
+        descriptionText.setText(error.description(root.getContext()));
 
         View dropdown = root.findViewById(R.id.stack_trace_dropdown);
-        if (t != null) {
+        if (error.throwable() != null) {
             TextView stackTraceText = root.findViewById(R.id.stack_trace_text);
-            stackTraceText.setText(getStackTrace(t));
+            stackTraceText.setText(getStackTrace(error.throwable()));
 
             inflateDropdown(
                     dropdown,
@@ -42,35 +76,9 @@ public class ErrorUtil {
             dropdown.setVisibility(View.GONE);
         }
 
-        inflateButtonPreset(root.findViewById(R.id.positive_button), positiveAction);
-        inflateButtonPreset(root.findViewById(R.id.neutral_button), neutralAction);
-        inflateButtonPreset(root.findViewById(R.id.negative_button), negativeAction);
-    }
-
-    public static void inflateErrorScreen(
-            View root, @StringRes int title, @StringRes int description, Throwable t,
-            UiUtil.ButtonPreset positiveAction,
-            UiUtil.ButtonPreset neutralAction,
-            UiUtil.ButtonPreset negativeAction) {
-        inflateErrorScreen(root, title, root.getContext().getString(description), t,
-                positiveAction, neutralAction, negativeAction);
-
-    }
-
-    public static void inflateErrorScreen(
-            View root, @StringRes int title, Throwable t,
-            UiUtil.ButtonPreset positiveAction,
-            UiUtil.ButtonPreset neutralAction,
-            UiUtil.ButtonPreset negativeAction) {
-        // prefer the higher-level error message if applicable. the user can always expand the stack trace anyway
-        String description;
-        if (t instanceof ErrorMessageException e) {
-            description = e.getLocalizedMessage(root.getContext());
-        } else {
-            description = generateErrorDescription(root.getContext(), t);
-        }
-
-        inflateErrorScreen(root, title, description, t, positiveAction, neutralAction, negativeAction);
+        inflateButtonPreset(root.findViewById(R.id.positive_button), error.positiveAction());
+        inflateButtonPreset(root.findViewById(R.id.neutral_button), error.neutralAction());
+        inflateButtonPreset(root.findViewById(R.id.negative_button), error.negativeAction());
     }
 
     public static String generateErrorDescription(Context context, Throwable t) {

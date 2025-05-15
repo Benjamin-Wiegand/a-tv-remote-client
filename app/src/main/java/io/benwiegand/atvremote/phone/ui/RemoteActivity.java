@@ -30,7 +30,6 @@ import io.benwiegand.atvremote.phone.ui.view.RemoteButton;
 import io.benwiegand.atvremote.phone.ui.view.TrackpadButton;
 import io.benwiegand.atvremote.phone.ui.view.TrackpadSurface;
 import io.benwiegand.atvremote.phone.util.ErrorUtil;
-import io.benwiegand.atvremote.phone.util.UiUtil;
 
 public class RemoteActivity extends ConnectingActivity implements TVReceiverConnectionCallback {
     private static final String TAG = RemoteActivity.class.getSimpleName();
@@ -83,25 +82,12 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
     }
 
     @Override
-    protected void showError(int title, Throwable t, UiUtil.ButtonPreset positiveAction, UiUtil.ButtonPreset neutralAction, UiUtil.ButtonPreset negativeAction) {
+    protected void showError(ErrorUtil.ErrorSpec error) {
         runOnUiThread(() -> {
             hideError();
 
             View view = getLayoutInflater().inflate(R.layout.layout_error, null, false);
-            ErrorUtil.inflateErrorScreen(view, title, t, positiveAction, neutralAction, negativeAction);
-            errorDialog = new AlertDialog.Builder(this, R.style.Theme_ATVRemote)
-                    .setView(view)
-                    .show();
-        });
-    }
-
-    @Override
-    protected void showError(int title, int description, Throwable t, UiUtil.ButtonPreset positiveAction, UiUtil.ButtonPreset neutralAction, UiUtil.ButtonPreset negativeAction) {
-        runOnUiThread(() -> {
-            hideError();
-
-            View view = getLayoutInflater().inflate(R.layout.layout_error, null, false);
-            ErrorUtil.inflateErrorScreen(view, title, description, t, positiveAction, neutralAction, negativeAction);
+            ErrorUtil.inflateErrorScreen(view, error);
             errorDialog = new AlertDialog.Builder(this, R.style.Theme_ATVRemote)
                     .setView(view)
                     .show();

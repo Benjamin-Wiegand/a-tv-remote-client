@@ -85,8 +85,9 @@ public class PairingActivity extends ConnectingActivity {
                 .doOnError(t -> {
                     Log.e(TAG, "failed to get token", t);
                     tryClose(connection);
-                    showError(R.string.title_pairing_error, t,
-                            RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null);
+                    showError(new ErrorUtil.ErrorSpec(
+                            R.string.title_pairing_error, t,
+                            RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null));
                 })
                 .doOnResult(token -> {
                     Log.d(TAG, "received token");
@@ -97,8 +98,9 @@ public class PairingActivity extends ConnectingActivity {
                         if (!committed) throw new RuntimeException("failed to commit pairing data");
                     } catch (Throwable t) {
                         // todo: might not be localized
-                        showError(R.string.title_pairing_error, t,
-                                RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null);
+                        showError(new ErrorUtil.ErrorSpec(
+                                R.string.title_pairing_error, t,
+                                RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null));
                         return;
                     }
 
@@ -169,8 +171,9 @@ public class PairingActivity extends ConnectingActivity {
         @Override
         public void onDisconnected() {
             if (isInvalid()) return;
-            showError(R.string.title_pairing_error, R.string.description_pairing_error_connection_lost, null,
-                    RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null);
+            showError(new ErrorUtil.ErrorSpec(
+                    R.string.title_pairing_error, R.string.description_pairing_error_connection_lost, null,
+                    RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null));
         }
     }
 
@@ -231,8 +234,9 @@ public class PairingActivity extends ConnectingActivity {
 
             Button noMatchButton = layout.findViewById(R.id.no_match_button);
             noMatchButton.setOnClickListener(v ->
-                    showError(R.string.title_pairing_error, R.string.description_pairing_error_fingerprint_differs, null,
-                            RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null));
+                    showError(new ErrorUtil.ErrorSpec(
+                            R.string.title_pairing_error, R.string.description_pairing_error_fingerprint_differs, null,
+                            RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null)));
 
             // don't immediately enable buttons to prevent user from skipping through this part.
             // they probably will anyway, but I tried.
@@ -247,18 +251,10 @@ public class PairingActivity extends ConnectingActivity {
     }
 
     @Override
-    protected void showError(int title, Throwable t, UiUtil.ButtonPreset positiveAction, UiUtil.ButtonPreset neutralAction, UiUtil.ButtonPreset negativeAction) {
+    protected void showError(ErrorUtil.ErrorSpec error) {
         runOnUiThread(() -> {
             View layout = switchLayout(R.layout.layout_error);
-            ErrorUtil.inflateErrorScreen(layout, title, t, positiveAction, neutralAction, negativeAction);
-        });
-    }
-
-    @Override
-    protected void showError(int title, int description, Throwable t, UiUtil.ButtonPreset positiveAction, UiUtil.ButtonPreset neutralAction, UiUtil.ButtonPreset negativeAction) {
-        runOnUiThread(() -> {
-            View layout = switchLayout(R.layout.layout_error);
-            ErrorUtil.inflateErrorScreen(layout, title, description, t, positiveAction, neutralAction, negativeAction);
+            ErrorUtil.inflateErrorScreen(layout, error);
         });
     }
 

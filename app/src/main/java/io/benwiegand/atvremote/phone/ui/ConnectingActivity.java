@@ -9,7 +9,6 @@ import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
-import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -24,6 +23,7 @@ import io.benwiegand.atvremote.phone.auth.ssl.CorruptedKeystoreException;
 import io.benwiegand.atvremote.phone.network.ConnectionService;
 import io.benwiegand.atvremote.phone.network.TVReceiverConnection;
 import io.benwiegand.atvremote.phone.protocol.RequiresPairingException;
+import io.benwiegand.atvremote.phone.util.ErrorUtil;
 import io.benwiegand.atvremote.phone.util.UiUtil;
 
 public abstract class ConnectingActivity extends AppCompatActivity {
@@ -94,20 +94,24 @@ public abstract class ConnectingActivity extends AppCompatActivity {
             onReady();
         } catch (IOException e) {
             Log.e(TAG, "failed to load keystore", e);
-            showError(R.string.init_failure, R.string.init_failure_desc_general, e,
-                    retryButton, cancelButton, deleteKeystoreAndRetry);
+            showError(new ErrorUtil.ErrorSpec(
+                    R.string.init_failure, R.string.init_failure_desc_general, e,
+                    retryButton, cancelButton, deleteKeystoreAndRetry));
         } catch (KeyManagementException | CorruptedKeystoreException e) {
             Log.e(TAG, "keystore is corrupted", e);
-            showError(R.string.init_failure, R.string.init_failure_desc_corrupted_keystore, e,
-                    deleteKeystoreAndRetry, cancelButton, retryButton);
+            showError(new ErrorUtil.ErrorSpec(
+                    R.string.init_failure, R.string.init_failure_desc_corrupted_keystore, e,
+                    deleteKeystoreAndRetry, cancelButton, retryButton));
         } catch (UnsupportedOperationException e) {
             Log.e(TAG, "device unsupported?", e);
-            showError(R.string.init_failure, R.string.init_failure_desc_unsupported, e,
-                    retryButton, cancelButton, null);
+            showError(new ErrorUtil.ErrorSpec(
+                    R.string.init_failure, R.string.init_failure_desc_unsupported, e,
+                    retryButton, cancelButton, null));
         } catch (RuntimeException e) {
             Log.e(TAG, "unexpected error", e);
-            showError(R.string.init_failure, R.string.init_failure_desc_unexpected_error, e,
-                    retryButton, cancelButton, null);
+            showError(new ErrorUtil.ErrorSpec(
+                    R.string.init_failure, R.string.init_failure_desc_unexpected_error, e,
+                    retryButton, cancelButton, null));
         }
     }
 
@@ -119,17 +123,7 @@ public abstract class ConnectingActivity extends AppCompatActivity {
         if (connection != null) tryClose(connection);
     }
 
-    protected abstract void showError(
-            @StringRes int title, Throwable t,
-            UiUtil.ButtonPreset positiveAction,
-            UiUtil.ButtonPreset neutralAction,
-            UiUtil.ButtonPreset negativeAction);
-
-    protected abstract void showError(
-            @StringRes int title, @StringRes int description, Throwable t,
-            UiUtil.ButtonPreset positiveAction,
-            UiUtil.ButtonPreset neutralAction,
-            UiUtil.ButtonPreset negativeAction);
+    protected abstract void showError(ErrorUtil.ErrorSpec error);
 
     protected void scheduleConnect(long delay) {
         try {
@@ -161,10 +155,11 @@ public abstract class ConnectingActivity extends AppCompatActivity {
             finish();   // assume termination
         } catch (RuntimeException e) {
             Log.e(TAG, "unexpected error", e);
-            showError(R.string.negotiation_failure, R.string.negotiation_failure_desc_unexpected_error, e,
+            showError(new ErrorUtil.ErrorSpec(
+                    R.string.negotiation_failure, R.string.negotiation_failure_desc_unexpected_error, e,
                     new UiUtil.ButtonPreset(R.string.button_retry, v -> initConnectionService()),
                     new UiUtil.ButtonPreset(R.string.button_cancel, v -> finish()),
-                    null);
+                    null));
         } catch (RequiresPairingException e) {
             Log.i(TAG, "not paired, starting pairing: " + e.getMessage());
             Intent intent = new Intent(this, PairingActivity.class)
