@@ -102,7 +102,7 @@
     <string name="dropdown_expand_stack_trace">show stack trace</string>
     <string name="dropdown_retract_stack_trace">hide stack trace</string>
     <string name="exception_line">{0}: {1}</string>
-    <string name="exception_line_error_message">error: {1}</string>
+    <string name="exception_line_error_message">error: {0}</string>
     <string name="exception_caused_by">caused by {0}</string>
 
 </resources>
