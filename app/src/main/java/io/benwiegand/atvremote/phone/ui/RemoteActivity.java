@@ -90,6 +90,7 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
             ErrorUtil.inflateErrorScreen(view, error);
             errorDialog = new AlertDialog.Builder(this, R.style.Theme_ATVRemote)
                     .setView(view)
+                    .setCancelable(false)
                     .show();
         });
     }
