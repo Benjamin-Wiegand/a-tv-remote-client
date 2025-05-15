@@ -153,6 +153,12 @@ public abstract class ConnectingActivity extends AppCompatActivity {
         } catch (InterruptedException e) {
             Log.d(TAG, "interrupted");
             finish();   // assume termination
+        } catch (ErrorMessageException e) {
+            showError(new ErrorUtil.ErrorSpec(
+                    R.string.negotiation_failure, e,
+                    new UiUtil.ButtonPreset(R.string.button_retry, v -> initConnectionService()),
+                    new UiUtil.ButtonPreset(R.string.button_cancel, v -> finish()),
+                    null));
         } catch (RuntimeException e) {
             Log.e(TAG, "unexpected error", e);
             showError(new ErrorUtil.ErrorSpec(
