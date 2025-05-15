@@ -121,12 +121,20 @@ public class TVReceiverConnection implements Closeable {
 
             line = reader.nextLine(SOCKET_AUTH_TIMEOUT);
             if (line == null) throw new RuntimeException("TV didn't respond to initial operation");
-            switch (line) {
+
+            String[] response = line.split(" ", 2);
+            if (response.length == 0) throw new RuntimeException("empty response from TV");
+
+            switch (response[0]) {
                 case OP_CONFIRM -> Log.v(TAG, "handshake completed");
                 case OP_UNAUTHORIZED -> {
                     Log.e(TAG, "unauthorized");
                     if (pairing) throw new RuntimeException("pairing is disabled on TV");
                     else throw new RequiresPairingException("TV rejected auth token");
+                }
+                case OP_ERR -> {
+                    String json = response.length == 1 ? null : response[1];
+                    throw parseError(json);
                 }
                 default -> {
                     Log.e(TAG, "unexpected response from tv");
@@ -227,6 +235,14 @@ public class TVReceiverConnection implements Closeable {
 //        Log.d(TAG, "pong!");
     }
 
+    private RemoteProtocolException parseError(String json) {
+        Log.e(TAG, "error response: " + json);
+        if (json == null)
+            return new RemoteProtocolException(R.string.protocol_error_unspecified, "tv gave no error details");
+
+        return gson.fromJson(json, ErrorDetails.class).toException();
+    }
+
     private Sec<Void> addBasicOperation(String operation) {
         synchronized (operationQueue) {
             SecAdapter.SecWithAdapter<String> secWithAdapter = SecAdapter.createThreadless();
@@ -242,12 +258,8 @@ public class TVReceiverConnection implements Closeable {
                         return switch (response[0]) {
                             case OP_CONFIRM -> null;
                             case OP_ERR -> {
-                                Log.e(TAG, "error response: " + r);
-
-                                if (response.length == 2)
-                                    throw gson.fromJson(response[1], ErrorDetails.class).toException();
-
-                                throw new RemoteProtocolException(R.string.protocol_error_unspecified, "tv gave no error details");
+                                String json = response.length == 1 ? null : response[1];
+                                throw parseError(json);
                             }
                             case OP_UNSUPPORTED -> {
                                 Log.e(TAG, "operation unsupported");
