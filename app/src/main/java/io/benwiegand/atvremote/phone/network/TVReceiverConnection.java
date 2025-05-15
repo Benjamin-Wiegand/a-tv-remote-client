@@ -47,7 +47,6 @@ public class TVReceiverConnection implements Closeable {
     private final String token;
     private boolean dead;
     private boolean init;
-    private boolean tvReadyState = false;
 
     private TCPWriter writer;
     private TCPReader reader;
@@ -171,30 +170,6 @@ public class TVReceiverConnection implements Closeable {
 
     private void connectionLoop() throws IOException, InterruptedException {
         while (!dead) {
-
-            String status = reader.nextLine(RESPONSE_TIMEOUT);
-            if (status == null) {
-                ping();
-                continue;
-            }
-            switch (status) {
-                case OP_READY -> {
-                    if (!tvReadyState) callback.onReadyStateChanged(true);
-                    tvReadyState = true;
-                }
-                case OP_UNREADY -> {
-                    Log.d(TAG, "TV is unready");
-                    if (tvReadyState) callback.onReadyStateChanged(false);
-                    tvReadyState = false;
-                    continue;
-                }
-                default -> {
-                    // connection could be in an inconsistent state
-                    Log.wtf(TAG, "unexpected status from tv");
-                    Log.d(TAG, status);
-                    return;
-                }
-            }
 
             // pop the queue
             OperationQueueEntry entry = popOperationQueueBlocking();

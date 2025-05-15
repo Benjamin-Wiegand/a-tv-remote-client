@@ -27,7 +27,6 @@
     <!-- connection status -->
     <string name="connection_status_connecting">connecting…</string>
     <string name="connection_status_hand_shaking">negotiating…</string>
-    <string name="connection_status_unready">connected (TV not ready)</string>
     <string name="connection_status_ready">connected</string>
     <string name="connection_status_connection_lost">connection lost</string>
 

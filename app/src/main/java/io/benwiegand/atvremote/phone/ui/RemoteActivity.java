@@ -247,16 +247,9 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
 
     @Override
     public void onConnected() {
-        runOnUiThread(() -> setConnectionStatus(R.string.connection_status_unready, false));
-    }
-
-    @Override
-    public void onReadyStateChanged(boolean ready) {
         runOnUiThread(() -> {
-            setControlsEnabled(ready);
-            setConnectionStatus(
-                    ready ? R.string.connection_status_ready : R.string.connection_status_unready,
-                    false);
+            setControlsEnabled(true);
+            setConnectionStatus(R.string.connection_status_ready, false);
         });
     }
 

@@ -164,11 +164,6 @@ public class PairingActivity extends ConnectingActivity {
         }
 
         @Override
-        public void onReadyStateChanged(boolean ready) {
-            // todo: this would indicate inability to show pairing prompt
-        }
-
-        @Override
         public void onDisconnected() {
             if (isInvalid()) return;
             showError(new ErrorUtil.ErrorSpec(
