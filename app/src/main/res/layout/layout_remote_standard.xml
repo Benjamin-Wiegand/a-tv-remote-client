@@ -4,16 +4,28 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <include
-        layout="@layout/layout_remote_component_dpad"
-        android:layout_width="match_parent"
+    <Space
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         />
 
     <include
+        layout="@layout/layout_remote_component_dpad"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        />
+
+    <include
         layout="@layout/layout_remote_component_navbar"
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        />
+
+    <Space
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         />
@@ -22,6 +34,13 @@
         layout="@layout/layout_remote_component_media_buttons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_weight="0"
+        />
+
+    <Space
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_weight="1"
         />
+
 </LinearLayout>
