@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">A TV Remote</string>
 
     <!-- common ui -->
@@ -105,5 +105,10 @@
     <string name="exception_line">{0}: {1}</string>
     <string name="exception_line_error_message">error: {0}</string>
     <string name="exception_caused_by">caused by {0}</string>
+
+    <!-- media -->
+    <string name="media_display_timestamp_elapsed_placeholder" tools:ignore="TypographyDashes">- : - -</string>
+    <string name="media_display_timestamp_end_placeholder" tools:ignore="TypographyDashes">" / - : - -"</string>
+    <string name="media_display_timestamp_end_format">" / {0} "</string>
 
 </resources>
