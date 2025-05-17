@@ -212,13 +212,13 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
         setupBasicButton(R.id.home_button, InputHandler::navHome);
         setupBasicButton(R.id.recent_button, InputHandler::navRecent);
 
-        setupBasicButton(R.id.quick_settings_button, InputHandler::navQuickSettings);
 //        setupBasicButton(R.id.notifications_button, InputHandler::navNotifications);
+//        setupBasicButton(R.id.quick_settings_button, InputHandler::navQuickSettings);
 
         // volume
-        setupRepeatableButton(R.id.volume_up_button, InputHandler::volumeUp, 100);
+//        setupRepeatableButton(R.id.volume_up_button, InputHandler::volumeUp, 100);
         setupRepeatableButton(R.id.volume_down_button, InputHandler::volumeDown, 100);
-        setupBasicButton(R.id.mute_button, InputHandler::mute);
+//        setupBasicButton(R.id.mute_button, InputHandler::mute);
 
         setupRepeatableButton(R.id.skip_backward_button, InputHandler::skipBackward, 690);
         setupBasicButton(R.id.prev_track_button, InputHandler::prevTrack);

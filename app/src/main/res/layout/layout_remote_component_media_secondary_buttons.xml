@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
     android:gravity="center_vertical"
     >
 
@@ -14,13 +14,13 @@
         />
 
     <io.benwiegand.atvremote.phone.ui.view.RemoteButton
-        android:id="@+id/prev_track_button"
+        android:id="@+id/skip_backward_button"
         style="@style/Widget.Theme.ATVRemote.RemoteButton"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:layout_weight="0"
-        android:contentDescription="@string/button_previous_track"
-        app:srcCompat="@android:drawable/ic_media_previous"
+        android:contentDescription="@string/button_skip_backward"
+        app:srcCompat="@android:drawable/ic_media_rew"
         />
 
     <Space
@@ -30,13 +30,13 @@
         />
 
     <io.benwiegand.atvremote.phone.ui.view.RemoteButton
-        android:id="@+id/pause_button"
+        android:id="@+id/volume_down_button"
         style="@style/Widget.Theme.ATVRemote.RemoteButton"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:layout_weight="0"
-        android:contentDescription="@string/button_toggle_playing"
-        app:srcCompat="@android:drawable/ic_media_pause"
+        android:contentDescription="@string/button_volume_down"
+        app:srcCompat="@android:drawable/ic_lock_silent_mode_off"
         />
 
     <Space
@@ -46,13 +46,13 @@
         />
 
     <io.benwiegand.atvremote.phone.ui.view.RemoteButton
-        android:id="@+id/next_track_button"
+        android:id="@+id/skip_forward_button"
         style="@style/Widget.Theme.ATVRemote.RemoteButton"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:layout_weight="0"
-        android:contentDescription="@string/button_next_track"
-        app:srcCompat="@android:drawable/ic_media_next"
+        android:contentDescription="@string/button_skip_forward"
+        app:srcCompat="@android:drawable/ic_media_ff"
         />
 
     <Space
