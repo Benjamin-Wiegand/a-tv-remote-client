@@ -4,32 +4,59 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center_vertical"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    >
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        />
 
     <io.benwiegand.atvremote.phone.ui.view.RemoteButton
         android:id="@+id/back_button"
         style="@style/Widget.Theme.ATVRemote.RemoteButton"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_weight="0"
+        android:contentDescription="@string/button_navigate_back"
+        app:srcCompat="@drawable/back"
+        />
+
+    <Space
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:contentDescription="@string/button_navigate_back"
-        app:srcCompat="@drawable/back" />
+        />
 
     <io.benwiegand.atvremote.phone.ui.view.RemoteButton
         android:id="@+id/home_button"
         style="@style/Widget.Theme.ATVRemote.RemoteButton"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_weight="0"
+        android:contentDescription="@string/button_navigate_home"
+        app:srcCompat="@drawable/home" />
+
+    <Space
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:contentDescription="@string/button_navigate_home"
-        app:srcCompat="@drawable/home" />
+        />
 
     <io.benwiegand.atvremote.phone.ui.view.RemoteButton
         android:id="@+id/recent_button"
         style="@style/Widget.Theme.ATVRemote.RemoteButton"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_weight="0"
+        android:contentDescription="@string/button_navigate_recent"
+        app:srcCompat="@drawable/recent" />
+
+    <Space
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:contentDescription="@string/button_navigate_recent"
-        app:srcCompat="@drawable/recent" />
+        />
+
 </LinearLayout>
