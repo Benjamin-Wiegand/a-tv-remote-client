@@ -6,7 +6,6 @@
         <item name="minWidth">48dp</item>
         <item name="minHeight">48dp</item>
         <item name="android:layout_margin">12dp</item>
-        <item name="height">64dp</item>
         <item name="android:padding">6dp</item>
         <item name="android:scaleType">fitCenter</item>
     </style>
