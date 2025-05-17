@@ -65,11 +65,13 @@
     <string name="button_navigate_recent">recent</string>
     <string name="button_trackpad_left_click">left click</string>
 
-    <!-- remote nav bar (for control method switching) -->
+    <!-- remote nav bar (for control screen switching) -->
     <string name="nav_button_dpad">dpad</string>
     <string name="nav_button_accessibility_dpad">directional pad</string>
     <string name="nav_button_mouse">mouse</string>
     <string name="nav_button_accessibility_mouse">mouse control</string>
+    <string name="nav_button_media">media</string>
+    <string name="nav_button_accessibility_media">@string/nav_button_media</string>
 
     <!-- pairing -->
     <string name="title_pairing_connecting">connecting…</string>

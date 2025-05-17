@@ -240,6 +240,8 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
                 switchToLayout(R.layout.layout_remote_standard);
             else if (item.getItemId() == R.id.trackpad_selector_button)
                 switchToLayout(R.layout.layout_remote_mouse);
+            else if (item.getItemId() == R.id.media_selector_button)
+                switchToLayout(R.layout.layout_remote_media);
             else return false;
             return true;
         });

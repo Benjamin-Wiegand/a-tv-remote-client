@@ -14,4 +14,11 @@
         android:title="@string/nav_button_mouse"
         android:contentDescription="@string/nav_button_accessibility_mouse"
         />
+
+    <item
+        android:id="@+id/media_selector_button"
+        android:icon="@android:drawable/ic_media_pause"
+        android:title="@string/nav_button_media"
+        android:contentDescription="@string/nav_button_accessibility_media"
+        />
 </menu>
