@@ -5,7 +5,7 @@ android:layout_height="match_parent"
 android:orientation="vertical">
 
     <include
-        layout="@layout/layout_remote_component_media_buttons"
+        layout="@layout/layout_remote_component_navbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="0"
@@ -15,13 +15,6 @@ android:orientation="vertical">
         layout="@layout/layout_remote_component_trackpad"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        />
-
-    <include
-        layout="@layout/layout_remote_component_navbar"
-        android:layout_width="match_parent"
-        android:layout_height="90dp"
         android:layout_weight="0"
         />
 
