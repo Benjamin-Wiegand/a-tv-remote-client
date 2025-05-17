@@ -26,15 +26,11 @@
             android:rotation="-90"
             app:srcCompat="@drawable/arrow" />
 
-        <io.benwiegand.atvremote.phone.ui.view.RemoteButton
-            android:id="@+id/notifications_button"
-            style="@style/Widget.Theme.ATVRemote.RemoteButton"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:contentDescription="@string/button_notifications"
-            android:padding="30dp"
-            app:srcCompat="@android:drawable/ic_popup_reminder" />
+                <Space
+                    android:layout_height="match_parent"
+                    android:layout_width="match_parent"
+                    android:layout_weight="1"
+                    />
 
     </TableRow>
 
