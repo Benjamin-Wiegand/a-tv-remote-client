@@ -81,6 +81,10 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
     public void onWindowFocusChanged(boolean hasFocus) {
         Log.d(TAG, "focus changed");
 
+        // preserve layout across rotation
+        NavigationBarView controlMethodSelector = findViewById(R.id.control_method_selector);
+        selectedLayout = controlMethodSelector.getSelectedItemId();
+
         setupLayout();
     }
 
