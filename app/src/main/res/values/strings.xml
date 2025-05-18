@@ -106,8 +106,7 @@
     <!-- pairing code entry -->
     <string name="title_pairing_code_entry">Pairing code</string>
     <string name="description_pairing_code_entry">Please enter the 6 digit pairing code displayed on your TV</string>
-    <string name="hint_pairing_code">000000</string>
-    <string name="accessibility_pairing_code">pairing code</string>
+    <string name="hint_pairing_code">code</string>
     <string name="error_pairing_code_length">must be 6 digits</string>
 
     <!-- fingerprint verification -->
