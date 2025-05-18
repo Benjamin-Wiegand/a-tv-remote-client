@@ -18,6 +18,7 @@ import com.google.android.material.navigation.NavigationBarView;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import io.benwiegand.atvremote.phone.R;
@@ -41,6 +42,17 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
 
     private static final int BUTTON_REPEAT_DELAY = 420;
 
+    private record LayoutOrientationSelector(@LayoutRes int portraitLayout, @LayoutRes int landscapeLayout) {
+        LayoutOrientationSelector(@LayoutRes int layout) {
+            this(layout, layout);
+        }
+    }
+    private static final Map<Integer, LayoutOrientationSelector> LAYOUT_MAP = Map.of(
+            R.id.dpad_selector_button,      new LayoutOrientationSelector(R.layout.layout_remote_standard, R.layout.layout_remote_standard_landscape),
+            R.id.trackpad_selector_button,  new LayoutOrientationSelector(R.layout.layout_remote_mouse, R.layout.layout_remote_mouse_landscape),
+            R.id.media_selector_button,     new LayoutOrientationSelector(R.layout.layout_remote_media)
+    );
+
     // connection
     private InputHandler inputHandler = null;
 
@@ -48,6 +60,7 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
     private final List<View> tvControlButtons = new ArrayList<>(/* todo: define size */);
     private AlertDialog errorDialog = null;
     private Vibrator vibrator;
+    @IdRes private int selectedLayout = R.id.dpad_selector_button;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +73,15 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
         tvNameText.setText(deviceName);
 
         vibrator = getSystemService(Vibrator.class);
-        setupButtons();
+
+        setupFixedButtons();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        Log.d(TAG, "focus changed");
+
+        setupLayout();
     }
 
     protected void onReady() {
@@ -128,7 +149,6 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
         tvControlButtons.clear();
 
         getLayoutInflater().inflate(layout, remoteFrame, true);
-        setupRemoteButtons();
     }
 
     private void handleActionError(Throwable t) {
@@ -260,27 +280,39 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
         setupTrackpad();
     }
 
+    private void setLayout(@IdRes int selector) {
+        if (!LAYOUT_MAP.containsKey(selector)) throw new IllegalArgumentException("Layout selector has no mapping defined!");
+        selectedLayout = selector;
+        setupLayout();
+    }
+
+    private void setupLayout() {
+        LayoutOrientationSelector selector = LAYOUT_MAP.get(selectedLayout);
+        if (selector == null) throw new IllegalStateException("selected layout does not exist in layout map!");
+
+        View view = findViewById(R.id.remote_frame);
+        boolean portrait = view.getHeight() > view.getWidth();
+        int layout = portrait ? selector.portraitLayout() : selector.landscapeLayout();
+
+        switchToLayout(layout);
+        setupRemoteButtons();
+    }
+
     private void setupFixedButtons() {
         View disconnectButton = findViewById(R.id.disconnect_button);
         disconnectButton.setOnClickListener(v -> finish());
 
         NavigationBarView controlMethodSelector = findViewById(R.id.control_method_selector);
         controlMethodSelector.setOnItemSelectedListener(item -> {
-            if (item.getItemId() == R.id.dpad_selector_button)
-                switchToLayout(R.layout.layout_remote_standard);
-            else if (item.getItemId() == R.id.trackpad_selector_button)
-                switchToLayout(R.layout.layout_remote_mouse);
-            else if (item.getItemId() == R.id.media_selector_button)
-                switchToLayout(R.layout.layout_remote_media);
-            else return false;
+            try {
+                setLayout(item.getItemId());
+            } catch (IllegalArgumentException e) {
+                Log.wtf(TAG, "failed to set layout", e);
+                return false;
+            }
             return true;
         });
 
-    }
-
-    private void setupButtons() {
-        setupRemoteButtons();
-        setupFixedButtons();
     }
 
     @Override
