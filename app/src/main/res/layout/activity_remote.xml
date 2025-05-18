@@ -14,6 +14,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:padding="8dp"
+        android:background="?android:attr/windowBackground"
         >
 
         <ImageButton
@@ -55,27 +56,29 @@
 
     </LinearLayout>
 
-    <ProgressBar
-        android:id="@+id/connecting_indicator"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:indeterminate="true"
-        android:indeterminateOnly="true"
-        android:visibility="invisible"
-        tools:visibility="visible"
-        style="?android:attr/progressBarStyleHorizontal"
-        />
-
     <FrameLayout
-        android:id="@+id/remote_frame"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
         >
 
-        <include
-            layout="@layout/layout_remote_standard"
+        <ProgressBar
+            android:id="@+id/connecting_indicator"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:indeterminate="true"
+            android:indeterminateOnly="true"
+            android:visibility="gone"
+            tools:visibility="visible"
+            style="?android:attr/progressBarStyleHorizontal"
             />
+
+        <FrameLayout
+            android:id="@+id/remote_frame"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            />
+
 
     </FrameLayout>
 

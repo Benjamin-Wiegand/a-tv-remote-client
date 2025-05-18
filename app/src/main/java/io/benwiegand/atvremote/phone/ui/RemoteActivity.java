@@ -119,7 +119,7 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
         connectionStatusText.setText(text);
 
         findViewById(R.id.connecting_indicator)
-                .setVisibility(connecting ? View.VISIBLE : View.INVISIBLE);
+                .setVisibility(connecting ? View.VISIBLE : View.GONE);
     }
 
     private void switchToLayout(@LayoutRes int layout) {
