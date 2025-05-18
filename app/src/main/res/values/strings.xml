@@ -4,6 +4,7 @@
     <!-- common ui -->
     <string name="button_cancel">Cancel</string>
     <string name="button_ok">ok</string>
+    <string name="button_close">close</string>
     <string name="button_next">next</string>
     <string name="button_back">go back</string>
     <string name="button_retry">retry</string>
@@ -51,9 +52,6 @@
     <string name="button_select">select</string>
     <string name="button_right">right</string>
     <string name="button_down">down</string>
-    <string name="button_volume_up">volume up</string>
-    <string name="button_volume_down">volume down</string>
-    <string name="button_mute_toggle">toggle mute</string>
     <string name="button_quick_settings">quick settings</string>
     <string name="button_skip_backward">skip backward</string>
     <string name="button_previous_track">previous track</string>
@@ -64,6 +62,12 @@
     <string name="button_navigate_home">home</string>
     <string name="button_navigate_recent">recent</string>
     <string name="button_trackpad_left_click">left click</string>
+
+    <!-- volume dialog -->
+    <string name="title_volume_dialog">Adjust Volume</string>
+    <string name="button_volume_up">volume up</string>
+    <string name="button_volume_down">volume down</string>
+    <string name="button_mute_toggle">toggle mute</string>
 
     <!-- remote nav bar (for control screen switching) -->
     <string name="nav_button_dpad">dpad</string>

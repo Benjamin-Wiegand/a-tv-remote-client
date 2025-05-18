@@ -143,10 +143,10 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
 
     }
 
-    private View setupBasicButton(@IdRes int buttonId, Function<InputHandler, Sec<Void>> action) {
-        View button = findViewById(buttonId);
-        if (button == null) return null;
+    private void setupBasicButton(View button, Function<InputHandler, Sec<Void>> action, Function<InputHandler, Sec<Void>> longPressAction) {
+        if (button == null) return;
         tvControlButtons.add(button);
+
         button.setOnClickListener(v -> {
             if (inputHandler == null) return;
             action.apply(inputHandler)
@@ -154,12 +154,9 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
                     .callMeWhenDone();
             vibrator.vibrate(CLICK_VIBRATION_EFFECT);
         });
-        return button;
-    }
 
-    private void setupBasicButton(@IdRes int buttonId, Function<InputHandler, Sec<Void>> action, Function<InputHandler, Sec<Void>> longPressAction) {
-        View button = setupBasicButton(buttonId, action);
-        if (button == null) return;
+        if (longPressAction == null) return;
+
         button.setOnLongClickListener(v -> {
             if (inputHandler == null) return false;
             longPressAction.apply(inputHandler)
@@ -168,13 +165,28 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
             vibrator.vibrate(LONG_CLICK_VIBRATION_EFFECT);
             return true;
         });
+    }
 
+    private void setupBasicButton(@IdRes int buttonId, Function<InputHandler, Sec<Void>> action, Function<InputHandler, Sec<Void>> longPressAction) {
+        setupBasicButton(findViewById(buttonId), action, longPressAction);
+    }
+
+    private void setupBasicButton(View button, Function<InputHandler, Sec<Void>> action) {
+        setupBasicButton(button, action, null);
+    }
+
+    private void setupBasicButton(@IdRes int buttonId, Function<InputHandler, Sec<Void>> action) {
+        setupBasicButton(buttonId, action, null);
+    }
+
+    private void setupRepeatableButton(RemoteButton button, Function<InputHandler, Sec<Void>> action, int repeatInterval) {
+        if (button == null) return;
+        setupBasicButton(button, action);
+        button.setRepeat(BUTTON_REPEAT_DELAY, repeatInterval);
     }
 
     private void setupRepeatableButton(@IdRes int buttonId, Function<InputHandler, Sec<Void>> action, int repeatInterval) {
-        RemoteButton button = (RemoteButton) setupBasicButton(buttonId, action);
-        if (button == null) return;
-        button.setRepeat(BUTTON_REPEAT_DELAY, repeatInterval);
+        setupRepeatableButton(findViewById(buttonId), action, repeatInterval);
     }
 
     private void setupTrackpad() {
@@ -199,6 +211,25 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
         });
     }
 
+    private void setupVolumeAdjustButton() {
+        View volumeAdjustButton = findViewById(R.id.volume_adjust_button);
+        if (volumeAdjustButton == null) return;
+
+        volumeAdjustButton.setOnClickListener(v -> {
+            View view = getLayoutInflater().inflate(R.layout.layout_remote_dialog_volume_adjustment, null, false);
+
+            setupRepeatableButton(view.findViewById(R.id.volume_up_button), InputHandler::volumeUp, 100);
+            setupRepeatableButton(view.findViewById(R.id.volume_down_button), InputHandler::volumeDown, 100);
+            setupBasicButton(view.findViewById(R.id.mute_button), InputHandler::mute);
+
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.title_volume_dialog)
+                    .setView(view)
+                    .setPositiveButton(R.string.button_close, null)
+                    .show();
+        });
+    }
+
     private void setupRemoteButtons() {
         // dpad
         setupRepeatableButton(R.id.up_button, InputHandler::dpadUp, 150);
@@ -216,10 +247,9 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
 //        setupBasicButton(R.id.quick_settings_button, InputHandler::navQuickSettings);
 
         // volume
-//        setupRepeatableButton(R.id.volume_up_button, InputHandler::volumeUp, 100);
-        setupRepeatableButton(R.id.volume_down_button, InputHandler::volumeDown, 100);
-//        setupBasicButton(R.id.mute_button, InputHandler::mute);
+        setupVolumeAdjustButton();
 
+        // media
         setupRepeatableButton(R.id.skip_backward_button, InputHandler::skipBackward, 690);
         setupBasicButton(R.id.prev_track_button, InputHandler::prevTrack);
         setupBasicButton(R.id.pause_button, InputHandler::pause);
