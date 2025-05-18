@@ -70,6 +70,7 @@
             android:indeterminateOnly="true"
             android:visibility="gone"
             tools:visibility="visible"
+            android:importantForAccessibility="no"
             style="?android:attr/progressBarStyleHorizontal"
             />
 
