@@ -129,7 +129,7 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
             setControlsEnabled(false);
         });
 
-        TVReceiverConnection newConnection = connectionService.connectToTV(remoteHostname, remotePort, this);
+        TVReceiverConnection newConnection = connectionManager.connectToTV(remoteHostname, remotePort, this);
         inputHandler = newConnection.getInputForwarder();
         return newConnection;
     }

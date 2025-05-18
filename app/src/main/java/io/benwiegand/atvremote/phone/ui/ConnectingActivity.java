@@ -20,7 +20,7 @@ import java.util.TimerTask;
 
 import io.benwiegand.atvremote.phone.R;
 import io.benwiegand.atvremote.phone.auth.ssl.CorruptedKeystoreException;
-import io.benwiegand.atvremote.phone.network.ConnectionService;
+import io.benwiegand.atvremote.phone.network.ConnectionManager;
 import io.benwiegand.atvremote.phone.network.TVReceiverConnection;
 import io.benwiegand.atvremote.phone.protocol.RequiresPairingException;
 import io.benwiegand.atvremote.phone.util.ErrorUtil;
@@ -41,7 +41,7 @@ public abstract class ConnectingActivity extends AppCompatActivity {
     private final Handler handler = new Handler(Looper.getMainLooper());
 
     // connection
-    protected ConnectionService connectionService;
+    protected ConnectionManager connectionManager;
     protected TVReceiverConnection connection = null;
     protected String deviceName;
     protected String remoteHostname;
@@ -82,15 +82,15 @@ public abstract class ConnectingActivity extends AppCompatActivity {
                 .setTitle(R.string.title_confirm)
                 .setMessage(R.string.description_confirm_delete_keystore)
                 .setPositiveButton(R.string.button_confirm_delete, (d, w) -> {
-                    connectionService.getKeystoreManager().deleteKeystore();
+                    connectionManager.getKeystoreManager().deleteKeystore();
                     initConnectionService();
                 })
                 .setNeutralButton(R.string.button_cancel, null)
                 .show());
 
-        connectionService = new ConnectionService(this);
+        connectionManager = new ConnectionManager(this);
         try {
-            connectionService.initializeSSL();
+            connectionManager.initializeSSL();
             onReady();
         } catch (IOException e) {
             Log.e(TAG, "failed to load keystore", e);

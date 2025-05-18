@@ -27,8 +27,8 @@ import io.benwiegand.atvremote.phone.protocol.PairingManager;
 import io.benwiegand.atvremote.phone.protocol.RequiresPairingException;
 import io.benwiegand.atvremote.phone.stuff.LGTMTrustManager;
 
-public class ConnectionService {
-    private static final String TAG = ConnectionService.class.getSimpleName();
+public class ConnectionManager {
+    private static final String TAG = ConnectionManager.class.getSimpleName();
 
     private final KeystoreManager keystoreManager;
     private final SSLContext sslContext;
@@ -37,7 +37,7 @@ public class ConnectionService {
     private SocketFactory pairingSocketFactory = null;
     private final PairingManager pairingManager;
 
-    public ConnectionService(Context context) {
+    public ConnectionManager(Context context) {
         keystoreManager = new KeystoreManager(context);
         pairingManager = new PairingManager(context, keystoreManager);
         try {

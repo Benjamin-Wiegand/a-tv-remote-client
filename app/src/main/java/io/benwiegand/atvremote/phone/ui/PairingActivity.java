@@ -63,7 +63,7 @@ public class PairingActivity extends ConnectingActivity {
     }
 
     protected void onReady() {
-        pairingManager = new PairingManager(this, connectionService.getKeystoreManager());
+        pairingManager = new PairingManager(this, connectionManager.getKeystoreManager());
         startConnecting();
     }
 
@@ -125,7 +125,7 @@ public class PairingActivity extends ConnectingActivity {
     protected TVReceiverConnection connectToTV() throws IOException {
         connectionCallback = new ConnectionCallback(); // rotate callback to avoid events from previous connection
         // todo: also do the above in remote activity
-        TVReceiverConnection newConnection = connectionService.startPairingToTV(remoteHostname, remotePort, connectionCallback);
+        TVReceiverConnection newConnection = connectionManager.startPairingToTV(remoteHostname, remotePort, connectionCallback);
         try {
             certificate = newConnection.getCertificate();
             if (certificate == null) throw new IOException("TV did not send an SSL certificate");
