@@ -30,7 +30,7 @@
         />
 
     <io.benwiegand.atvremote.phone.ui.view.RemoteButton
-        android:id="@+id/volume_down_button"
+        android:id="@+id/volume_adjust_button"
         style="@style/Widget.Theme.ATVRemote.RemoteButton"
         android:layout_width="64dp"
         android:layout_height="64dp"
