@@ -8,6 +8,7 @@
     <string name="button_next">next</string>
     <string name="button_back">go back</string>
     <string name="button_retry">retry</string>
+    <string name="button_connect">connect</string>
 
     <!-- misc actions -->
     <string name="button_keystore_delete_and_retry">delete keys</string>
@@ -43,6 +44,16 @@
     <string name="title_tvdiscovery">connect to TV</string>
     <string name="searching_for_tvs">searching for TVs running the receiver app</string>
     <string name="button_manual_connection">connect manually</string>
+
+    <!-- manual connection -->
+    <string name="title_manual_connection">manual connection</string>
+    <string name="description_manual_connection">manually specify the IP address and port number the receiver app has bound to on your TV</string>
+    <string name="hint_manual_connection_hostname">host</string>
+    <string name="hint_manual_connection_port">port</string>
+    <string name="error_requires_hostname">must specify hostname</string>
+    <string name="error_requires_port">must specify port number</string>
+    <string name="error_numeric_port">must be a number</string>
+    <string name="error_range_port">must be between 0 and 65535</string>
 
     <!-- remote buttons -->
     <!-- the remote buttons don't actually have text, these are accessibility hints -->

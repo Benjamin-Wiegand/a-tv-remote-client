@@ -35,8 +35,7 @@ public class TVDiscoveryActivity extends AppCompatActivity implements ServiceDis
 
         findViewById(R.id.manual_connection_button)
                 .setOnClickListener(v -> {
-                    // todo: using placeholder DebugActivity for now
-                    Intent intent = new Intent(this, DebugActivity.class);
+                    Intent intent = new Intent(this, ManualConnectionActivity.class);
                     startActivity(intent);
                 });
 
