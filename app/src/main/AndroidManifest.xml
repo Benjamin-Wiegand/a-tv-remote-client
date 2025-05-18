@@ -22,6 +22,7 @@
             android:exported="false" />
         <activity
             android:name=".ui.PairingActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
             android:name=".ui.TVDiscoveryActivity"
