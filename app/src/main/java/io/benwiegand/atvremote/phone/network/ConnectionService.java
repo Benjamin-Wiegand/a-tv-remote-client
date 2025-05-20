@@ -10,12 +10,11 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.security.KeyManagementException;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.function.Consumer;
 
 import io.benwiegand.atvremote.phone.auth.ssl.CorruptedKeystoreException;
 import io.benwiegand.atvremote.phone.protocol.PairingManager;
+import io.benwiegand.atvremote.phone.stuff.SingleExecutor;
 
 public class ConnectionService extends Service {
     private static final String TAG = ConnectionService.class.getSimpleName();
@@ -24,8 +23,10 @@ public class ConnectionService extends Service {
 
     private final IBinder binder = new ConnectionServiceBinder();
 
+    private boolean dead = false;
+
     // threads
-    private Timer timer = null;
+    private final SingleExecutor executor = new SingleExecutor();
 
     // connection
     private final Object lock = new Object();
@@ -40,15 +41,15 @@ public class ConnectionService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-
-        timer = new Timer();
+        executor.start();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        dead = true;
         if (connection != null) tryClose(connection);
-        timer.cancel();
+        executor.destroy();
     }
 
     @Override
@@ -141,12 +142,18 @@ public class ConnectionService extends Service {
 
     // for running things not on the main thread
     private void scheduleLocked(Runnable runnable) {
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                runnable.run();
+        try {
+            executor.execute(runnable);
+        } catch (IllegalStateException e) {
+            if (dead) {
+                Log.v(TAG, "cannot execute in executor because service is dead");
+                Log.d(TAG, "IllegalStateException: " + e.getMessage());
+                return;
             }
-        }, 0);
+
+            Log.e(TAG, "executor refuses to execute, but service hasn't destroyed it yet", e);
+            throw e;
+        }
     }
 
     // do not run on main thread
