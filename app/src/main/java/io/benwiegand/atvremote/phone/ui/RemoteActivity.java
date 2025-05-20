@@ -1,13 +1,17 @@
 package io.benwiegand.atvremote.phone.ui;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.IdRes;
 import androidx.annotation.LayoutRes;
@@ -25,7 +29,6 @@ import io.benwiegand.atvremote.phone.R;
 import io.benwiegand.atvremote.phone.async.Sec;
 import io.benwiegand.atvremote.phone.control.InputHandler;
 import io.benwiegand.atvremote.phone.network.TVReceiverConnection;
-import io.benwiegand.atvremote.phone.network.TVReceiverConnectionCallback;
 import io.benwiegand.atvremote.phone.protocol.RequiresPairingException;
 import io.benwiegand.atvremote.phone.ui.view.RemoteButton;
 import io.benwiegand.atvremote.phone.ui.view.TrackpadButton;
@@ -33,8 +36,10 @@ import io.benwiegand.atvremote.phone.ui.view.TrackpadSurface;
 import io.benwiegand.atvremote.phone.util.ErrorUtil;
 import io.benwiegand.atvremote.phone.util.UiUtil;
 
-public class RemoteActivity extends ConnectingActivity implements TVReceiverConnectionCallback {
+public class RemoteActivity extends ConnectingActivity {
     private static final String TAG = RemoteActivity.class.getSimpleName();
+
+    private static final long CONNECT_RETRY_DELAY = 1500;
 
     private static final VibrationEffect CLICK_VIBRATION_EFFECT = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK);
     private static final VibrationEffect LONG_CLICK_VIBRATION_EFFECT = VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK);
@@ -59,8 +64,12 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
     // ui
     private final List<View> tvControlButtons = new ArrayList<>(/* todo: define size */);
     private AlertDialog errorDialog = null;
+    private Toast toast = null;
     private Vibrator vibrator;
     @IdRes private int selectedLayout = R.id.dpad_selector_button;
+
+    // events
+    private final Handler handler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,17 +97,29 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
         setupLayout();
     }
 
-    protected void onReady() {
-        hideError();
-
-        // connect to tv
-        scheduleConnect(0L);
-    }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
         hideError();
+    }
+
+    private void scheduleReconnect() {
+        handler.postDelayed(this::connect, CONNECT_RETRY_DELAY);
+    }
+
+    private void connect() {
+        runOnUiThread(() -> {
+            setConnectionStatus(R.string.connection_status_connecting, true);
+            setControlsEnabled(false);
+        });
+
+        binder.connect(deviceName, remoteHostname, remotePort, false);
+    }
+
+    @Override
+    public void onServiceInit() {
+        hideError();
+        connect();
     }
 
     private void hideError() {
@@ -123,15 +144,65 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
     }
 
     @Override
-    protected TVReceiverConnection connectToTV() throws RequiresPairingException, IOException {
+    public void onSocketConnected() {
         runOnUiThread(() -> {
-            setConnectionStatus(R.string.connection_status_connecting, true);
+            setConnectionStatus(R.string.connection_status_hand_shaking, true);
             setControlsEnabled(false);
         });
+    }
 
-        TVReceiverConnection newConnection = connectionManager.connectToTV(remoteHostname, remotePort, this);
-        inputHandler = newConnection.getInputForwarder();
-        return newConnection;
+    @Override
+    public void onConnected(TVReceiverConnection connection) {
+        inputHandler = connection.getInputForwarder();
+
+        runOnUiThread(() -> {
+            setControlsEnabled(true);
+            setConnectionStatus(R.string.connection_status_ready, false);
+        });
+    }
+
+    @Override
+    public void onConnectError(Throwable t) {
+        if (t instanceof IOException) {
+            toast(ErrorUtil.getExceptionLine(this, t));
+            scheduleReconnect();
+        } else if (t instanceof RequiresPairingException) {
+            Log.i(TAG, "not paired, starting pairing: " + t.getMessage());
+            Intent intent = new Intent(this, PairingActivity.class)
+                    .putExtra(EXTRA_DEVICE_NAME, deviceName)
+                    .putExtra(EXTRA_HOSTNAME, remoteHostname)
+                    .putExtra(EXTRA_PORT_NUMBER, remotePort);
+            startActivity(intent);
+            finish();
+        } else {
+            ErrorUtil.ErrorSpec error = connectExceptionErrorMessage(t,
+                    new UiUtil.ButtonPreset(R.string.button_retry, v -> connect()),
+                    new UiUtil.ButtonPreset(R.string.button_cancel, v -> finish()));
+            showError(error);
+        }
+    }
+
+    @Override
+    public void onDisconnected(Throwable t) {
+        runOnUiThread(() -> {
+            setControlsEnabled(false);
+            setConnectionStatus(R.string.connection_status_connection_lost, false);
+        });
+
+        if (isFinishing() || isDestroyed()) return;
+        if (t != null) toast(ErrorUtil.getExceptionLine(this, t));
+        connect();
+    }
+
+
+    // ui stuff
+
+    private void toast(String message) {
+        // todo: replace this with a "soft" error that doesn't have the limitations of toasts
+        runOnUiThread(() -> {
+            if (toast != null) toast.cancel();
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void setControlsEnabled(boolean enabled) {
@@ -319,28 +390,4 @@ public class RemoteActivity extends ConnectingActivity implements TVReceiverConn
 
     }
 
-    @Override
-    public void onSocketConnected() {
-        runOnUiThread(() -> {
-            setConnectionStatus(R.string.connection_status_hand_shaking, true);
-            setControlsEnabled(false);
-        });
-    }
-
-    @Override
-    public void onConnected() {
-        runOnUiThread(() -> {
-            setControlsEnabled(true);
-            setConnectionStatus(R.string.connection_status_ready, false);
-        });
-    }
-
-    @Override
-    public void onDisconnected() {
-        scheduleConnect(0L);
-        runOnUiThread(() -> {
-            setControlsEnabled(false);
-            setConnectionStatus(R.string.connection_status_connection_lost, false);
-        });
-    }
 }

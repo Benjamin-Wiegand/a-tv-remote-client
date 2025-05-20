@@ -143,8 +143,6 @@ public class TVReceiverConnection implements Closeable {
             }
 
             Log.i(TAG, "tv connected: " + socket.getRemoteSocketAddress());
-            callback.onConnected();
-
             thread.start();
 
         } catch (InterruptedException e) {
@@ -170,8 +168,8 @@ public class TVReceiverConnection implements Closeable {
         } catch (Throwable t) {
             Log.e(TAG, "unexpected error in connection", t);
         } finally {
-            callback.onDisconnected();
             tryClose(this);
+            callback.onDisconnected();
         }
     }
 

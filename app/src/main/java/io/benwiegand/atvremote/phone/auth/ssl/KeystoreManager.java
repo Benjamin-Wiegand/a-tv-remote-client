@@ -26,6 +26,8 @@ public class KeystoreManager {
     private static final String TAG = KeystoreManager.class.getSimpleName();
 
     // try to preserve forward-compatibility if possible
+    private static final String KEYSTORE_FILE_NAME = "keystore.jks";
+    private static final String SSL_DIRECTORY_NAME = "ssl";
     private static final String KEYSTORE_TYPE = "BKS";
     private static final String KEYSTORE_TYPE_FALLBACK = KeyStore.getDefaultType();
 
@@ -38,12 +40,17 @@ public class KeystoreManager {
     private KeyStore keystore = null;
 
     public KeystoreManager(Context context) {
-        Path sslPath = context.getFilesDir().toPath().resolve("ssl");
+        keystoreFile = getKeystoreFile(context);
+    }
+
+    private static File getKeystoreFile(Context context) {
+        Path sslPath = context.getFilesDir().toPath().resolve(SSL_DIRECTORY_NAME);
         File sslDir = sslPath.toFile();
-        keystoreFile = sslPath.resolve("keystore.jks").toFile();
 
         if (!(sslDir.isDirectory() || sslDir.mkdirs()))
             throw new RuntimeException("cannot make ssl directory");
+
+        return sslPath.resolve(KEYSTORE_FILE_NAME).toFile();
     }
 
     public KeyManager[] getKeyManagers() throws CorruptedKeystoreException {
@@ -133,7 +140,8 @@ public class KeystoreManager {
         keystore = ks;
     }
 
-    public boolean deleteKeystore() {
+    public static boolean deleteKeystore(Context context) {
+        File keystoreFile = getKeystoreFile(context);
         return !keystoreFile.isFile() || keystoreFile.delete();
     }
 

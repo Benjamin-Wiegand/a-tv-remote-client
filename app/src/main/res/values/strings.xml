@@ -19,9 +19,14 @@
     <string name="init_failure_desc_corrupted_keystore">Failed to load cryptographic secrets used to secure the connection to your TV, they might be corrupted.</string>
     <string name="init_failure_desc_unsupported">One or more algorithms required for a secure connection to your TV are not supported by your device.</string>
     <string name="init_failure_desc_unexpected_error">Encountered an unexpected error while trying to initialize cryptographic secrets.</string>
-    <string name="negotiation_failure">failed to initialize</string>
-    <string name="negotiation_failure_desc_unexpected_error">Encountered an unexpected error while negotiating with the TV.</string>
+    <string name="connect_failure">failed to connect</string>
+    <string name="connect_failure_desc_bad_certificate">The SSL certificate provided by the TV is invalid. Make sure you have the correct device or try updating the app on your phone/TV.</string>
+    <string name="connect_failure_desc_unexpected_error">Encountered an unexpected error while connecting to the TV.</string>
     <string name="action_failure">action error</string>
+
+    <!-- crash -->
+    <string name="title_application_error">internal error</string>
+    <string name="description_application_error_connection_service_stopped">the connection service has unexpectedly stopped.</string>
 
     <!-- confirmation -->
     <string name="title_confirm">are you sure?</string>

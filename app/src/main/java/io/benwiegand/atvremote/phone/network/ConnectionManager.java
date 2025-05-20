@@ -54,11 +54,7 @@ public class ConnectionManager {
     public void initializeSSL() throws IOException, CorruptedKeystoreException, KeyManagementException {
         keystoreManager.loadKeystore();
 
-        sslContext.init(
-                keystoreManager.getKeyManagers(),
-                keystoreManager.getTrustManagers(),
-                getSecureRandom()
-        );
+        refreshCertificates();
 
         // use an insecure context for pairing because the certificate isn't trusted yet
         pairingSslContext.init(
@@ -67,8 +63,17 @@ public class ConnectionManager {
                 getSecureRandom()
         );
 
-        socketFactory = sslContext.getSocketFactory();
         pairingSocketFactory = pairingSslContext.getSocketFactory();
+    }
+
+    public void refreshCertificates() throws CorruptedKeystoreException, KeyManagementException {
+        sslContext.init(
+                keystoreManager.getKeyManagers(),
+                keystoreManager.getTrustManagers(),
+                getSecureRandom()
+        );
+
+        socketFactory = sslContext.getSocketFactory();
     }
 
     private SSLSocket openSocket(String hostname, int port, boolean pairing) throws IOException {
@@ -134,7 +139,7 @@ public class ConnectionManager {
         return connection;
     }
 
-    public KeystoreManager getKeystoreManager() {
-        return keystoreManager;
+    public PairingManager getPairingManager() {
+        return pairingManager;
     }
 }

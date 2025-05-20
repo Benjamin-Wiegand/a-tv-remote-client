@@ -1,11 +1,10 @@
 package io.benwiegand.atvremote.phone.ui;
 
-import static io.benwiegand.atvremote.phone.network.SocketUtil.tryClose;
-
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
+import android.os.IBinder;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -13,36 +12,27 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.security.KeyManagementException;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import io.benwiegand.atvremote.phone.R;
 import io.benwiegand.atvremote.phone.auth.ssl.CorruptedKeystoreException;
-import io.benwiegand.atvremote.phone.network.ConnectionManager;
+import io.benwiegand.atvremote.phone.auth.ssl.KeystoreManager;
+import io.benwiegand.atvremote.phone.network.ConnectionService;
 import io.benwiegand.atvremote.phone.network.TVReceiverConnection;
-import io.benwiegand.atvremote.phone.protocol.RequiresPairingException;
 import io.benwiegand.atvremote.phone.util.ErrorUtil;
 import io.benwiegand.atvremote.phone.util.UiUtil;
 
-public abstract class ConnectingActivity extends AppCompatActivity {
+public abstract class ConnectingActivity extends AppCompatActivity implements ConnectionService.Callback {
     private static final String TAG = ConnectingActivity.class.getSimpleName();
-
-    private static final long CONNECT_RETRY_DELAY = 1500;
 
     // intent extras
     public static final String EXTRA_DEVICE_NAME = "name";
     public static final String EXTRA_HOSTNAME = "addr";
     public static final String EXTRA_PORT_NUMBER = "port";
 
-    // threads
-    private Timer timer = null;
-    private final Handler handler = new Handler(Looper.getMainLooper());
-
     // connection
-    protected ConnectionManager connectionManager;
-    protected TVReceiverConnection connection = null;
+    private final ConnectionServiceConnection connectionServiceConnection = new ConnectionServiceConnection();
+    protected ConnectionService.ConnectionServiceBinder binder = null;
     protected String deviceName;
     protected String remoteHostname;
     protected int remotePort;
@@ -64,119 +54,147 @@ public abstract class ConnectingActivity extends AppCompatActivity {
         }
         if (deviceName == null) deviceName = remoteHostname;
 
-        // start connection timer
-        timer = new Timer();
+        Intent intent = new Intent(this, ConnectionService.class);
+        assert bindService(intent, connectionServiceConnection, BIND_IMPORTANT | BIND_AUTO_CREATE);
 
-        // connection
-        // run this in a handler so onCreate() finishes for child
-        handler.post(this::initConnectionService);
+
     }
 
-    protected abstract void onReady();
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (binder != null)
+            binder.foreground();
+    }
 
-    private void initConnectionService() {
-        // error actions
-        UiUtil.ButtonPreset retryButton = new UiUtil.ButtonPreset(R.string.button_retry, v -> initConnectionService());
-        UiUtil.ButtonPreset cancelButton = new UiUtil.ButtonPreset(R.string.button_cancel, v -> finish());
-        UiUtil.ButtonPreset deleteKeystoreAndRetry = new UiUtil.ButtonPreset(R.string.button_keystore_delete_and_retry, v -> new AlertDialog.Builder(this)
-                .setTitle(R.string.title_confirm)
-                .setMessage(R.string.description_confirm_delete_keystore)
-                .setPositiveButton(R.string.button_confirm_delete, (d, w) -> {
-                    connectionManager.getKeystoreManager().deleteKeystore();
-                    initConnectionService();
-                })
-                .setNeutralButton(R.string.button_cancel, null)
-                .show());
-
-        connectionManager = new ConnectionManager(this);
-        try {
-            connectionManager.initializeSSL();
-            onReady();
-        } catch (IOException e) {
-            Log.e(TAG, "failed to load keystore", e);
-            showError(new ErrorUtil.ErrorSpec(
-                    R.string.init_failure, R.string.init_failure_desc_general, e,
-                    retryButton, cancelButton, deleteKeystoreAndRetry));
-        } catch (KeyManagementException | CorruptedKeystoreException e) {
-            Log.e(TAG, "keystore is corrupted", e);
-            showError(new ErrorUtil.ErrorSpec(
-                    R.string.init_failure, R.string.init_failure_desc_corrupted_keystore, e,
-                    deleteKeystoreAndRetry, cancelButton, retryButton));
-        } catch (UnsupportedOperationException e) {
-            Log.e(TAG, "device unsupported?", e);
-            showError(new ErrorUtil.ErrorSpec(
-                    R.string.init_failure, R.string.init_failure_desc_unsupported, e,
-                    retryButton, cancelButton, null));
-        } catch (RuntimeException e) {
-            Log.e(TAG, "unexpected error", e);
-            showError(new ErrorUtil.ErrorSpec(
-                    R.string.init_failure, R.string.init_failure_desc_unexpected_error, e,
-                    retryButton, cancelButton, null));
-        }
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (binder != null)
+            binder.background();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "onDestroy()");
-        timer.cancel();
-        if (connection != null) tryClose(connection);
+        if (binder != null)
+            binder.unregister(this);
+        unbindService(connectionServiceConnection);
+    }
+
+    private class ConnectionServiceConnection implements ServiceConnection {
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.i(TAG, "connection service connected");
+            binder = (ConnectionService.ConnectionServiceBinder) service;
+            binder.register(ConnectingActivity.this);
+            binder.init();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.e(TAG, "connection service died");
+            if (isFinishing() || isDestroyed()) return; // and we have (likely) killed it
+
+            onServiceDeath(false);
+        }
+
+        @Override
+        public void onBindingDied(ComponentName name) {
+            ServiceConnection.super.onBindingDied(name);
+            Log.e(TAG, "connection service binding was murdered");
+            onServiceDeath(true);
+        }
     }
 
     protected abstract void showError(ErrorUtil.ErrorSpec error);
 
-    protected void scheduleConnect(long delay) {
-        try {
-            timer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    initConnection();
-                }
-            }, delay);
-        } catch (IllegalStateException e) {
-            Log.w(TAG, "task not scheduled, timer is dead");
+    @Override
+    public abstract void onServiceInit();
+
+    @Override
+    public void onServiceInitError(Throwable t, boolean possiblyKeystoreInit) {
+        UiUtil.ButtonPreset retryButton = new UiUtil.ButtonPreset(R.string.button_retry, v -> binder.init());
+        UiUtil.ButtonPreset cancelButton = new UiUtil.ButtonPreset(R.string.button_cancel, v -> finish());
+        UiUtil.ButtonPreset deleteKeystoreAndRetry = new UiUtil.ButtonPreset(R.string.button_keystore_delete_and_retry, v -> new AlertDialog.Builder(this)
+                .setTitle(R.string.title_confirm)
+                .setMessage(R.string.description_confirm_delete_keystore)
+                .setPositiveButton(R.string.button_confirm_delete, (d, w) -> {
+                    KeystoreManager.deleteKeystore(getApplicationContext());
+                    binder.init();
+                })
+                .setNeutralButton(R.string.button_cancel, null)
+                .show());
+
+        if (t instanceof IOException) {
+            Log.e(TAG, "failed to load keystore", t);
+            showError(new ErrorUtil.ErrorSpec(
+                    R.string.init_failure, R.string.init_failure_desc_general, t,
+                    retryButton, cancelButton, deleteKeystoreAndRetry));
+        } else if (t instanceof KeyManagementException || t instanceof CorruptedKeystoreException) {
+            Log.e(TAG, "keystore is corrupted", t);
+            showError(new ErrorUtil.ErrorSpec(
+                    R.string.init_failure, R.string.init_failure_desc_corrupted_keystore, t,
+                    deleteKeystoreAndRetry, cancelButton, retryButton));
+        } else if (t instanceof UnsupportedOperationException) {
+            Log.e(TAG, "device unsupported?", t);
+            showError(new ErrorUtil.ErrorSpec(
+                    R.string.init_failure, R.string.init_failure_desc_unsupported, t,
+                    retryButton, cancelButton, null));
+        } else if (t instanceof ErrorMessageException) {
+            showError(new ErrorUtil.ErrorSpec(
+                    R.string.init_failure, t,
+                    retryButton, cancelButton, null));
+        } else {
+            Log.e(TAG, "unexpected error", t);
+            showError(new ErrorUtil.ErrorSpec(
+                    R.string.init_failure, R.string.init_failure_desc_unexpected_error, t,
+                    retryButton, cancelButton, null));
         }
     }
 
-    private void initConnection() {
-        if (connection != null) tryClose(connection);
+    @Override
+    public abstract void onSocketConnected();
 
-        try {
-            connection = connectToTV();
-        } catch (UnknownHostException e) {
-            // todo: somehow inform the user without popup
-            Log.e(TAG, "Unknown host", e);
-            scheduleConnect(CONNECT_RETRY_DELAY);
-        } catch (IOException e) {
-            Log.e(TAG, "got IOException while connecting to TV", e);
-            scheduleConnect(CONNECT_RETRY_DELAY);
-        } catch (InterruptedException e) {
-            Log.d(TAG, "interrupted");
-            finish();   // assume termination
-        } catch (ErrorMessageException e) {
-            showError(new ErrorUtil.ErrorSpec(
-                    R.string.negotiation_failure, e,
-                    new UiUtil.ButtonPreset(R.string.button_retry, v -> initConnectionService()),
-                    new UiUtil.ButtonPreset(R.string.button_cancel, v -> finish()),
-                    null));
-        } catch (RuntimeException e) {
-            Log.e(TAG, "unexpected error", e);
-            showError(new ErrorUtil.ErrorSpec(
-                    R.string.negotiation_failure, R.string.negotiation_failure_desc_unexpected_error, e,
-                    new UiUtil.ButtonPreset(R.string.button_retry, v -> initConnectionService()),
-                    new UiUtil.ButtonPreset(R.string.button_cancel, v -> finish()),
-                    null));
-        } catch (RequiresPairingException e) {
-            Log.i(TAG, "not paired, starting pairing: " + e.getMessage());
-            Intent intent = new Intent(this, PairingActivity.class)
-                    .putExtra(EXTRA_DEVICE_NAME, deviceName)
-                    .putExtra(EXTRA_HOSTNAME, remoteHostname)
-                    .putExtra(EXTRA_PORT_NUMBER, remotePort);
-            startActivity(intent);
+    @Override
+    public abstract void onConnected(TVReceiverConnection connection);
+
+    @Override
+    public abstract void onConnectError(Throwable t);
+
+    protected ErrorUtil.ErrorSpec connectExceptionErrorMessage(Throwable t, UiUtil.ButtonPreset retryButton, UiUtil.ButtonPreset cancelButton) {
+        if (t instanceof ErrorMessageException) {
+            return new ErrorUtil.ErrorSpec(
+                    R.string.connect_failure, t,
+                    retryButton, cancelButton, null);
+        } else {
+            return new ErrorUtil.ErrorSpec(
+                    R.string.connect_failure, R.string.connect_failure_desc_unexpected_error, t,
+                    retryButton, cancelButton, null);
+        }
+    }
+
+    @Override
+    public abstract void onDisconnected(Throwable t);
+
+    /**
+     * called when the service dies (can be overridden by children)
+     * @param murder if killed intentionally or via external factors
+     */
+    public void onServiceDeath(boolean murder) {
+        if (murder) {   // silently exit
             finish();
+            return;
         }
-    }
 
-    protected abstract TVReceiverConnection connectToTV() throws RequiresPairingException, IOException, InterruptedException;
+        // todo: try to gather an exception for this if possible
+        showError(new ErrorUtil.ErrorSpec(
+                R.string.title_application_error, R.string.description_application_error_connection_service_stopped, null,
+                new UiUtil.ButtonPreset(R.string.button_close, v -> finish()),
+                null, null
+        ));
+    }
 
 }

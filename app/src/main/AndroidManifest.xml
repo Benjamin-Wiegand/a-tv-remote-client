@@ -16,14 +16,20 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ATVRemote"
         tools:targetApi="31">
+        <service
+            android:name=".network.ConnectionService"
+            android:enabled="true"
+            android:exported="false"
+            />
+
         <activity
             android:name=".ui.ManualConnectionActivity"
-            android:windowSoftInputMode="adjustResize"
-            android:exported="false" />
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".ui.PairingActivity"
-            android:windowSoftInputMode="adjustResize"
-            android:exported="false" />
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".ui.TVDiscoveryActivity"
             android:exported="true">

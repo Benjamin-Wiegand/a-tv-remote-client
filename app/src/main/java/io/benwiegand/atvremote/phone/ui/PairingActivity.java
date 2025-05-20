@@ -2,8 +2,6 @@ package io.benwiegand.atvremote.phone.ui;
 
 import static android.view.inputmethod.EditorInfo.IME_ACTION_DONE;
 
-import static io.benwiegand.atvremote.phone.network.SocketUtil.tryClose;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -27,7 +25,6 @@ import io.benwiegand.atvremote.phone.R;
 import io.benwiegand.atvremote.phone.auth.ssl.CorruptedKeystoreException;
 import io.benwiegand.atvremote.phone.auth.ssl.KeyUtil;
 import io.benwiegand.atvremote.phone.network.TVReceiverConnection;
-import io.benwiegand.atvremote.phone.network.TVReceiverConnectionCallback;
 import io.benwiegand.atvremote.phone.protocol.PairingData;
 import io.benwiegand.atvremote.phone.protocol.PairingManager;
 import io.benwiegand.atvremote.phone.util.ByteUtil;
@@ -38,11 +35,12 @@ public class PairingActivity extends ConnectingActivity {
     private static final String TAG = PairingActivity.class.getSimpleName();
 
     // global error actions
-    private final UiUtil.ButtonPreset RETRY_PAIRING_ACTION = new UiUtil.ButtonPreset(R.string.button_retry, v -> startConnecting());
+    private final UiUtil.ButtonPreset RETRY_PAIRING_ACTION = new UiUtil.ButtonPreset(R.string.button_retry, v -> connect());
     private final UiUtil.ButtonPreset CANCEL_PAIRING_ACTION = new UiUtil.ButtonPreset(R.string.button_cancel, v -> finish());
 
     // ui
     private View layoutView = null;
+    private boolean showingError = false;
 
     // pairing secrets
     private Certificate certificate = null;
@@ -50,7 +48,7 @@ public class PairingActivity extends ConnectingActivity {
     private String pairingCode = null;
 
     // connection
-    private ConnectionCallback connectionCallback = null;
+    private TVReceiverConnection connection = null;
 
     // misc
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -62,38 +60,79 @@ public class PairingActivity extends ConnectingActivity {
         setContentView(R.layout.activity_pairing);
     }
 
-    protected void onReady() {
-        pairingManager = new PairingManager(this, connectionManager.getKeystoreManager());
-        startConnecting();
+    private void connect() {
+        showLoadingScreen(R.string.title_pairing_connecting, MessageFormat.format(getString(R.string.description_pairing_connecting), deviceName));
+        binder.connect(deviceName, remoteHostname, remotePort, true);
     }
 
     @Override
-    protected void onDestroy() {
-        Log.d(TAG, "onDestroy");
-        super.onDestroy();
+    public void onServiceInit() {
+        pairingManager = binder.getPairingManager();
+        connect();
     }
 
-    private void startConnecting() {
-        showLoadingScreen(R.string.title_pairing_connecting, MessageFormat.format(getString(R.string.description_pairing_connecting), deviceName));
-        scheduleConnect(0L);
+    @Override
+    public void onSocketConnected() {
+        showLoadingScreen(R.string.title_pairing_hand_shaking, MessageFormat.format(getString(R.string.description_pairing_hand_shaking), deviceName));
+    }
+
+    @Override
+    public void onConnected(TVReceiverConnection connection) {
+        try {
+            certificate = connection.getCertificate();
+            if (certificate == null) throw new IOException("TV did not send an SSL certificate");
+            fingerprint = KeyUtil.calculateCertificateFingerprint(certificate);
+            this.connection = connection;
+        } catch (CorruptedKeystoreException e) {
+            certificate = null;
+            fingerprint = null;
+            binder.disconnect();
+            showError(new ErrorUtil.ErrorSpec(
+                    R.string.connect_failure, R.string.connect_failure_desc_bad_certificate, new IOException("TV sent a bad SSL certificate", e),
+                    RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null));
+            return;
+        } catch (Throwable t) {
+            certificate = null;
+            fingerprint = null;
+            binder.disconnect();
+            showError(new ErrorUtil.ErrorSpec(
+                    R.string.connect_failure, R.string.connect_failure_desc_unexpected_error, t,
+                    RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null));
+            return;
+        }
+
+        showPairingCodeScreen();
+    }
+
+    @Override
+    public void onConnectError(Throwable t) {
+        showError(connectExceptionErrorMessage(t, RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION));
+    }
+
+    @Override
+    public void onDisconnected(Throwable t) {
+        if (showingError) return;   // the disconnection is likely a result of the current error
+        showError(new ErrorUtil.ErrorSpec(
+                R.string.title_pairing_error, R.string.description_pairing_error_connection_lost, t,
+                RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null));
     }
 
     private void sendPairingCode() {
         showLoadingScreen(R.string.title_pairing_authenticating, MessageFormat.format(getString(R.string.description_pairing_authenticating), deviceName));
-        connectionCallback = null;
         connection.sendPairingCode(pairingCode)
                 .doOnError(t -> {
                     Log.e(TAG, "failed to get token", t);
-                    tryClose(connection);
+                    binder.disconnect();
                     showError(new ErrorUtil.ErrorSpec(
                             R.string.title_pairing_error, t,
                             RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null));
                 })
                 .doOnResult(token -> {
                     Log.d(TAG, "received token");
-                    tryClose(connection);
+                    binder.disconnect();
 
                     try {
+                        Log.v(TAG, "committing pairing data");
                         boolean committed = pairingManager.addNewDevice(certificate, new PairingData(token, fingerprint, deviceName, remoteHostname, Instant.now().getEpochSecond()));
                         if (!committed) throw new RuntimeException("failed to commit pairing data");
                     } catch (Throwable t) {
@@ -103,6 +142,9 @@ public class PairingActivity extends ConnectingActivity {
                                 RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null));
                         return;
                     }
+
+                    Log.v(TAG, "refreshing certificates");
+                    binder.refreshCertificates();
 
                     Log.i(TAG, "pairing successful");
                     launchRemote();
@@ -119,57 +161,6 @@ public class PairingActivity extends ConnectingActivity {
             startActivity(intent);
             finish();
         });
-    }
-
-    @Override
-    protected TVReceiverConnection connectToTV() throws IOException {
-        connectionCallback = new ConnectionCallback(); // rotate callback to avoid events from previous connection
-        // todo: also do the above in remote activity
-        TVReceiverConnection newConnection = connectionManager.startPairingToTV(remoteHostname, remotePort, connectionCallback);
-        try {
-            certificate = newConnection.getCertificate();
-            if (certificate == null) throw new IOException("TV did not send an SSL certificate");
-            fingerprint = KeyUtil.calculateCertificateFingerprint(certificate);
-        } catch (CorruptedKeystoreException e) {
-            certificate = null;
-            fingerprint = null;
-            tryClose(connection);
-            throw new IOException("TV send a bad SSL certificate", e);
-        } catch (Throwable t) {
-            certificate = null;
-            fingerprint = null;
-            tryClose(connection);
-            throw t;
-        }
-
-        return newConnection;
-    }
-
-    private class ConnectionCallback implements TVReceiverConnectionCallback {
-
-        private boolean isInvalid() {
-            return this != connectionCallback;
-        }
-
-        @Override
-        public void onSocketConnected() {
-            if (isInvalid()) return;
-            showLoadingScreen(R.string.title_pairing_hand_shaking, MessageFormat.format(getString(R.string.description_pairing_hand_shaking), deviceName));
-        }
-
-        @Override
-        public void onConnected() {
-            if (isInvalid()) return;
-            showPairingCodeScreen();
-        }
-
-        @Override
-        public void onDisconnected() {
-            if (isInvalid()) return;
-            showError(new ErrorUtil.ErrorSpec(
-                    R.string.title_pairing_error, R.string.description_pairing_error_connection_lost, null,
-                    RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null));
-        }
     }
 
     private void showLoadingScreen(@StringRes int title, String description) {
@@ -247,6 +238,7 @@ public class PairingActivity extends ConnectingActivity {
 
     @Override
     protected void showError(ErrorUtil.ErrorSpec error) {
+        showingError = true;
         runOnUiThread(() -> {
             View layout = switchLayout(R.layout.layout_error);
             ErrorUtil.inflateErrorScreen(layout, error);
@@ -271,6 +263,8 @@ public class PairingActivity extends ConnectingActivity {
                 .setInterpolator(UiUtil.EASE_OUT)
                 .translationX(0)
                 .start();
+
+        showingError = layout == R.layout.layout_error;
 
         return layoutView;
     }
