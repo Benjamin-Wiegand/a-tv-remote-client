@@ -50,8 +50,9 @@
             android:labelFor="@id/pairing_code_text"
             >
 
-            <EditText
+            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/pairing_code_text"
+                style="@style/ThemeOverlay.MaterialComponents.TextInputEditText.OutlinedBox.Dense"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:autofillHints=""

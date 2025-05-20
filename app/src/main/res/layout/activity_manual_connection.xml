@@ -55,8 +55,9 @@
             android:labelFor="@+id/hostname_text"
             >
 
-            <EditText
+            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/hostname_text"
+                style="@style/ThemeOverlay.MaterialComponents.TextInputEditText.OutlinedBox.Dense"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="text"
@@ -76,8 +77,9 @@
             android:labelFor="@+id/port_text"
             >
 
-            <EditText
+            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/port_text"
+                style="@style/ThemeOverlay.MaterialComponents.TextInputEditText.OutlinedBox.Dense"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="number"
