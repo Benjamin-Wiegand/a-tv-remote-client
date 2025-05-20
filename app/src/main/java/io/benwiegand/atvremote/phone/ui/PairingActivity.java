@@ -40,7 +40,7 @@ public class PairingActivity extends ConnectingActivity {
 
     // ui
     private View layoutView = null;
-    private boolean showingError = false;
+    private boolean ignoreDisconnection = false;
 
     // pairing secrets
     private Certificate certificate = null;
@@ -111,7 +111,7 @@ public class PairingActivity extends ConnectingActivity {
 
     @Override
     public void onDisconnected(Throwable t) {
-        if (showingError) return;   // the disconnection is likely a result of the current error
+        if (ignoreDisconnection) return;
         showError(new ErrorUtil.ErrorSpec(
                 R.string.title_pairing_error, R.string.description_pairing_error_connection_lost, t,
                 RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null));
@@ -129,25 +129,27 @@ public class PairingActivity extends ConnectingActivity {
                 })
                 .doOnResult(token -> {
                     Log.d(TAG, "received token");
-                    binder.disconnect();
-
+                    ignoreDisconnection = true;
                     try {
+                        binder.disconnect();
+
                         Log.v(TAG, "committing pairing data");
                         boolean committed = pairingManager.addNewDevice(certificate, new PairingData(token, fingerprint, deviceName, remoteHostname, Instant.now().getEpochSecond()));
                         if (!committed) throw new RuntimeException("failed to commit pairing data");
+
+                        Log.v(TAG, "refreshing certificates");
+                        binder.refreshCertificates();
+
+                        Log.i(TAG, "pairing successful");
+                        launchRemote();
+
+                        ignoreDisconnection = false;
                     } catch (Throwable t) {
                         // todo: might not be localized
                         showError(new ErrorUtil.ErrorSpec(
                                 R.string.title_pairing_error, t,
                                 RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null));
-                        return;
                     }
-
-                    Log.v(TAG, "refreshing certificates");
-                    binder.refreshCertificates();
-
-                    Log.i(TAG, "pairing successful");
-                    launchRemote();
                 })
                 .callMeWhenDone();
     }
@@ -238,7 +240,8 @@ public class PairingActivity extends ConnectingActivity {
 
     @Override
     protected void showError(ErrorUtil.ErrorSpec error) {
-        showingError = true;
+        // the disconnection is likely a result of the current error
+        ignoreDisconnection = true;
         runOnUiThread(() -> {
             View layout = switchLayout(R.layout.layout_error);
             ErrorUtil.inflateErrorScreen(layout, error);
@@ -264,7 +267,7 @@ public class PairingActivity extends ConnectingActivity {
                 .translationX(0)
                 .start();
 
-        showingError = layout == R.layout.layout_error;
+        ignoreDisconnection = layout == R.layout.layout_error;
 
         return layoutView;
     }
