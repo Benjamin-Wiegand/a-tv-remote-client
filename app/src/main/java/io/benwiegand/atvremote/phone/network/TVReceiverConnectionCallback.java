@@ -3,5 +3,5 @@ package io.benwiegand.atvremote.phone.network;
 public interface TVReceiverConnectionCallback {
 
     void onSocketConnected();
-    void onDisconnected();
+    void onDisconnected(Throwable t);
 }

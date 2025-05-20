@@ -210,11 +210,11 @@ public class ConnectionService extends Service {
         }
 
         @Override
-        public void onDisconnected() {
+        public void onDisconnected(Throwable t) {
             synchronized (lock) {
                 if (invalid()) return;
 
-                callCallback(c -> c.onDisconnected(null)); //todo
+                callCallback(c -> c.onDisconnected(t));
                 connection = null;
                 connectionCallback = null;
             }

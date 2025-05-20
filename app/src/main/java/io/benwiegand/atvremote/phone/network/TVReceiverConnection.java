@@ -9,7 +9,6 @@ import com.google.gson.Gson;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.SocketException;
 import java.security.cert.Certificate;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -29,6 +28,7 @@ import io.benwiegand.atvremote.phone.control.OperationQueueEntry;
 import io.benwiegand.atvremote.phone.protocol.RemoteProtocolException;
 import io.benwiegand.atvremote.phone.protocol.RequiresPairingException;
 import io.benwiegand.atvremote.phone.protocol.json.ErrorDetails;
+import io.benwiegand.atvremote.phone.util.ErrorUtil;
 
 public class TVReceiverConnection implements Closeable {
     private static final String TAG = TVReceiverConnection.class.getSimpleName();
@@ -157,19 +157,22 @@ public class TVReceiverConnection implements Closeable {
     }
 
     private void run() {
+        Throwable exitThrowable = null;
         try {
             connectionLoop();
-        } catch (SocketException e) {
-            Log.e(TAG, "socket died", e);
         } catch (IOException e) {
-            Log.e(TAG, "IOException in connection", e);
+            Log.e(TAG, "connection died:\n" + ErrorUtil.getLightStackTrace(e));
+            exitThrowable = e;
         } catch (InterruptedException e) {
-            Log.e(TAG, "connection loop interrupted", e);
+            Log.e(TAG, "connection loop interrupted:\n" + ErrorUtil.getLightStackTrace(e));
+            exitThrowable = e;
         } catch (Throwable t) {
             Log.e(TAG, "unexpected error in connection", t);
+            exitThrowable = t;
         } finally {
+            if (dead) exitThrowable = null; // discard reactions from an intentional close
             tryClose(this);
-            callback.onDisconnected();
+            callback.onDisconnected(exitThrowable);
         }
     }
 
