@@ -221,10 +221,12 @@ public class PairingActivity extends ConnectingActivity {
             matchButton.setOnClickListener(v -> sendPairingCode());
 
             Button noMatchButton = layout.findViewById(R.id.no_match_button);
-            noMatchButton.setOnClickListener(v ->
-                    showError(new ErrorUtil.ErrorSpec(
-                            R.string.title_pairing_error, R.string.description_pairing_error_fingerprint_differs, null,
-                            RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null)));
+            noMatchButton.setOnClickListener(v -> {
+                binder.disconnect();
+                showError(new ErrorUtil.ErrorSpec(
+                        R.string.title_pairing_error, R.string.description_pairing_error_fingerprint_differs, null,
+                        RETRY_PAIRING_ACTION, CANCEL_PAIRING_ACTION, null));
+            });
 
             // don't immediately enable buttons to prevent user from skipping through this part.
             // they probably will anyway, but I tried.
