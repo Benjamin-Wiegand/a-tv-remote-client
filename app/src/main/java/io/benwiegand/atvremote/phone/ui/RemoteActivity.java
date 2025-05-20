@@ -201,7 +201,8 @@ public class RemoteActivity extends ConnectingActivity {
         // todo: replace this with a "soft" error that doesn't have the limitations of toasts
         runOnUiThread(() -> {
             if (toast != null) toast.cancel();
-            Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+            toast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
+            toast.show();
         });
     }
 
