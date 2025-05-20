@@ -108,6 +108,23 @@ public class ErrorUtil {
         );
     }
 
+
+    private static String getStackTraceExceptionLine(Throwable t) {
+        return t.getClass().getName() + ": " + t.getMessage();
+    }
+
+    private static String getStackTraceElementLine(StackTraceElement element) {
+        return "    at "
+                + element.getClassName()
+                + "."
+                + element.getMethodName()
+                + "("
+                + element.getFileName()
+                + ":"
+                + element.getLineNumber()
+                + ")";
+    }
+
     public static String getStackTrace(Throwable t) {
         StringBuilder sb = new StringBuilder();
         boolean top = true;
@@ -116,21 +133,33 @@ public class ErrorUtil {
             if (!top) sb.append("Caused by: ");
             top = false;
 
-            sb.append(t.getClass().getName())
-                    .append(": ")
-                    .append(t.getMessage())
+            sb.append(getStackTraceExceptionLine(t))
                     .append("\n");
 
             for (StackTraceElement element : t.getStackTrace()) sb
-                        .append("    at ")
-                        .append(element.getClassName())
-                        .append(".")
-                        .append(element.getMethodName())
-                        .append("(")
-                        .append(element.getFileName())
-                        .append(":")
-                        .append(element.getLineNumber())
-                        .append(")\n");
+                    .append(getStackTraceElementLine(element))
+                    .append("\n");
+
+        } while ((t = t.getCause()) != null);
+
+        return sb.toString();
+    }
+
+    public static String getLightStackTrace(Throwable t) {
+        StringBuilder sb = new StringBuilder();
+        boolean top = true;
+
+        do {
+            if (!top) sb.append("Caused by: ");
+            top = false;
+
+            sb.append(getStackTraceExceptionLine(t)).append("\n");
+
+            for (StackTraceElement element : t.getStackTrace()) {
+                // filter for my app package
+                if (!element.getClassName().startsWith("io.benwiegand.atvremote.phone")) continue;
+                sb.append(getStackTraceElementLine(element)).append("\n");
+            }
 
         } while ((t = t.getCause()) != null);
 
