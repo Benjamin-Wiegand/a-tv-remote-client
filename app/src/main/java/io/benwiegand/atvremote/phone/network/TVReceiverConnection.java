@@ -238,9 +238,16 @@ public class TVReceiverConnection implements Closeable {
     private Sec<String[]> sendOperation(String operation) {
         SecAdapter.SecWithAdapter<String> secWithAdapter = SecAdapter.createThreadless();
 
+        OperationQueueEntry entry = new OperationQueueEntry(secWithAdapter.secAdapter(), operation);
         synchronized (operationQueue) {
-            operationQueue.add(new OperationQueueEntry(secWithAdapter.secAdapter(), operation));
+            operationQueue.add(entry);
             operationQueue.notifyAll();
+        }
+
+        // do this after to prevent race conditions while avoiding needing a lock
+        if (dead) {
+            operationQueue.remove(entry);
+            return Sec.premeditatedError(new IOException("connection is dead"));
         }
 
         return secWithAdapter.sec()
@@ -279,13 +286,17 @@ public class TVReceiverConnection implements Closeable {
 
             SecAdapter.SecWithAdapter<String> secWithAdapter = SecAdapter.createThreadless();
 
+            OperationQueueEntry entry = new OperationQueueEntry(secWithAdapter.secAdapter(), code);
             synchronized (operationQueue) {
-                operationQueue.add(new OperationQueueEntry(secWithAdapter.secAdapter(), code));
+                operationQueue.add(entry);
                 operationQueue.notifyAll();
             }
 
-            if (dead)
+            // do this after to prevent race conditions while avoiding needing a lock
+            if (dead) {
+                operationQueue.remove(entry);
                 return Sec.premeditatedError(new IOException("connection is dead"));
+            }
 
             return secWithAdapter.sec()
                     .map(r -> switch (r) {
