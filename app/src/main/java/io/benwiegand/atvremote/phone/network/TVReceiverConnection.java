@@ -67,15 +67,7 @@ public class TVReceiverConnection implements Closeable {
     }
 
     TVReceiverConnection(SSLSocket socket, TVReceiverConnectionCallback callback) {
-        resultCallbackThreadPool = new ThreadPoolExecutor(4, 8, 500, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>());
-        operationQueue = new ConcurrentLinkedQueue<>();
-        inputForwarder = new InputForwarder();
-        this.socket = socket;
-        this.callback = callback;
-        this.thread = new Thread(this::run);
-        this.token = null;
-        dead = false;
-        init = false;
+        this(socket, callback, null);
     }
 
     public InputHandler getInputForwarder() {
@@ -229,12 +221,10 @@ public class TVReceiverConnection implements Closeable {
         assert init;
         if (dead) throw new IOException("this connection is dead");
 
-//        Log.d(TAG, "ping!");
         writer.sendLine(OP_PING);
         String result = reader.nextLine(RESPONSE_TIMEOUT);
         if (!OP_CONFIRM.equals(result))
             throw new IOException("sent ping but didn't get a pong");
-//        Log.d(TAG, "pong!");
     }
 
     private RemoteProtocolException parseError(String json) {
@@ -511,16 +501,8 @@ public class TVReceiverConnection implements Closeable {
         thread.interrupt();
 
         OperationQueueEntry entry;
-        while ((entry = operationQueue.poll()) != null) {
-            try {
-                entry.responseAdapter().throwError(new IOException("connection closed"));
-            } catch (IllegalStateException e) {
-                // todo: maybe close() is being called multiple times across multiple threads
-                // todo: check if the poll() fix works
-                Log.wtf(TAG, "(bug) popped queue item isn't popped (but it had to be popped)", e);
-                throw e;
-            }
-        }
+        while ((entry = operationQueue.poll()) != null)
+            entry.responseAdapter().throwError(new IOException("connection closed"));
 
         resultCallbackThreadPool.shutdown();
 
