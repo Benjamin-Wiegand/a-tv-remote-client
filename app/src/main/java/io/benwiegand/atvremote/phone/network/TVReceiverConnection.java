@@ -27,6 +27,7 @@ import io.benwiegand.atvremote.phone.control.InputHandler;
 import io.benwiegand.atvremote.phone.control.OperationQueueEntry;
 import io.benwiegand.atvremote.phone.protocol.RemoteProtocolException;
 import io.benwiegand.atvremote.phone.protocol.RequiresPairingException;
+import io.benwiegand.atvremote.phone.protocol.UnauthorizedException;
 import io.benwiegand.atvremote.phone.protocol.json.ErrorDetails;
 import io.benwiegand.atvremote.phone.util.ErrorUtil;
 
@@ -244,55 +245,62 @@ public class TVReceiverConnection implements Closeable {
         return gson.fromJson(json, ErrorDetails.class).toException();
     }
 
-    private Sec<Void> addBasicOperation(String operation) {
-        synchronized (operationQueue) {
-            SecAdapter.SecWithAdapter<String> secWithAdapter = SecAdapter.createThreadless();
+    private Sec<String[]> sendOperation(String operation) {
+        SecAdapter.SecWithAdapter<String> secWithAdapter = SecAdapter.createThreadless();
 
+        synchronized (operationQueue) {
             operationQueue.add(new OperationQueueEntry(secWithAdapter.secAdapter(), operation));
             operationQueue.notifyAll();
-
-            return secWithAdapter.sec()
-                    .map(r -> {
-                        String[] response = r.split(" ", 2);
-                        if (response.length == 0) throw new RuntimeException("empty response from TV");
-
-                        return switch (response[0]) {
-                            case OP_CONFIRM -> null;
-                            case OP_ERR -> {
-                                String json = response.length == 1 ? null : response[1];
-                                throw parseError(json);
-                            }
-                            case OP_UNSUPPORTED -> {
-                                Log.e(TAG, "operation unsupported");
-                                throw new RemoteProtocolException(R.string.protocol_error_unspecified, "operation not supported by tv");
-                            }
-                            default -> throw new RemoteProtocolException(R.string.protocol_error_response_invalid, "unexpected response from tv");
-                        };
-                    });
         }
+
+        return secWithAdapter.sec()
+                .map(r -> {
+                    // parse errors
+                    String[] response = r.split(" ", 2);
+                    if (response.length == 0)
+                        throw new RemoteProtocolException(R.string.protocol_error_response_invalid, "response was empty");
+
+                    return switch (response[0]) {
+                        case OP_CONFIRM -> response;
+                        case OP_ERR -> throw parseError(response.length == 1 ? null : response[1]);
+                        case OP_UNAUTHORIZED -> throw new UnauthorizedException();
+                        case OP_UNSUPPORTED -> throw new RemoteProtocolException(R.string.protocol_error_op_unsupported, "operation not supported by tv");
+                        default -> throw new RemoteProtocolException(R.string.protocol_error_response_invalid, "unexpected response from tv");
+                    };
+                });
     }
 
-    private Sec<Void> addBasicOperation(String... operation) {
-        return addBasicOperation(String.join(" ", operation));
+    private Sec<String[]> sendOperation(String... operation) {
+        return sendOperation(String.join(" ", operation));
+    }
+
+    private Sec<Void> sendBasicOperation(String operation) {
+        return sendOperation(operation)
+                .map(r -> null);
+    }
+
+    private Sec<Void> sendBasicOperation(String... operation) {
+        return sendBasicOperation(String.join(" ", operation));
     }
 
     public Sec<String> sendPairingCode(String code) {
+        // todo: this will be less atrocious when I update the protocol
         synchronized (operationQueue) {
+
             SecAdapter.SecWithAdapter<String> secWithAdapter = SecAdapter.createThreadless();
 
-            operationQueue.add(new OperationQueueEntry(secWithAdapter.secAdapter(), code));
-            operationQueue.notifyAll();
+            synchronized (operationQueue) {
+                operationQueue.add(new OperationQueueEntry(secWithAdapter.secAdapter(), code));
+                operationQueue.notifyAll();
+            }
+
+            if (dead)
+                return Sec.premeditatedError(new IOException("connection is dead"));
 
             return secWithAdapter.sec()
                     .map(r -> switch (r) {
-                        case OP_UNAUTHORIZED -> {
-                            Log.e(TAG, "bad pairing code");
-                            throw new RemoteProtocolException(R.string.protocol_error_pairing_code_invalid, "bad pairing code");
-                        }
-                        case OP_UNSUPPORTED -> {
-                            Log.e(TAG, "operation unsupported");
-                            throw new RemoteProtocolException(R.string.protocol_error_unspecified, "operation not supported by tv");
-                        }
+                        case OP_UNAUTHORIZED -> throw new RemoteProtocolException(R.string.protocol_error_pairing_code_invalid, "pairing code invalid");
+                        case OP_UNSUPPORTED -> throw new RemoteProtocolException(R.string.protocol_error_op_unsupported, "operation not supported by tv");
                         default -> r;
                     });
         }
@@ -302,102 +310,102 @@ public class TVReceiverConnection implements Closeable {
 
         @Override
         public Sec<Void> dpadDown() {
-            return addBasicOperation(OP_DPAD_DOWN);
+            return sendBasicOperation(OP_DPAD_DOWN);
         }
 
         @Override
         public Sec<Void> dpadUp() {
-            return addBasicOperation(OP_DPAD_UP);
+            return sendBasicOperation(OP_DPAD_UP);
         }
 
         @Override
         public Sec<Void> dpadLeft() {
-            return addBasicOperation(OP_DPAD_LEFT);
+            return sendBasicOperation(OP_DPAD_LEFT);
         }
 
         @Override
         public Sec<Void> dpadRight() {
-            return addBasicOperation(OP_DPAD_RIGHT);
+            return sendBasicOperation(OP_DPAD_RIGHT);
         }
 
         @Override
         public Sec<Void> dpadSelect() {
-            return addBasicOperation(OP_DPAD_SELECT);
+            return sendBasicOperation(OP_DPAD_SELECT);
         }
 
         @Override
         public Sec<Void> dpadLongPress() {
-            return addBasicOperation(OP_DPAD_LONG_PRESS);
+            return sendBasicOperation(OP_DPAD_LONG_PRESS);
         }
 
         @Override
         public Sec<Void> navHome() {
-            return addBasicOperation(OP_NAV_HOME);
+            return sendBasicOperation(OP_NAV_HOME);
         }
 
         @Override
         public Sec<Void> navBack() {
-            return addBasicOperation(OP_NAV_BACK);
+            return sendBasicOperation(OP_NAV_BACK);
         }
 
         @Override
         public Sec<Void> navRecent() {
-            return addBasicOperation(OP_NAV_RECENT);
+            return sendBasicOperation(OP_NAV_RECENT);
         }
 
         @Override
         public Sec<Void> navApps() {
-            return addBasicOperation(OP_NAV_APPS);
+            return sendBasicOperation(OP_NAV_APPS);
         }
 
         @Override
         public Sec<Void> navNotifications() {
-            return addBasicOperation(OP_NAV_NOTIFICATIONS);
+            return sendBasicOperation(OP_NAV_NOTIFICATIONS);
         }
 
         @Override
         public Sec<Void> navQuickSettings() {
-            return addBasicOperation(OP_NAV_QUICK_SETTINGS);
+            return sendBasicOperation(OP_NAV_QUICK_SETTINGS);
         }
 
         @Override
         public Sec<Void> volumeUp() {
-            return addBasicOperation(OP_VOLUME_UP);
+            return sendBasicOperation(OP_VOLUME_UP);
         }
 
         @Override
         public Sec<Void> volumeDown() {
-            return addBasicOperation(OP_VOLUME_DOWN);
+            return sendBasicOperation(OP_VOLUME_DOWN);
         }
 
         @Override
         public Sec<Void> mute() {
-            return addBasicOperation(OP_MUTE);
+            return sendBasicOperation(OP_MUTE);
         }
 
         @Override
         public Sec<Void> pause() {
-            return addBasicOperation(OP_PAUSE);
+            return sendBasicOperation(OP_PAUSE);
         }
 
         @Override
         public Sec<Void> nextTrack() {
-            return addBasicOperation(OP_NEXT_TRACK);
+            return sendBasicOperation(OP_NEXT_TRACK);
         }
 
         @Override
         public Sec<Void> prevTrack() {
-            return addBasicOperation(OP_PREV_TRACK);
+            return sendBasicOperation(OP_PREV_TRACK);
         }
 
         @Override
         public Sec<Void> skipBackward() {
-            return addBasicOperation(OP_SKIP_BACKWARD);
+            return sendBasicOperation(OP_SKIP_BACKWARD);
         }
 
         @Override
         public Sec<Void> skipForward() {
-            return addBasicOperation(OP_SKIP_FORWARD);
+            return sendBasicOperation(OP_SKIP_FORWARD);
         }
 
         @Override
@@ -448,27 +456,27 @@ public class TVReceiverConnection implements Closeable {
 
         @Override
         public Sec<Void> showCursor() {
-            return addBasicOperation(OP_CURSOR_SHOW);
+            return sendBasicOperation(OP_CURSOR_SHOW);
         }
 
         @Override
         public Sec<Void> hideCursor() {
-            return addBasicOperation(OP_CURSOR_HIDE);
+            return sendBasicOperation(OP_CURSOR_HIDE);
         }
 
         @Override
         public Sec<Void> cursorMove(int x, int y) {
-            return addBasicOperation(OP_CURSOR_MOVE, String.valueOf(x), String.valueOf(y));
+            return sendBasicOperation(OP_CURSOR_MOVE, String.valueOf(x), String.valueOf(y));
         }
 
         @Override
         public Sec<Void> cursorDown() {
-            return addBasicOperation(OP_CURSOR_DOWN);
+            return sendBasicOperation(OP_CURSOR_DOWN);
         }
 
         @Override
         public Sec<Void> cursorUp() {
-            return addBasicOperation(OP_CURSOR_UP);
+            return sendBasicOperation(OP_CURSOR_UP);
         }
 
         @Override

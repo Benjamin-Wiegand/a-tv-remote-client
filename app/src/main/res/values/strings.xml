@@ -41,6 +41,7 @@
 
     <!-- protocol errors -->
     <string name="protocol_error_unspecified">tv replied: unspecified error</string>
+    <string name="protocol_error_unauthorized">tv replied: unauthorized</string>
     <string name="protocol_error_op_unsupported">operation not supported by TV</string>
     <string name="protocol_error_response_invalid">unexpected response from TV</string>
     <string name="protocol_error_pairing_code_invalid">pairing code rejected</string>

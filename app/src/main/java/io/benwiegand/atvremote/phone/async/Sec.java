@@ -1,5 +1,7 @@
 package io.benwiegand.atvremote.phone.async;
 
+import static io.benwiegand.atvremote.phone.async.SecAdapter.createThreadless;
+
 import android.util.Log;
 
 import java.util.function.Consumer;
@@ -80,6 +82,19 @@ public class Sec<T> {
         }
     }
 
+    private static <T, U> Consumer<T> applyMap(Function<T, U> mapper, Consumer<U> downstreamResult, Consumer<Throwable> downstreamError) {
+        return r -> {
+            U mapped;
+            try {
+                mapped = mapper.apply(r);
+            } catch (Throwable t) {
+                downstreamError.accept(t);
+                return;
+            }
+            downstreamResult.accept(mapped);
+        };
+    }
+
     public <U> Sec<U> map(Function<T, U> map) {
         // for now just use the callbacks. this may change in the future
         SecAdapter.SecWithAdapter<U> secWithAdapter;
@@ -87,20 +102,30 @@ public class Sec<T> {
             if (callbacksSet) throw new IllegalStateException("callbacks already set up");
             callbacksSet = true;
 
-            secWithAdapter = SecAdapter.createThreadless();
+            secWithAdapter = createThreadless();
 
             SecAdapter<U> adapter = secWithAdapter.secAdapter();
-            this.onResult = r -> {
-                U mapped;
-                try {
-                    mapped = map.apply(r);
-                } catch (Throwable t) {
-                    adapter.throwError(t);
-                    return;
-                }
-                adapter.provideResult(mapped);
-            };
+            this.onResult = applyMap(map, adapter::provideResult, adapter::throwError);
             this.onError = adapter::throwError;
+        }
+
+        if (isFinished()) callCallbacks();
+
+        return secWithAdapter.sec();
+    }
+
+    public Sec<T> mapError(Function<Throwable, Throwable> map) {
+        // for now just use the callbacks. this may change in the future
+        SecAdapter.SecWithAdapter<T> secWithAdapter;
+        synchronized (lock) {
+            if (callbacksSet) throw new IllegalStateException("callbacks already set up");
+            callbacksSet = true;
+
+            secWithAdapter = createThreadless();
+
+            SecAdapter<T> adapter = secWithAdapter.secAdapter();
+            this.onResult = adapter::provideResult;
+            this.onError = applyMap(map, adapter::throwError, adapter::throwError);
         }
 
         if (isFinished()) callCallbacks();
@@ -167,6 +192,10 @@ public class Sec<T> {
         }
     }
 
-
+    public static <T> Sec<T> premeditatedError(Throwable t) {
+        SecAdapter.SecWithAdapter<T> secWithAdapter = createThreadless();
+        secWithAdapter.secAdapter().throwError(t);
+        return secWithAdapter.sec();
+    }
 
 }
