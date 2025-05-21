@@ -1,9 +1,12 @@
 package io.benwiegand.atvremote.phone.util;
 
+import static io.benwiegand.atvremote.phone.util.UiUtil.applyButtonPresetToDialog;
 import static io.benwiegand.atvremote.phone.util.UiUtil.inflateButtonPreset;
 import static io.benwiegand.atvremote.phone.util.UiUtil.inflateDropdown;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 
@@ -53,6 +56,10 @@ public class ErrorUtil {
             if (throwable() instanceof ErrorMessageException e) return e.getLocalizedMessage(context);
             return generateErrorDescription(context, throwable());
         }
+
+        private ErrorSpec noButtons() {
+            return new ErrorSpec(title, descriptionStr, descriptionRes, throwable, null, null, null);
+        }
     }
 
     public static void inflateErrorScreen(View root, ErrorSpec error) {
@@ -79,6 +86,21 @@ public class ErrorUtil {
         inflateButtonPreset(root.findViewById(R.id.positive_button), error.positiveAction());
         inflateButtonPreset(root.findViewById(R.id.neutral_button), error.neutralAction());
         inflateButtonPreset(root.findViewById(R.id.negative_button), error.negativeAction());
+    }
+
+    public static AlertDialog inflateErrorScreenAsDialog(Context context, ErrorSpec error) {
+        View view = LayoutInflater.from(context).inflate(R.layout.layout_error, null, false);
+
+        ErrorUtil.inflateErrorScreen(view, error.noButtons());
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(context, R.style.Theme_ATVRemote)
+                .setView(view)
+                .setCancelable(false);
+
+        applyButtonPresetToDialog(dialogBuilder::setPositiveButton, error.positiveAction());
+        applyButtonPresetToDialog(dialogBuilder::setNeutralButton, error.neutralAction());
+        applyButtonPresetToDialog(dialogBuilder::setNegativeButton, error.negativeAction());
+
+        return dialogBuilder.create();
     }
 
     public static String generateErrorDescription(Context context, Throwable t) {

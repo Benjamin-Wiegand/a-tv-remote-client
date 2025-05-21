@@ -1,11 +1,14 @@
 package io.benwiegand.atvremote.phone.util;
 
 import android.animation.TimeInterpolator;
+import android.content.DialogInterface;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.StringRes;
+
+import java.util.function.BiConsumer;
 
 import io.benwiegand.atvremote.phone.R;
 
@@ -37,6 +40,13 @@ public class UiUtil {
         button.setText(preset.text());
         button.setOnClickListener(preset.clickListener());
         button.setVisibility(View.VISIBLE);
+    }
+
+    public static void applyButtonPresetToDialog(BiConsumer<Integer, DialogInterface.OnClickListener> apply, ButtonPreset preset) {
+        if (preset == null) return;
+        apply.accept(
+                preset.text(),
+                preset.clickListener() == null ? null : (d, w) -> preset.clickListener().onClick(null));
     }
 
     private static class DropdownHandler {

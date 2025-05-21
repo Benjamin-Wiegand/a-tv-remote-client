@@ -118,7 +118,6 @@ public class RemoteActivity extends ConnectingActivity {
 
     @Override
     public void onServiceInit() {
-        hideError();
         connect();
     }
 
@@ -134,12 +133,8 @@ public class RemoteActivity extends ConnectingActivity {
         runOnUiThread(() -> {
             hideError();
 
-            View view = getLayoutInflater().inflate(R.layout.layout_error, null, false);
-            ErrorUtil.inflateErrorScreen(view, error);
-            errorDialog = new AlertDialog.Builder(this, R.style.Theme_ATVRemote)
-                    .setView(view)
-                    .setCancelable(false)
-                    .show();
+            errorDialog = ErrorUtil.inflateErrorScreenAsDialog(this, error);
+            errorDialog.show();
         });
     }
 
@@ -233,7 +228,7 @@ public class RemoteActivity extends ConnectingActivity {
             vibrator.vibrate(ATTENTION_VIBRATION_EFFECT);
             showError(new ErrorUtil.ErrorSpec(
                     R.string.action_failure, e,
-                    new UiUtil.ButtonPreset(R.string.button_ok, v -> hideError()),
+                    new UiUtil.ButtonPreset(R.string.button_ok, null),
                     null, null));
         }
 
