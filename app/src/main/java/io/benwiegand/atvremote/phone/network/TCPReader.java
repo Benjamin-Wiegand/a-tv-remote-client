@@ -1,6 +1,7 @@
 package io.benwiegand.atvremote.phone.network;
 
 import static io.benwiegand.atvremote.phone.network.SocketUtil.tryClose;
+import static io.benwiegand.atvremote.phone.util.ErrorUtil.getLightStackTrace;
 
 import android.util.Log;
 
@@ -90,7 +91,7 @@ public class TCPReader implements Closeable {
             deathException = new IOException("stream closed");
 
         } catch (IOException e) {
-            Log.w(TAG, "read thread encountered IOException", e);
+            Log.w(TAG, "read thread encountered IOException:\n" + getLightStackTrace(e));
             deathException = e;
         } catch (RuntimeException e) {
             Log.e(TAG, "read thread encountered unexpected exception", e);
