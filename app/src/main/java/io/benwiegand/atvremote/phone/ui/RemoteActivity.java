@@ -13,9 +13,14 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
 import androidx.annotation.IdRes;
 import androidx.annotation.LayoutRes;
 import androidx.annotation.StringRes;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.navigation.NavigationBarView;
 
@@ -75,7 +80,21 @@ public class RemoteActivity extends ConnectingActivity {
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
+
+        setTheme(R.style.Theme_ATVRemote_Remote);
+        getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+
         setContentView(R.layout.activity_remote);
+
+        EdgeToEdge.enable(this);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars());
+            v.setPadding(statusBars.left, 0, statusBars.right, 0);
+            v.findViewById(R.id.action_bar).setPadding(0, statusBars.top, 0, 0);
+
+            return insets;
+        });
+
 
         // ui setup
         TextView tvNameText = findViewById(R.id.connected_tv_name_text);

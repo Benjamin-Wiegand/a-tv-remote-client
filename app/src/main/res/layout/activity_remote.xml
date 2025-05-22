@@ -9,12 +9,13 @@
     tools:context=".ui.RemoteActivity">
 
     <LinearLayout
+        android:id="@+id/action_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
+        android:background="?attr/colorSurfaceContainer"
         android:padding="8dp"
-        android:background="?android:attr/windowBackground"
         >
 
         <ImageButton
@@ -88,7 +89,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="0"
-        android:background="?android:attr/windowBackground"
+        android:background="?attr/colorSurfaceContainer"
         app:menu="@menu/control_method_selector_menu"
         />
 
