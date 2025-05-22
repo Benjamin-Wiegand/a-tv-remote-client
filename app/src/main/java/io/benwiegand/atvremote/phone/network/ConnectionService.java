@@ -48,12 +48,14 @@ public class ConnectionService extends Service {
 
     @Override
     public void onCreate() {
+        Log.d(TAG, "onCreate()");
         super.onCreate();
         connectionThreadPool = new ThreadPoolExecutor(0, 2, 5, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
     }
 
     @Override
     public void onDestroy() {
+        Log.d(TAG, "onDestroy()");
         super.onDestroy();
         synchronized (lock) {
             dead = true;
@@ -301,6 +303,7 @@ public class ConnectionService extends Service {
          * @param newUiCallback the callback
          */
         public void register(Callback newUiCallback) {
+            Log.d(TAG, "register()");
             synchronized (lock) {
                 if (uiCallback == newUiCallback)
                     Log.w(TAG, "the same ui callback was registered twice");
@@ -324,10 +327,13 @@ public class ConnectionService extends Service {
         }
 
         /**
-         * unregisters the UI Callback. if a connection is active, it will be killed.
+         * unregisters the UI Callback. if a disconnect is true and a connection is active, it will
+         * be killed.
          * @param oldUiCallback the callback
+         * @param disconnect if true, disconnect active connection if any
          */
-        public void unregister(Callback oldUiCallback) {
+        public void unregister(Callback oldUiCallback, boolean disconnect) {
+            Log.d(TAG, "unregister() disconnect = " + disconnect);
             synchronized (lock) {
                 if (oldUiCallback != uiCallback) {
                     Log.w(TAG, "cannot unregister old ui callback, it was never registered or has already been replaced!");
@@ -335,7 +341,8 @@ public class ConnectionService extends Service {
                 }
 
                 uiCallback = null;
-                scheduleLocked(ConnectionService.this::disconnect);
+                if (disconnect)
+                    scheduleLocked(ConnectionService.this::disconnect);
             }
         }
 

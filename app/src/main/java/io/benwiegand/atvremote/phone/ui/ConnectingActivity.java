@@ -31,6 +31,7 @@ public abstract class ConnectingActivity extends AppCompatActivity implements Co
     public static final String EXTRA_PORT_NUMBER = "port";
 
     // connection
+    private Intent serviceIntent;
     private final ConnectionServiceConnection connectionServiceConnection = new ConnectionServiceConnection();
     protected ConnectionService.ConnectionServiceBinder binder = null;
     protected String deviceName;
@@ -54,10 +55,9 @@ public abstract class ConnectingActivity extends AppCompatActivity implements Co
         }
         if (deviceName == null) deviceName = remoteHostname;
 
-        Intent intent = new Intent(this, ConnectionService.class);
-        assert bindService(intent, connectionServiceConnection, BIND_IMPORTANT | BIND_AUTO_CREATE);
-
-
+        serviceIntent = new Intent(this, ConnectionService.class);
+        startService(serviceIntent);
+        assert bindService(serviceIntent, connectionServiceConnection, BIND_IMPORTANT | BIND_AUTO_CREATE);
     }
 
     @Override
@@ -78,8 +78,13 @@ public abstract class ConnectingActivity extends AppCompatActivity implements Co
     protected void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "onDestroy()");
+
         if (binder != null)
-            binder.unregister(this);
+            binder.unregister(this, !isChangingConfigurations());
+
+        if (!isChangingConfigurations())
+            stopService(serviceIntent);
+
         unbindService(connectionServiceConnection);
     }
 
