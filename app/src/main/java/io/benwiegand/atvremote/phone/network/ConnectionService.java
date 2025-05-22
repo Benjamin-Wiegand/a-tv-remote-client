@@ -1,6 +1,7 @@
 package io.benwiegand.atvremote.phone.network;
 
 import static io.benwiegand.atvremote.phone.network.SocketUtil.tryClose;
+import static io.benwiegand.atvremote.phone.util.ErrorUtil.getLightStackTrace;
 
 import android.app.Service;
 import android.content.Intent;
@@ -10,11 +11,16 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.security.KeyManagementException;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import io.benwiegand.atvremote.phone.auth.ssl.CorruptedKeystoreException;
 import io.benwiegand.atvremote.phone.protocol.PairingManager;
-import io.benwiegand.atvremote.phone.stuff.SingleExecutor;
+import io.benwiegand.atvremote.phone.protocol.RequiresPairingException;
+import io.benwiegand.atvremote.phone.stuff.SerialInt;
 
 public class ConnectionService extends Service {
     private static final String TAG = ConnectionService.class.getSimpleName();
@@ -26,12 +32,14 @@ public class ConnectionService extends Service {
     private boolean dead = false;
 
     // threads
-    private final SingleExecutor executor = new SingleExecutor();
+    private ThreadPoolExecutor connectionThreadPool;
 
     // connection
     private final Object lock = new Object();
+    private final SerialInt connectionSerial = new SerialInt();
     private ConnectionManager connectionManager = null;
     private ConnectionSpec connectionSpec = null;
+    private ConnectionSpec establishedConnectionSpec = null;
     private TVReceiverConnection connection = null;
     private TVReceiverConnectionCallback connectionCallback = null;
 
@@ -41,15 +49,19 @@ public class ConnectionService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        executor.start();
+        connectionThreadPool = new ThreadPoolExecutor(0, 2, 5, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        dead = true;
-        if (connection != null) tryClose(connection);
-        executor.destroy();
+        synchronized (lock) {
+            dead = true;
+            if (connection != null) new Thread(
+                    () -> tryClose(connection))
+                    .start();
+            connectionThreadPool.shutdown();
+        }
     }
 
     @Override
@@ -132,7 +144,7 @@ public class ConnectionService extends Service {
 
         callCallback(Callback::onServiceInit);
     }
-    
+
     private void initConnectionManagerLocked() throws IOException, CorruptedKeystoreException, KeyManagementException {
         if (connectionManager != null) return;
         ConnectionManager conman = new ConnectionManager(this);
@@ -143,11 +155,11 @@ public class ConnectionService extends Service {
     // for running things not on the main thread
     private void scheduleLocked(Runnable runnable) {
         try {
-            executor.execute(runnable);
-        } catch (IllegalStateException e) {
+            connectionThreadPool.execute(runnable);
+        } catch (RejectedExecutionException e) {
             if (dead) {
                 Log.v(TAG, "cannot execute in executor because service is dead");
-                Log.d(TAG, "IllegalStateException: " + e.getMessage());
+                Log.d(TAG, "RejectedExecutionException: " + e.getMessage());
                 return;
             }
 
@@ -156,45 +168,106 @@ public class ConnectionService extends Service {
         }
     }
 
-    // do not run on main thread
-    private void connectLocked() {
-        if (connection != null && !connection.isDead()) return;
-        connectionCallback = new ConnectionCallback(); // rotate callback to avoid events from previous connection
+    /**
+     * determines if connect() should try to open a new connection and close the old one (if any).
+     * conditions:
+     * <ul>
+     *     <li>there is no connection</li>
+     *     <li>the connection is dead</li>
+     *     <li>the connection spec doesn't match the current connections connection spec</li>
+     * </ul>
+     * @return true if conditions are met
+     */
+    private boolean shouldReconnectLocked() {
+        return connectionSpec != establishedConnectionSpec || connection == null || connection.isDead();
+    }
 
+
+    /**
+     * <p>
+     *     connects to the currently set connectionSpec, unless a connection to it is already established.
+     *     uses shouldReconnectLocked() to determine if it will kill the old connection and make a new one.
+     * </p>
+     * <p>
+     *     if two instances of this method are running at the same time, a serial is used to ensure no race
+     *     condition happens. regardless, such situations should be avoided even though they are handled.
+     * </p>
+     * <b>do not run on main thread</b>
+     */
+    private void connect() {
+        // use a serial to invalidate competing connections to avoid needing to lock for the entire connection init
+        int serial;
+        TVReceiverConnection oldConnection, newConnection;
+        synchronized (lock) {
+            if (!shouldReconnectLocked()) {
+                Log.i(TAG, "already connected, refusing to reconnect");
+                return;
+            }
+
+            oldConnection = connection;
+            connectionCallback = new ConnectionCallback(); // rotate callback to avoid events from previous connection
+            if (oldConnection != null && !oldConnection.isDead())
+                callCallback(c -> c.onDisconnected(null));
+
+            // call the callback before setting null to ensure it doesn't get orphaned in a crash
+            connection = null;
+
+            serial = connectionSerial.advance();
+        }
+
+        // connection happens outside of lock, because the lock is locked on the main thread too
         try {
+            if (oldConnection != null)
+                tryClose(oldConnection);
+
             if (connectionSpec.pairing()) {
-                connection = connectionManager.startPairingToTV(connectionSpec.hostname(), connectionSpec.port(), connectionCallback);
+                newConnection = connectionManager.startPairingToTV(connectionSpec.hostname(), connectionSpec.port(), connectionCallback);
             } else {
-                connection = connectionManager.connectToTV(connectionSpec.hostname(), connectionSpec.port(), connectionCallback);
+                newConnection = connectionManager.connectToTV(connectionSpec.hostname(), connectionSpec.port(), connectionCallback);
             }
         } catch (Throwable t) {
-            Log.e(TAG, "error while connecting", t);
-            callCallback(c -> c.onConnectError(t));
+            if (t instanceof IOException || t instanceof RequiresPairingException) {
+                Log.e(TAG, "error while connecting:\n" + getLightStackTrace(t));
+            } else {
+                Log.e(TAG, "error while connecting", t);
+            }
+
+            synchronized (lock) {
+                if (!connectionSerial.isValid(serial)) { // this connection (including its errors) is irrelevant
+                    Log.w(TAG, "not calling error callback because a new connection has started while this one was connecting");
+                    return;
+                }
+                callCallback(c -> c.onConnectError(t));
+            }
             return;
         }
 
-        callCallback(c -> c.onConnected(connection));
+        // ensure only the most recently run connect() wins
+        synchronized (lock) {
+            if (!dead && connectionSerial.isValid(serial)) {
+                establishedConnectionSpec = connectionSpec;
+                connection = newConnection;
+                callCallback(c -> c.onConnected(connection));
+                return;
+            } else if (!dead) {
+                Log.w(TAG, "another connection has started while connecting this one, silently abandoning it");
+            }
+        }
+
+        tryClose(newConnection);
     }
 
     // do not run on main thread
     private void disconnect() {
+        TVReceiverConnection oldConnection;
         synchronized (lock) {
-            disconnectLocked();
+            oldConnection = connection;
+            connection = null;
         }
-    }
 
-    // do not run on main thread
-    private void disconnectLocked() {
-        if (connection == null) return;
-        tryClose(connection);
-    }
-
-    // do not run on main thread
-    private void reconnect() {
-        synchronized (lock) {
-            disconnectLocked();
-            connectLocked();
-        }
+        // don't lock during disconnection
+        if (oldConnection == null) return;
+        tryClose(oldConnection);
     }
 
     private class ConnectionCallback implements TVReceiverConnectionCallback {
@@ -307,8 +380,7 @@ public class ConnectionService extends Service {
                 }
 
                 connectionSpec = spec;
-                // reconnect ensures any existing connection dies, connect will refuse regardless of the connectionSpec being different
-                scheduleLocked(ConnectionService.this::reconnect);
+                scheduleLocked(ConnectionService.this::connect);
             }
         }
 
