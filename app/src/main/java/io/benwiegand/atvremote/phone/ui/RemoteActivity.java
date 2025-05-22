@@ -16,6 +16,7 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.IdRes;
 import androidx.annotation.LayoutRes;
+import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.graphics.Insets;
@@ -52,6 +53,9 @@ public class RemoteActivity extends ConnectingActivity {
 
     private static final int BUTTON_REPEAT_DELAY = 420;
 
+    private static final String KEY_STATE_SELECTED_LAYOUT = "selected_layout";
+    private static final int DEFAULT_LAYOUT = R.id.dpad_selector_button;
+
     private record LayoutOrientationSelector(@LayoutRes int portraitLayout, @LayoutRes int landscapeLayout) {
         LayoutOrientationSelector(@LayoutRes int layout) {
             this(layout, layout);
@@ -71,7 +75,7 @@ public class RemoteActivity extends ConnectingActivity {
     private AlertDialog errorDialog = null;
     private Toast toast = null;
     private Vibrator vibrator;
-    @IdRes private int selectedLayout = R.id.dpad_selector_button;
+    @IdRes private int selectedLayout = DEFAULT_LAYOUT;
     private boolean controlsEnabled = false;
 
     // events
@@ -103,18 +107,31 @@ public class RemoteActivity extends ConnectingActivity {
 
         vibrator = getSystemService(Vibrator.class);
 
+        // restore state
+        if (savedInstanceState != null) {
+            selectedLayout = savedInstanceState.getInt(KEY_STATE_SELECTED_LAYOUT, DEFAULT_LAYOUT);
+        }
+
+        // ensure navbar matches selected value
+        NavigationBarView controlMethodSelector = findViewById(R.id.control_method_selector);
+        controlMethodSelector.setSelectedItemId(selectedLayout);
+
         setupFixedButtons();
     }
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         Log.d(TAG, "focus changed");
-
-        // preserve layout across rotation
-        NavigationBarView controlMethodSelector = findViewById(R.id.control_method_selector);
-        selectedLayout = controlMethodSelector.getSelectedItemId();
-
+        // layout is different depending on aspect ratio
+        // the aspect ratio is taken from the view showing said layout, not the device orientation
+        // this can't be done in onCreate because the view hasn't drawn
         setupLayout();
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(KEY_STATE_SELECTED_LAYOUT, selectedLayout);
     }
 
     @Override
