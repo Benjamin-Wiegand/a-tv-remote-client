@@ -1,6 +1,6 @@
 <resources>
     <style name="Widget.Theme.ATVRemote.RemoteButton" parent="">
-        <item name="android:background">?attr/selectableItemBackground</item>
+        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
         <item name="tint">?android:attr/textColorSecondary</item>
         <item name="android:adjustViewBounds">true</item>
         <item name="minWidth">48dp</item>
