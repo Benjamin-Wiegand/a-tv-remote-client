@@ -72,6 +72,7 @@ public class RemoteActivity extends ConnectingActivity {
     private Toast toast = null;
     private Vibrator vibrator;
     @IdRes private int selectedLayout = R.id.dpad_selector_button;
+    private boolean controlsEnabled = false;
 
     // events
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -220,9 +221,14 @@ public class RemoteActivity extends ConnectingActivity {
         });
     }
 
-    private void setControlsEnabled(boolean enabled) {
+    private void updateControlsEnabled() {
         runOnUiThread(() ->
-                tvControlButtons.forEach(b -> b.setEnabled(enabled)));
+                tvControlButtons.forEach(b -> b.setEnabled(controlsEnabled)));
+    }
+
+    private void setControlsEnabled(boolean enabled) {
+        controlsEnabled = enabled;
+        updateControlsEnabled();
     }
 
     private void setConnectionStatus(@StringRes int text, boolean connecting) {
@@ -324,6 +330,7 @@ public class RemoteActivity extends ConnectingActivity {
     private void setupVolumeAdjustButton() {
         View volumeAdjustButton = findViewById(R.id.volume_adjust_button);
         if (volumeAdjustButton == null) return;
+        tvControlButtons.add(volumeAdjustButton);
 
         volumeAdjustButton.setOnClickListener(v -> {
             View view = getLayoutInflater().inflate(R.layout.layout_remote_dialog_volume_adjustment, null, false);
@@ -368,6 +375,8 @@ public class RemoteActivity extends ConnectingActivity {
 
         // trackpad
         setupTrackpad();
+
+        updateControlsEnabled();
     }
 
     private void setLayout(@IdRes int selector) {
