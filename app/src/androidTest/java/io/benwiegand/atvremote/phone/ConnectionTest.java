@@ -26,17 +26,24 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.security.cert.Certificate;
+import java.time.Instant;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import io.benwiegand.atvremote.phone.async.Sec;
+import io.benwiegand.atvremote.phone.auth.ssl.KeyUtil;
+import io.benwiegand.atvremote.phone.control.InputHandler;
+import io.benwiegand.atvremote.phone.dummytv.FakeKeystoreManager;
 import io.benwiegand.atvremote.phone.dummytv.FakeTVServer;
 import io.benwiegand.atvremote.phone.dummytv.FakeTvConnection;
 import io.benwiegand.atvremote.phone.helper.FlatConnectionServiceCallback;
 import io.benwiegand.atvremote.phone.network.ConnectionService;
 import io.benwiegand.atvremote.phone.network.TVReceiverConnection;
+import io.benwiegand.atvremote.phone.protocol.PairingData;
 import io.benwiegand.atvremote.phone.protocol.PairingManager;
 import io.benwiegand.atvremote.phone.ui.ErrorMessageException;
+import io.benwiegand.atvremote.phone.util.ByteUtil;
 
 @RunWith(AndroidJUnit4.class)
 public class ConnectionTest {
@@ -273,7 +280,15 @@ public class ConnectionTest {
     }
 
     /**
-     * tests general pairing flow (todo: finish this)
+     * tests critical pairing functionality:
+     * <ul>
+     *     <li>getting an error message on bad pairing code</li>
+     *     <li>certificate matches the one on the server</li>
+     *     <li>certificate fingerprint calculation</li>
+     *     <li>saving certificate</li>
+     *     <li>saving pairing data</li>
+     *     <li>connecting to saved device with certificate and pairing data</li>
+     * </ul>
      */
     @Test
     public void pairing_Test() {
@@ -285,38 +300,88 @@ public class ConnectionTest {
         doFullServiceInit(context);
 
 
-        // connect for pairing
-        TVReceiverConnection connection = doConnection(server, false, true);
-        assertConnections(server, 1, 0);
+        {
+            Log.i(TAG, "connecting for pairing with wrong code");
 
-        // try the wrong code
-        Sec<String> tokenSec = connection.sendPairingCode(String.valueOf(696969));
-        assert block(tokenSec, 5, TimeUnit.SECONDS);
-        assertFalse("expecting unsuccessful pairing", tokenSec.isSuccessful());
-        assertTrue("expecting an error extending ErrorMessageException", tokenSec.getError() instanceof ErrorMessageException);
+            // connect for pairing
+            TVReceiverConnection connection = doConnection(server, false, true);
+            assertConnections(server, 1, 0);
 
-        // ensure disconnected
-        callback.waitForNextCall(6, TimeUnit.SECONDS);
-        callback.assertCallTo("onDisconnected");    // throwable here is undefined behavior (it doesn't matter)
-        callback.assertNoMoreCalls("expecting no calls other than onDisconnected");
-        assertConnections(server, 1, 1);
+            // try the wrong code
+            Sec<String> tokenSec = connection.sendPairingCode(String.valueOf(696969));
+            assert block(tokenSec, 5, TimeUnit.SECONDS);
+            assertFalse("expecting unsuccessful pairing", tokenSec.isSuccessful());
+            assertTrue("expecting an error extending ErrorMessageException", tokenSec.getError() instanceof ErrorMessageException);
 
+            // ensure disconnected
+            callback.waitForNextCall(6, TimeUnit.SECONDS);
+            callback.assertCallTo("onDisconnected");    // throwable here is undefined behavior (it doesn't matter)
+            callback.assertNoMoreCalls("expecting no calls other than onDisconnected");
+            assertConnections(server, 1, 1);
+        }
 
-        // connect for pairing again
-        connection = doConnection(server, false, true);
-        assertConnections(server, 2, 1);
+        {
+            Log.i(TAG, "connecting for pairing (for real this time)");
 
-        // try to pair for real this time
-        tokenSec = connection.sendPairingCode(String.valueOf(FakeTvConnection.TEST_CODE));
-        assert block(tokenSec, 5, TimeUnit.SECONDS);
-        assertTrue("expecting successful pairing", tokenSec.isSuccessful());
-        String token = tokenSec.getResult();
+            // connect for pairing again
+            TVReceiverConnection connection = doConnection(server, false, true);
+            assertConnections(server, 2, 1);
 
-        assertEquals("expecting the test token", FakeTvConnection.TEST_TOKEN, token);
+            // verify certificate
+            Certificate certificate = catchAll(connection::getCertificate);
+            assertEquals("expecting certificate to match the test certificate",
+                    FakeKeystoreManager.getTestCert(), certificate);
+
+            // verify fingerprint
+            byte[] fingerprint = catchAll(() -> KeyUtil.calculateCertificateFingerprint(certificate));
+            assertEquals("expecting test certificate fingerprint to match precalculated value",
+                    FakeKeystoreManager.TEST_CERTIFICATE_FINGERPRINT, ByteUtil.hexOf(fingerprint));
+
+            // try to pair for real this time
+            Sec<String> tokenSec = connection.sendPairingCode(String.valueOf(FakeTvConnection.TEST_CODE));
+            assert block(tokenSec, 5, TimeUnit.SECONDS);
+            assertTrue("expecting successful pairing", tokenSec.isSuccessful());
+
+            // check the received token
+            String token = tokenSec.getResult();
+            assertEquals("expecting the test token", FakeTvConnection.TEST_TOKEN, token);
+
+            // register to pairing manager
+            PairingData pairingData = new PairingData(token, fingerprint, "not a real tv", "127.0.0.1", Instant.now().getEpochSecond());
+            boolean committed = catchAll(() -> binder.getPairingManager().addNewDevice(certificate, pairingData));
+            assertTrue("expected pairing data commit to be successful", committed);
+
+            binder.refreshCertificates();
+            assertTrue("expecting service to refresh certificates without falling back to re-init", binder.isInitialized());
+
+            // ensure disconnected
+            callback.waitForNextCall(6, TimeUnit.SECONDS);
+            callback.assertCallTo("onDisconnected");    // throwable here is undefined behavior (it doesn't matter)
+            callback.assertNoMoreCalls("expecting no calls other than onDisconnected");
+            assertConnections(server, 2, 2);
+        }
+
+        {
+            Log.i(TAG, "connecting normally now that fake TV is paired");
+
+            // connect for remote
+            TVReceiverConnection connection = doConnection(server, false, false);
+            assertConnections(server, 3, 2);
+
+            InputHandler forwarder = connection.getInputForwarder();
+
+            // just look for a success response for now
+            Sec<Void> testOp = forwarder.dpadUp();
+            block(testOp, 2, TimeUnit.SECONDS);
+            assertTrue("expected test operation to work", testOp.isSuccessful());
+
+            // callback should be quiet
+            callback.assertNoMoreCalls("expected no calls while nothing relevant is happening");
+        }
 
 
         doFullServiceTeardown(context);
-        assertConnections(server, 2, 2);
+        assertConnections(server, 3, 3);
 
         server.stop();
     }
