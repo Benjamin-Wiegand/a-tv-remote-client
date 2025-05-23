@@ -10,7 +10,9 @@ import static io.benwiegand.atvremote.phone.helper.TestUtil.busyWait;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Instrumentation;
+import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -24,23 +26,31 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.time.Instant;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import io.benwiegand.atvremote.phone.async.Sec;
 import io.benwiegand.atvremote.phone.async.SecAdapter;
+import io.benwiegand.atvremote.phone.auth.ssl.CorruptedKeystoreException;
+import io.benwiegand.atvremote.phone.auth.ssl.KeystoreManager;
+import io.benwiegand.atvremote.phone.dummytv.FakeKeystoreManager;
 import io.benwiegand.atvremote.phone.dummytv.FakeTVServer;
 import io.benwiegand.atvremote.phone.dummytv.FakeTvConnection;
 import io.benwiegand.atvremote.phone.helper.ConnectionCounter;
 import io.benwiegand.atvremote.phone.network.TVReceiverConnection;
+import io.benwiegand.atvremote.phone.protocol.PairingData;
+import io.benwiegand.atvremote.phone.protocol.PairingManager;
 import io.benwiegand.atvremote.phone.ui.ConnectingActivity;
 import io.benwiegand.atvremote.phone.ui.PairingActivity;
 import io.benwiegand.atvremote.phone.ui.RemoteActivity;
 
 @RunWith(AndroidJUnit4.class)
 public class UiTest {
+    private static final String TAG = UiTest.class.getSimpleName();
 
     private final FakeTVServer server = new FakeTVServer();
     private final ConnectionCounter connectionCounter = new ConnectionCounter(server, 5000);
@@ -158,6 +168,68 @@ public class UiTest {
 
         busyWait(button::hasOnClickListeners, 100, 1000);
         return runOnUiThreadForResult(a, button::performClick);
+    }
+
+    private void assertConnected(RemoteActivity remoteActivity) throws InterruptedException {
+        assertStringResourceMatch(remoteActivity, R.id.connection_status_text, R.string.connection_status_ready, 5000);
+    }
+
+    private RemoteActivity doPairing(Instrumentation in, PairingActivity pairingActivity) throws Throwable {
+        assertTrue("expecting pairing screen",
+                waitForUiElement(pairingActivity, R.id.pairing_code_text, 5000));
+        TVReceiverConnection connection = getClientConnectionFromActivity(pairingActivity);
+        connectionCounter.expectConnection();
+
+        // enter the pairing code
+        enterPairingCode(pairingActivity, FakeTvConnection.TEST_CODE);
+
+        assertTrue( "expecting to click next button",
+                clickButton(pairingActivity, R.id.next_button));
+
+        assertTrue("expecting fingerprint verification screen",
+                waitForUiElement(pairingActivity, R.id.match_button, 5000));
+
+        Sec<RemoteActivity> remoteActivitySec = listenForActivity(in, RemoteActivity.class, 3000);
+
+        assertTrue( "expecting to click fingerprint match button",
+                clickButton(pairingActivity, R.id.match_button));
+
+        // should be disconnected
+        busyWait(connection::isDead, 100, 5000);
+        assertTrue("connection should be dead after pairing completes", connection.isDead());
+
+        // remote activity should be open
+        RemoteActivity remoteActivity = blockAndFlatten(remoteActivitySec, 3000);
+        assertNotNull("expecting RemoteActivity to open", remoteActivity);
+
+        // it should successfully connect (and not go to pairing again)
+        assertConnected(remoteActivity);
+
+        connectionCounter.expect(1, 1);
+
+        return remoteActivity;
+    }
+
+    /**
+     * skips pairing process and installs pairing data directly
+     */
+    private void installTestPairingData(Instrumentation in) throws IOException, CorruptedKeystoreException {
+        Log.i(TAG, "Installing test pairing data");
+        Context context = in.getTargetContext();
+
+        KeystoreManager km = new KeystoreManager(context);
+        km.loadKeystore();
+
+        PairingManager pm = new PairingManager(context, km);
+
+        assert pm.addNewDevice(
+                FakeKeystoreManager.getTestCert(),
+                new PairingData(
+                        FakeTvConnection.TEST_TOKEN,
+                        FakeKeystoreManager.TEST_CERTIFICATE_FINGERPRINT,
+                        "test device", "127.0.0.1",
+                        Instant.now().getEpochSecond()));
+
     }
 
     /**
@@ -290,37 +362,7 @@ public class UiTest {
 
         // test correct code
 
-        assertTrue("expecting pairing screen",
-                waitForUiElement(a, R.id.pairing_code_text, 5000));
-        connection = getClientConnectionFromActivity(a);
-        connectionCounter.expectConnection();
-
-        // enter the pairing code
-        enterPairingCode(a, FakeTvConnection.TEST_CODE);
-
-        assertTrue( "expecting to click next button",
-                clickButton(a, R.id.next_button));
-
-        assertTrue("expecting fingerprint verification screen",
-                waitForUiElement(a, R.id.match_button, 5000));
-
-        Sec<RemoteActivity> remoteActivitySec = listenForActivity(in, RemoteActivity.class, 3000);
-
-        assertTrue( "expecting to click fingerprint match button",
-                clickButton(a, R.id.match_button));
-
-        // should be disconnected
-        busyWait(connection::isDead, 100, 5000);
-        assertTrue("connection should be dead after pairing completes", connection.isDead());
-        connectionCounter.expectDisconnection();
-
-        // remote activity should be open
-        RemoteActivity remoteActivity = blockAndFlatten(remoteActivitySec, 3000);
-        assertNotNull("expecting RemoteActivity to open", remoteActivity);
-
-        // it should successfully connect (and not go to pairing again)
-        assertStringResourceMatch(remoteActivity, R.id.connection_status_text, R.string.connection_status_ready, 5000);
-        connectionCounter.expectConnection();
+        doPairing(in, a);
 
 
         server.stop();
@@ -351,6 +393,23 @@ public class UiTest {
         assertFalse("expecting no error showing after idling",
                 waitForUiElement(a, R.id.stack_trace_dropdown, 100));
         connectionCounter.assertConnections();
+
+        server.stop();
+    }
+
+    /**
+     * sanity check to verify that installTestPairingData() works
+     */
+    @Test
+    public void testPairingData_Test() throws InterruptedException, IOException, CorruptedKeystoreException {
+        Instrumentation in = InstrumentationRegistry.getInstrumentation();
+        server.start();
+        installTestPairingData(in);
+
+        RemoteActivity remoteActivity = launchRemote(in, server.getPort());
+
+        assertConnected(remoteActivity);
+        connectionCounter.expectConnection();
 
         server.stop();
     }
