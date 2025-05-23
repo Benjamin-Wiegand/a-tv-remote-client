@@ -1,5 +1,6 @@
 package io.benwiegand.atvremote.phone;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static io.benwiegand.atvremote.phone.helper.TestUtil.busyWait;
 
@@ -33,21 +34,21 @@ public class UiTest {
     private final FakeTVServer server = new FakeTVServer();
     private final ConnectionCounter connectionCounter = new ConnectionCounter(server, 5000);
 
-    private RemoteActivity launchRemote(Instrumentation in, String deviceName, String host, int port) {
+    private RemoteActivity launchRemote(Instrumentation in, int port) {
         Intent intent = new Intent(in.getTargetContext(), RemoteActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra(ConnectingActivity.EXTRA_DEVICE_NAME, deviceName);
-        intent.putExtra(ConnectingActivity.EXTRA_HOSTNAME, host);
+        intent.putExtra(ConnectingActivity.EXTRA_DEVICE_NAME, "deez nuts");
+        intent.putExtra(ConnectingActivity.EXTRA_HOSTNAME, "localhost");
         intent.putExtra(ConnectingActivity.EXTRA_PORT_NUMBER, port);
 
         return (RemoteActivity) in.startActivitySync(intent);
     }
 
-    private PairingActivity launchPairingActivity(Instrumentation in, String deviceName, String host, int port) {
+    private PairingActivity launchPairingActivity(Instrumentation in, int port) {
         Intent intent = new Intent(in.getTargetContext(), PairingActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra(ConnectingActivity.EXTRA_DEVICE_NAME, deviceName);
-        intent.putExtra(ConnectingActivity.EXTRA_HOSTNAME, host);
+        intent.putExtra(ConnectingActivity.EXTRA_DEVICE_NAME, "deez nuts");
+        intent.putExtra(ConnectingActivity.EXTRA_HOSTNAME, "localhost");
         intent.putExtra(ConnectingActivity.EXTRA_PORT_NUMBER, port);
 
         return (PairingActivity) in.startActivitySync(intent);
@@ -92,7 +93,7 @@ public class UiTest {
         server.start();
 
 
-        PairingActivity a = launchPairingActivity(in, "deez nuts", "localhost", server.getPort());
+        PairingActivity a = launchPairingActivity(in, server.getPort());
 
 
 
@@ -221,6 +222,35 @@ public class UiTest {
 
         server.stop();
 
+    }
+
+    /**
+     * simply sits idle on the pairing screen for a few seconds.
+     * I've had a few bugs with pings that this would catch.
+     */
+    @Test
+    public void pairingIdle_test() throws NoSuchFieldException, IllegalAccessException, InterruptedException {
+        Instrumentation in = InstrumentationRegistry.getInstrumentation();
+        server.start();
+
+        // open pairing activity
+        PairingActivity a = launchPairingActivity(in, server.getPort());
+        assertTrue("expecting pairing screen",
+                waitForUiElement(a, R.id.pairing_code_text, 5000));
+        TVReceiverConnection connection = getClientConnectionFromActivity(a);
+        connectionCounter.expectConnection();
+
+        // wait for twice the keepalive interval
+        Thread.sleep(TVReceiverConnection.KEEPALIVE_INTERVAL * 2);
+
+        // nothing should have exploded
+        assertFalse("expecting connection to stay alive after idling",
+                connection.isDead());
+        assertFalse("expecting no error showing after idling",
+                waitForUiElement(a, R.id.stack_trace_dropdown, 100));
+        connectionCounter.assertConnections();
+
+        server.stop();
     }
 
 

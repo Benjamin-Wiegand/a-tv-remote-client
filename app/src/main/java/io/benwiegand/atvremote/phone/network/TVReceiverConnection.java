@@ -37,7 +37,7 @@ public class TVReceiverConnection implements Closeable {
     private static final Gson gson = new Gson();
 
     private static final int SOCKET_AUTH_TIMEOUT = 3000;
-    private static final long KEEPALIVE_INTERVAL = 5000;
+    public static final long KEEPALIVE_INTERVAL = 5000;
     private static final long RESPONSE_TIMEOUT = 2500;
 
     private final ThreadPoolExecutor resultCallbackThreadPool;
