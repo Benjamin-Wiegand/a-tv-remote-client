@@ -37,6 +37,7 @@ import io.benwiegand.atvremote.phone.control.InputHandler;
 import io.benwiegand.atvremote.phone.dummytv.FakeKeystoreManager;
 import io.benwiegand.atvremote.phone.dummytv.FakeTVServer;
 import io.benwiegand.atvremote.phone.dummytv.FakeTvConnection;
+import io.benwiegand.atvremote.phone.helper.ConnectionCounter;
 import io.benwiegand.atvremote.phone.helper.FlatConnectionServiceCallback;
 import io.benwiegand.atvremote.phone.network.ConnectionService;
 import io.benwiegand.atvremote.phone.network.TVReceiverConnection;
@@ -51,6 +52,7 @@ public class ConnectionTest {
 
     FakeTVServer server = new FakeTVServer();
     FlatConnectionServiceCallback callback = new FlatConnectionServiceCallback();
+    ConnectionCounter connectionCounter = new ConnectionCounter(server, 5000);
 
     ConnectionService.ConnectionServiceBinder binder = null;
     CountDownLatch bindLatch = new CountDownLatch(1);
@@ -124,12 +126,6 @@ public class ConnectionTest {
         return connection;
     }
 
-    public void assertConnections(FakeTVServer server, int connects, int disconnects) {
-        server.waitForCounters(connects, disconnects, 5000);
-        assertEquals("expecting " + connects + " total connections to fake TV receiver", connects, server.getTotalConnects());
-        assertEquals("expecting " + disconnects + " total disconnections from fake TV receiver", disconnects, server.getTotalDisconnects());
-    }
-
     /**
      * basic sanity check. ensures the test can bind to the ConnectionService
      */
@@ -172,18 +168,18 @@ public class ConnectionTest {
 
         // normal connection
         TVReceiverConnection connection = doConnection(server, false, true);
-        assertConnections(server, 1, 0);
+        connectionCounter.expectConnection();
 
         // second connection should not reconnect
         TVReceiverConnection secondConnection = doConnection(server, true,  true);
         assertSame("expecting second connection request to the same TV to return the initial connection", connection, secondConnection);
-        assertConnections(server, 1, 0);
+        connectionCounter.assertConnections();
 
         // even after calling init() again, it should not reconnect
         doServiceInit();
         TVReceiverConnection thirdConnection = doConnection(server, true, true);
         assertSame("expecting third connection request to the same TV after calling init a second time to also return the initial connection", connection, thirdConnection);
-        assertConnections(server, 1, 0);
+        connectionCounter.assertConnections();
 
         // disconnect
         binder.disconnect();
@@ -191,12 +187,12 @@ public class ConnectionTest {
         Object[] args = callback.assertCallTo("onDisconnected");
         assertNull("expecting no throwable in onDisconnected() callback for call to binder.disconnect()", args[0]);
         callback.assertNoMoreCalls("expecting no calls other than onDisconnected");
-        assertConnections(server, 1, 1);
+        connectionCounter.expectDisconnection();
 
         // _now_ reconnecting should increment the total connections
         TVReceiverConnection fourthConnection = doConnection(server, false, true);
         assertNotSame("expecting connection request after disconnect to return a new connection", connection, fourthConnection);
-        assertConnections(server, 2, 1);
+        connectionCounter.expectConnection();
 
 
         doFullServiceTeardown(context);
@@ -246,14 +242,14 @@ public class ConnectionTest {
 
         // connect
         TVReceiverConnection connection = doConnection(server, false, true);
-        assertConnections(server, 1, 0);
+        connectionCounter.expectConnection();
 
         // disconnect via unregister
         binder.unregister(callback, true);
         busyWait(connection::isDead, 100, 6000); // no way to receive the callback
         assertTrue("expecting disconnect after calling unregister() with disconnect = true", connection.isDead());
         callback.assertNoMoreCalls("expecting no calls because that should be impossible (no callback registered)");
-        assertConnections(server, 1, 1);
+        connectionCounter.expectDisconnection();
 
         // re-register
         binder.register(callback);
@@ -261,7 +257,7 @@ public class ConnectionTest {
         // connect
         TVReceiverConnection secondConnection = doConnection(server, false, true);
         assertNotSame("expecting connection request after disconnect to return a new connection", connection, secondConnection); // sanity
-        assertConnections(server, 2, 1);
+        connectionCounter.expectConnection();
 
         // disconnect via killing service
         stopService(context);
@@ -269,7 +265,7 @@ public class ConnectionTest {
         assertTrue("expecting disconnect after calling unregister() with disconnect = true", secondConnection.isDead());
         Object[] args = callback.assertCallTo("onDisconnected");
         assertNull("expecting no throwable in onDisconnected() callback for call to binder.disconnect()", args[0]);
-        assertConnections(server, 2, 2);
+        connectionCounter.expectDisconnection();
 
         // restart for teardown
         startService(context);
@@ -305,7 +301,7 @@ public class ConnectionTest {
 
             // connect for pairing
             TVReceiverConnection connection = doConnection(server, false, true);
-            assertConnections(server, 1, 0);
+            connectionCounter.expectConnection();
 
             // try the wrong code
             Sec<String> tokenSec = connection.sendPairingCode(String.valueOf(FakeTvConnection.TEST_INCORRECT_CODE));
@@ -317,7 +313,7 @@ public class ConnectionTest {
             callback.waitForNextCall(6, TimeUnit.SECONDS);
             callback.assertCallTo("onDisconnected");    // throwable here is undefined behavior (it doesn't matter)
             callback.assertNoMoreCalls("expecting no calls other than onDisconnected");
-            assertConnections(server, 1, 1);
+            connectionCounter.expectDisconnection();
         }
 
         {
@@ -325,7 +321,7 @@ public class ConnectionTest {
 
             // connect for pairing again
             TVReceiverConnection connection = doConnection(server, false, true);
-            assertConnections(server, 2, 1);
+            connectionCounter.expectConnection();
 
             // verify certificate
             Certificate certificate = catchAll(connection::getCertificate);
@@ -358,7 +354,7 @@ public class ConnectionTest {
             callback.waitForNextCall(6, TimeUnit.SECONDS);
             callback.assertCallTo("onDisconnected");    // throwable here is undefined behavior (it doesn't matter)
             callback.assertNoMoreCalls("expecting no calls other than onDisconnected");
-            assertConnections(server, 2, 2);
+            connectionCounter.expectDisconnection();
         }
 
         {
@@ -366,7 +362,7 @@ public class ConnectionTest {
 
             // connect for remote
             TVReceiverConnection connection = doConnection(server, false, false);
-            assertConnections(server, 3, 2);
+            connectionCounter.expectConnection();
 
             InputHandler forwarder = connection.getInputForwarder();
 
@@ -381,7 +377,7 @@ public class ConnectionTest {
 
 
         doFullServiceTeardown(context);
-        assertConnections(server, 3, 3);
+        connectionCounter.expectDisconnection();
 
         server.stop();
     }
