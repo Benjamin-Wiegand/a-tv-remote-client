@@ -18,6 +18,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
 
 import io.benwiegand.atvremote.phone.network.TCPReader;
@@ -34,6 +35,7 @@ public class FakeTvConnection {
 
     public static final String TEST_TOKEN = "TEST_TOKEN_1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     public static final int TEST_CODE = 123456;
+    public static final int TEST_INCORRECT_CODE = 696969;
 
     private final SSLSocket socket;
 
@@ -89,6 +91,8 @@ public class FakeTvConnection {
                 Log.i(TAG, "end of connection for " + socket.getRemoteSocketAddress());
                 assertTrue("socket should be closed at end of test", socket.isClosed());
 
+            } catch (SSLHandshakeException e) {
+                Log.v(TAG, "SSL error, client most likely failed certificate validation (not paired)", e);
             } finally {
                 dead = true;
                 onDie.run();
@@ -103,6 +107,11 @@ public class FakeTvConnection {
             line = reader.nextLine(KEEPALIVE_TIMEOUT);
             assertNotNull("expecting a ping before the timeout", line);
         } while (!die && line.equals(OP_PING));
+
+        if (die) {
+            socket.close();
+            return;
+        }
 
         int code = Integer.parseInt(line);
         Log.d(TAG, "got paring code: " + code);

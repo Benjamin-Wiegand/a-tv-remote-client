@@ -308,7 +308,7 @@ public class ConnectionTest {
             assertConnections(server, 1, 0);
 
             // try the wrong code
-            Sec<String> tokenSec = connection.sendPairingCode(String.valueOf(696969));
+            Sec<String> tokenSec = connection.sendPairingCode(String.valueOf(FakeTvConnection.TEST_INCORRECT_CODE));
             assert block(tokenSec, 5, TimeUnit.SECONDS);
             assertFalse("expecting unsuccessful pairing", tokenSec.isSuccessful());
             assertTrue("expecting an error extending ErrorMessageException", tokenSec.getError() instanceof ErrorMessageException);
