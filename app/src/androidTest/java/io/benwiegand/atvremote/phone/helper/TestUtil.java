@@ -1,5 +1,7 @@
 package io.benwiegand.atvremote.phone.helper;
 
+import androidx.core.util.Supplier;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -47,6 +49,25 @@ public class TestUtil {
                 .callMeWhenDone();
 
         return catchAll(() -> latch.await(timeout, timeUnit));
+
+    }
+
+    /**
+     * I think an argument can be made that this is fine inside of tests
+     * @noinspection BusyWait
+     */
+    public static void busyWait(Supplier<Boolean> condition, long pollMs, long timeoutMs) {
+        long stopTime = System.currentTimeMillis() + timeoutMs;
+        // busy waiting that I'm only allowing to make tests easier to write
+        while (!condition.get()) {
+            try {
+                long wait = Math.min(pollMs, stopTime - System.currentTimeMillis());
+                if (wait < 0) break;
+                Thread.sleep(pollMs);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
     }
 

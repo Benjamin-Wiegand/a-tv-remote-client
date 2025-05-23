@@ -8,6 +8,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static io.benwiegand.atvremote.phone.helper.TestUtil.block;
+import static io.benwiegand.atvremote.phone.helper.TestUtil.busyWait;
 import static io.benwiegand.atvremote.phone.helper.TestUtil.catchAll;
 
 import android.app.Instrumentation;
@@ -188,6 +189,53 @@ public class ConnectionTest {
         assertNotSame("expecting connection request after disconnect to return a new connection", connection, fourthConnection);
         assertConnections(server, 2, 1);
 
+
+        doFullServiceTeardown(context);
+
+        server.stop();
+    }
+
+    /**
+     * test automatic disconnections for unregister() and stopService()
+     */
+    @Test
+    public void autoDisconnect_Test() {
+        Instrumentation in = InstrumentationRegistry.getInstrumentation();
+        Context context = in.getTargetContext();
+
+        server.start();
+
+        doFullServiceInit(context);
+
+        // connect
+        TVReceiverConnection connection = doConnection(server, false, true);
+        assertConnections(server, 1, 0);
+
+        // disconnect via unregister
+        binder.unregister(callback, true);
+        busyWait(connection::isDead, 100, 6000); // no way to receive the callback
+        assertTrue("expecting disconnect after calling unregister() with disconnect = true", connection.isDead());
+        callback.assertNoMoreCalls("expecting no calls because that should be impossible (no callback registered)");
+        assertConnections(server, 1, 1);
+
+        // re-register
+        binder.register(callback);
+
+        // connect
+        TVReceiverConnection secondConnection = doConnection(server, false, true);
+        assertNotSame("expecting connection request after disconnect to return a new connection", connection, secondConnection); // sanity
+        assertConnections(server, 2, 1);
+
+        // disconnect via killing service
+        stopService(context);
+        busyWait(secondConnection::isDead, 100, 6000);
+        assertTrue("expecting disconnect after calling unregister() with disconnect = true", secondConnection.isDead());
+        Object[] args = callback.assertCallTo("onDisconnected");
+        assertNull("expecting no throwable in onDisconnected() callback for call to binder.disconnect()", args[0]);
+        assertConnections(server, 2, 2);
+
+        // restart for teardown
+        startService(context);
 
         doFullServiceTeardown(context);
 
