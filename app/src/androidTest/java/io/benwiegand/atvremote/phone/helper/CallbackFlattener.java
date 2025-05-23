@@ -27,7 +27,7 @@ public abstract class CallbackFlattener {
     public void waitForNextCall(long timeout, TimeUnit timeUnit) {
         synchronized (lock) {
             if (extraCalls > 0) {
-                Log.i(TAG, "call already happened");
+                Log.i(TAG, "consumed call");
                 extraCalls--;
                 return;
             }

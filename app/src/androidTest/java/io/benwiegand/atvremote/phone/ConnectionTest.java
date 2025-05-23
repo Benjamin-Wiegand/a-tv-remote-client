@@ -117,6 +117,7 @@ public class ConnectionTest {
     }
 
     public void assertConnections(FakeTVServer server, int connects, int disconnects) {
+        server.waitForCounters(connects, disconnects, 5000);
         assertEquals("expecting " + connects + " total connections to fake TV receiver", connects, server.getTotalConnects());
         assertEquals("expecting " + disconnects + " total disconnections from fake TV receiver", disconnects, server.getTotalDisconnects());
     }

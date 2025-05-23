@@ -28,6 +28,7 @@ public class FakeTVServer {
 
     private final LinkedList<FakeTvConnection> connections = new LinkedList<>();
 
+    private final Object connectionCounterLock = new Object();
     private int totalConnects = 0;
     private int totalDisconnects = 0;
 
@@ -67,11 +68,17 @@ public class FakeTVServer {
                 while (!dead) {
                     SSLSocket socket = (SSLSocket) serverSock.accept();
 
-                    totalConnects++;
+                    synchronized (connectionCounterLock) {
+                        totalConnects++;
+                        connectionCounterLock.notifyAll();
+                    }
 
                     AtomicReference<FakeTvConnection> aConnection = new AtomicReference<>();
                     FakeTvConnection connection = new FakeTvConnection(socket, () -> {
-                        totalDisconnects++;
+                        synchronized (connectionCounterLock) {
+                            totalDisconnects++;
+                            connectionCounterLock.notifyAll();
+                        }
                         connections.remove(aConnection.get());
                     });
                     aConnection.set(connection);
@@ -85,6 +92,18 @@ public class FakeTVServer {
 
     public List<FakeTvConnection> getConnections() {
         return connections;
+    }
+
+    public void waitForCounters(int connects, int disconnects, long timeoutMs) {
+        long stopTime = System.currentTimeMillis() + timeoutMs;
+        synchronized (connectionCounterLock) {
+            while (totalConnects != connects || totalDisconnects != disconnects) {
+                long waitTimeout = stopTime - System.currentTimeMillis();
+                if (waitTimeout < 0) return;
+                catchAll(() -> connectionCounterLock.wait(waitTimeout));
+            }
+        }
+
     }
 
     public int getTotalConnects() {
