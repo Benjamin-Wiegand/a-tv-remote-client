@@ -1,7 +1,10 @@
 package io.benwiegand.atvremote.phone;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static io.benwiegand.atvremote.phone.helper.TestUtil.blockAndFlatten;
 import static io.benwiegand.atvremote.phone.helper.TestUtil.busyWait;
 
 import android.app.Activity;
@@ -10,8 +13,11 @@ import android.app.Instrumentation;
 import android.content.Intent;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import androidx.annotation.IdRes;
+import androidx.annotation.StringRes;
+import androidx.core.util.Supplier;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -19,7 +25,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.lang.reflect.Field;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
+import io.benwiegand.atvremote.phone.async.Sec;
+import io.benwiegand.atvremote.phone.async.SecAdapter;
 import io.benwiegand.atvremote.phone.dummytv.FakeTVServer;
 import io.benwiegand.atvremote.phone.dummytv.FakeTvConnection;
 import io.benwiegand.atvremote.phone.helper.ConnectionCounter;
@@ -54,10 +65,60 @@ public class UiTest {
         return (PairingActivity) in.startActivitySync(intent);
     }
 
+    private <T extends Activity> Sec<T> listenForActivity(Instrumentation in, Class<T> activityClass, long timeout) {
+        Instrumentation.ActivityMonitor activityMonitor = in.addMonitor(activityClass.getName(), null, false);
+
+        // there is only currently threadless sec, so add an external thread for now
+        SecAdapter.SecWithAdapter<T> secWithAdapter = SecAdapter.createThreadless();
+        new Thread(() -> {
+            try {
+                Activity activity = activityMonitor.waitForActivityWithTimeout(timeout);
+                in.removeMonitor(activityMonitor);
+
+                T result = null;
+                if (activity != null) {
+                    assert activity.getClass().isAssignableFrom(activityClass);
+                    result = activityClass.cast(activity);
+                }
+
+                secWithAdapter.secAdapter().provideResult(result);
+            } catch (Throwable t) {
+                secWithAdapter.secAdapter().throwError(t);
+            }
+        }).start();
+
+        return secWithAdapter.sec();
+    }
+
     private boolean waitForUiElement(Activity a, @IdRes int id, long timeout) {
         busyWait(() -> a.findViewById(id) != null, 100, timeout);
-        a.runOnUiThread(() -> {});
         return a.findViewById(id) != null;
+    }
+
+    private String getTextContent(Activity a, @IdRes int id) throws InterruptedException {
+        return runOnUiThreadForResult(a, () -> {
+            TextView tv = a.findViewById(id);
+            if (tv == null) return null;
+            return String.valueOf(tv.getText());
+        });
+    }
+
+    private void assertStringResourceMatch(Activity a, @IdRes int id, @StringRes int expected) throws InterruptedException {
+        assertEquals("expecting text to match",
+                a.getString(expected), getTextContent(a, id));
+    }
+
+    private void assertStringResourceMatch(Activity a, @IdRes int id, @StringRes int expected, long timeoutMs) throws InterruptedException {
+        busyWait(() -> {
+            try {
+                assertStringResourceMatch(a, id, expected);
+                return true;
+            } catch (Throwable t) {
+                return false;
+            }
+        }, 100, timeoutMs);
+
+        assertStringResourceMatch(a, id, expected);
     }
 
     private void enterPairingCode(PairingActivity a, int code) {
@@ -76,25 +137,51 @@ public class UiTest {
         return connection;
     }
 
-    private boolean clickButton(Activity a, @IdRes int buttonId) {
+    private void runOnUiThreadSync(Activity a, Runnable runnable) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        a.runOnUiThread(() -> {
+            runnable.run();
+            latch.countDown();
+        });
+        assert latch.await(5, TimeUnit.SECONDS);
+    }
+
+    private <T> T runOnUiThreadForResult(Activity a, Supplier<T> supplier) throws InterruptedException {
+        AtomicReference<T> result = new AtomicReference<>(null);
+        runOnUiThreadSync(a, () -> result.set(supplier.get()));
+        return result.get();
+    }
+
+    private boolean clickButton(Activity a, @IdRes int buttonId) throws InterruptedException {
         View button = a.findViewById(buttonId);
         if (button == null) return false;
 
         busyWait(button::hasOnClickListeners, 100, 1000);
-        a.runOnUiThread(button::performClick);
-        return true;
+        return runOnUiThreadForResult(a, button::performClick);
     }
 
+    /**
+     * tests pairing activity
+     * <ul>
+     *     <li>lost connection</li>
+     *     <li>wrong pairing code</li>
+     *     <li>fingerprint miss-match</li>
+     *     <li>correct pairing code</li>
+     *     <li>smooth transition to remote activity</li>
+     * </ul>
+     */
     @Test
-    public void pairing_Test() throws InterruptedException, NoSuchFieldException, IllegalAccessException {
+    public void pairing_Test() throws Throwable {
         Instrumentation in = InstrumentationRegistry.getInstrumentation();
         assert !ActivityManager.isUserAMonkey(); // mandatory check
 
+        // these delays account for animations, without these it can grab the old buttons before they disappear
+        // yes I know using fragments will fix this, I'll switch to them eventually
+        final long animationDelay = PairingActivity.SCREEN_TRANSITION_DURATION;
+
         server.start();
 
-
         PairingActivity a = launchPairingActivity(in, server.getPort());
-
 
 
         // test disconnection
@@ -108,21 +195,22 @@ public class UiTest {
         FakeTvConnection serverConnection = server.getConnections().getFirst();
         serverConnection.stop(5000);
 
-        // wait for it to die on client
+        // wait for it to disconnect on client
         busyWait(connection::isDead, 100, 5000);
         assertTrue("connection should be dead after killing it", connection.isDead());
-
-        assertTrue("expecting error screen",
-                waitForUiElement(a, R.id.stack_trace_dropdown, 5000));
         connectionCounter.expectDisconnection();
 
-        // todo: verify error text
+        // error screen should show
+        assertTrue("expecting error screen",
+                waitForUiElement(a, R.id.stack_trace_dropdown, 5000));
+        Thread.sleep(animationDelay);
+        assertStringResourceMatch(a, R.id.description_text, R.string.description_pairing_error_connection_lost);
 
-        assertTrue("expected to click retry button",
+        // retry
+        assertTrue("expecting to click retry button",
                 clickButton(a, R.id.positive_button));
 
-        Thread.sleep(300);
-
+        Thread.sleep(animationDelay);
 
 
         // test wrong code
@@ -132,31 +220,34 @@ public class UiTest {
         connection = getClientConnectionFromActivity(a);
         connectionCounter.expectConnection();
 
+        // enter the wrong code
         enterPairingCode(a, FakeTvConnection.TEST_INCORRECT_CODE);
 
-        assertTrue( "expected to click next button",
+        assertTrue( "expecting to click next button",
                 clickButton(a, R.id.next_button));
 
         assertTrue("expecting fingerprint verification screen",
                 waitForUiElement(a, R.id.match_button, 5000));
 
-        assertTrue( "expected to click fingerprint match button",
+        assertTrue( "expecting to click fingerprint match button",
                 clickButton(a, R.id.match_button));
 
+        // error should show
         assertTrue("expecting error screen",
                 waitForUiElement(a, R.id.stack_trace_dropdown, 5000));
+        Thread.sleep(animationDelay);
+        assertStringResourceMatch(a, R.id.description_text, R.string.protocol_error_pairing_code_invalid);
 
-        // todo: error text
-
+        // should be disconnected
         busyWait(connection::isDead, 100, 5000);
         assertTrue("connection should be dead after entering wrong code", connection.isDead());
         connectionCounter.expectDisconnection();
 
-        assertTrue( "expected to click retry button",
+        // retry
+        assertTrue( "expecting to click retry button",
                 clickButton(a, R.id.positive_button));
 
-        Thread.sleep(300);
-
+        Thread.sleep(animationDelay);
 
 
         // test no match
@@ -166,31 +257,35 @@ public class UiTest {
         connection = getClientConnectionFromActivity(a);
         connectionCounter.expectConnection();
 
+        // enter any code (doesn't matter)
         enterPairingCode(a, FakeTvConnection.TEST_CODE);
 
-        assertTrue( "expected to click next button",
+        assertTrue( "expecting to click next button",
                 clickButton(a, R.id.next_button));
 
         assertTrue("expecting fingerprint verification screen",
                 waitForUiElement(a, R.id.match_button, 5000));
 
-        assertTrue( "expected to click fingerprint no match button",
+        // hit the no match button
+        assertTrue( "expecting to click fingerprint no match button",
                 clickButton(a, R.id.no_match_button));
 
+        // error should show
         assertTrue("expecting error screen",
                 waitForUiElement(a, R.id.stack_trace_dropdown, 5000));
+        Thread.sleep(animationDelay);
+        assertStringResourceMatch(a, R.id.description_text, R.string.description_pairing_error_fingerprint_differs);
 
-        // todo: error text
-
+        // should be disconnected
         busyWait(connection::isDead, 100, 5000);
-        assertTrue("connection should be dead after entering wrong code", connection.isDead());
+        assertTrue("connection should be dead after hitting no match button", connection.isDead());
         connectionCounter.expectDisconnection();
 
-        assertTrue( "expected to click retry button",
+        // retry
+        assertTrue( "expecting to click retry button",
                 clickButton(a, R.id.positive_button));
 
-        Thread.sleep(300);
-
+        Thread.sleep(animationDelay);
 
 
         // test correct code
@@ -200,28 +295,35 @@ public class UiTest {
         connection = getClientConnectionFromActivity(a);
         connectionCounter.expectConnection();
 
+        // enter the pairing code
         enterPairingCode(a, FakeTvConnection.TEST_CODE);
 
-        assertTrue( "expected to click next button",
+        assertTrue( "expecting to click next button",
                 clickButton(a, R.id.next_button));
 
         assertTrue("expecting fingerprint verification screen",
                 waitForUiElement(a, R.id.match_button, 5000));
 
-        assertTrue( "expected to click fingerprint match button",
+        Sec<RemoteActivity> remoteActivitySec = listenForActivity(in, RemoteActivity.class, 3000);
+
+        assertTrue( "expecting to click fingerprint match button",
                 clickButton(a, R.id.match_button));
 
+        // should be disconnected
         busyWait(connection::isDead, 100, 5000);
         assertTrue("connection should be dead after pairing completes", connection.isDead());
         connectionCounter.expectDisconnection();
 
+        // remote activity should be open
+        RemoteActivity remoteActivity = blockAndFlatten(remoteActivitySec, 3000);
+        assertNotNull("expecting RemoteActivity to open", remoteActivity);
 
-
-        Thread.sleep(2000);
+        // it should successfully connect (and not go to pairing again)
+        assertStringResourceMatch(remoteActivity, R.id.connection_status_text, R.string.connection_status_ready, 5000);
+        connectionCounter.expectConnection();
 
 
         server.stop();
-
     }
 
     /**

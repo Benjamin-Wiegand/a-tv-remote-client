@@ -38,6 +38,9 @@ import io.benwiegand.atvremote.phone.util.UiUtil;
 public class PairingActivity extends ConnectingActivity {
     private static final String TAG = PairingActivity.class.getSimpleName();
 
+    // animation constants
+    public static final long SCREEN_TRANSITION_DURATION = 250;
+
     // global error actions
     private final UiUtil.ButtonPreset RETRY_PAIRING_ACTION = new UiUtil.ButtonPreset(R.string.button_retry, v -> connect());
     private final UiUtil.ButtonPreset CANCEL_PAIRING_ACTION = new UiUtil.ButtonPreset(R.string.button_cancel, v -> finish());
@@ -270,6 +273,7 @@ public class PairingActivity extends ConnectingActivity {
         root.addView(layoutView);
 
         if (oldLayout != null) oldLayout.animate()
+                .setDuration(SCREEN_TRANSITION_DURATION)
                 .setInterpolator(UiUtil.EASE_IN)
                 .translationX(-root.getWidth())
                 .withEndAction(() -> root.removeView(oldLayout))
@@ -277,6 +281,7 @@ public class PairingActivity extends ConnectingActivity {
 
         layoutView.setTranslationX(root.getWidth());
         layoutView.animate()
+                .setDuration(SCREEN_TRANSITION_DURATION)
                 .setInterpolator(UiUtil.EASE_OUT)
                 .translationX(0)
                 .start();

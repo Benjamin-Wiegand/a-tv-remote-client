@@ -106,7 +106,7 @@ public class FakeTVServer {
         synchronized (connectionCounterLock) {
             while (totalConnects != connects || totalDisconnects != disconnects) {
                 long waitTimeout = stopTime - System.currentTimeMillis();
-                if (waitTimeout < 0) return;
+                if (waitTimeout < 1) return;
                 catchAll(() -> connectionCounterLock.wait(waitTimeout));
             }
         }

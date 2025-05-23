@@ -4,6 +4,7 @@ import androidx.core.util.Supplier;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import io.benwiegand.atvremote.phone.async.Sec;
 
@@ -50,6 +51,15 @@ public class TestUtil {
 
         return catchAll(() -> latch.await(timeout, timeUnit));
 
+    }
+
+    public static <T> boolean block(Sec<T> sec, long timeoutMs) {
+        return block(sec, timeoutMs, TimeUnit.MILLISECONDS);
+    }
+
+    public static <T> T blockAndFlatten(Sec<T> sec, long timeoutMs) throws Throwable {
+        if (!block(sec, timeoutMs)) throw new TimeoutException("timed out waiting for Sec");
+        return sec.getResultOrThrow();
     }
 
     /**
