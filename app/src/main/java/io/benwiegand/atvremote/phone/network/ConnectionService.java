@@ -418,5 +418,11 @@ public class ConnectionService extends Service {
             }
         }
 
+        public boolean isInitialized() {
+            synchronized (lock) {
+                return connectionManager != null;
+            }
+        }
+
     }
 }
