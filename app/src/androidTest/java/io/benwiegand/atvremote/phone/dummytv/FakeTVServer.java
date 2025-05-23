@@ -36,6 +36,8 @@ public class FakeTVServer {
     private final Thread thread = new Thread(this::loop);
     private boolean dead = false;
 
+    private boolean reject = false;
+
     public void start() {
         Log.i(TAG, "starting fake TV receiver");
         catchAll(() -> {
@@ -67,6 +69,11 @@ public class FakeTVServer {
 
                 while (!dead) {
                     SSLSocket socket = (SSLSocket) serverSock.accept();
+                    if (reject) {
+                        Log.i(TAG, "rejecting connection from " + socket.getRemoteSocketAddress());
+                        socket.close();
+                        continue;
+                    }
 
                     synchronized (connectionCounterLock) {
                         totalConnects++;
@@ -116,5 +123,9 @@ public class FakeTVServer {
 
     public int getPort() {
         return port;
+    }
+
+    public void setReject(boolean reject) {
+        this.reject = reject;
     }
 }

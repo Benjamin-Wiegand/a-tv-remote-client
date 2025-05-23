@@ -25,6 +25,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -189,6 +190,34 @@ public class ConnectionTest {
         TVReceiverConnection fourthConnection = doConnection(server, false, true);
         assertNotSame("expecting connection request after disconnect to return a new connection", connection, fourthConnection);
         assertConnections(server, 2, 1);
+
+
+        doFullServiceTeardown(context);
+
+        server.stop();
+    }
+
+    /**
+     * tests onConnectError() callback by having the server reject the socket before the ssl handshake
+     */
+    @Test
+    public void badDestination_Test() {
+        Instrumentation in = InstrumentationRegistry.getInstrumentation();
+        Context context = in.getTargetContext();
+
+        server.start();
+        server.setReject(true);
+
+        doFullServiceInit(context);
+
+
+        // connect
+        binder.connect("fake TV", "localhost", server.getPort(), true);
+        callback.waitForNextCall(5, TimeUnit.SECONDS);
+        Object[] args = callback.assertCallTo("onConnectError");
+        callback.assertNoMoreCalls("expecting no other calls after onConnectError");
+        assertNotNull("throwable in onConnectError should never be null", args[0]);
+        assertTrue("expecting throwable of type IOException in onConnectError", args[0] instanceof IOException);
 
 
         doFullServiceTeardown(context);
