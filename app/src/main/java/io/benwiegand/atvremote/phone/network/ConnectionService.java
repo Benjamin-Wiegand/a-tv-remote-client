@@ -424,5 +424,10 @@ public class ConnectionService extends Service {
             }
         }
 
+        // for testing
+        private TVReceiverConnection getConnection() {
+            return connection;
+        }
+
     }
 }

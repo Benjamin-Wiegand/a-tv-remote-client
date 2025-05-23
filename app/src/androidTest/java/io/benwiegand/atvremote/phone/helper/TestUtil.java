@@ -1,7 +1,11 @@
 package io.benwiegand.atvremote.phone.helper;
 
+import android.content.Context;
+import android.util.Log;
+
 import androidx.core.util.Supplier;
 
+import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -9,6 +13,7 @@ import java.util.concurrent.TimeoutException;
 import io.benwiegand.atvremote.phone.async.Sec;
 
 public class TestUtil {
+    private static final String TAG = TestUtil.class.getSimpleName();
     public interface ThrowingRunnable {
         void run() throws Throwable;
     }
@@ -79,6 +84,46 @@ public class TestUtil {
             }
         }
 
+    }
+
+    public static boolean recursiveDelete(File file) {
+        if (!file.isDirectory()) {
+            Log.d(TAG, "deleting " + file);
+            return file.delete();
+        }
+
+        File[] listing = file.listFiles();
+        if (listing == null) {
+            Log.d(TAG, "deleting " + file);
+            return file.delete();
+        }
+
+        for (File child : listing) {
+            recursiveDelete(child);
+        }
+
+        Log.d(TAG, "deleting " + file);
+        return file.delete();
+    }
+
+    public static boolean recursiveDeleteContents(File file) {
+        File[] listing = file.listFiles();
+        if (listing == null) return true;
+
+        boolean totalSuccess = true;
+        for (File child : listing) {
+            if (!recursiveDelete(child)) totalSuccess = false;
+        }
+        return totalSuccess;
+    }
+
+    public static void clearAppData(Context context) {
+        Log.i(TAG, "deleting app data");
+        File files = context.getFilesDir();
+        File sharedPrefs = context.getDataDir().toPath().resolve("shared_prefs").toFile();
+
+        recursiveDeleteContents(files);
+        recursiveDeleteContents(sharedPrefs);
     }
 
 }

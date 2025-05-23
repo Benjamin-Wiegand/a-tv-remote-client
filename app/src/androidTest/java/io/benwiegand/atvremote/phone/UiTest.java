@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static io.benwiegand.atvremote.phone.helper.TestUtil.blockAndFlatten;
 import static io.benwiegand.atvremote.phone.helper.TestUtil.busyWait;
+import static io.benwiegand.atvremote.phone.helper.TestUtil.clearAppData;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -28,6 +29,8 @@ import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -41,12 +44,15 @@ import io.benwiegand.atvremote.phone.dummytv.FakeKeystoreManager;
 import io.benwiegand.atvremote.phone.dummytv.FakeTVServer;
 import io.benwiegand.atvremote.phone.dummytv.FakeTvConnection;
 import io.benwiegand.atvremote.phone.helper.ConnectionCounter;
+import io.benwiegand.atvremote.phone.network.ConnectionService;
 import io.benwiegand.atvremote.phone.network.TVReceiverConnection;
 import io.benwiegand.atvremote.phone.protocol.PairingData;
 import io.benwiegand.atvremote.phone.protocol.PairingManager;
 import io.benwiegand.atvremote.phone.ui.ConnectingActivity;
+import io.benwiegand.atvremote.phone.ui.ManualConnectionActivity;
 import io.benwiegand.atvremote.phone.ui.PairingActivity;
 import io.benwiegand.atvremote.phone.ui.RemoteActivity;
+import io.benwiegand.atvremote.phone.ui.TVDiscoveryActivity;
 
 @RunWith(AndroidJUnit4.class)
 public class UiTest {
@@ -54,6 +60,13 @@ public class UiTest {
 
     private final FakeTVServer server = new FakeTVServer();
     private final ConnectionCounter connectionCounter = new ConnectionCounter(server, 5000);
+
+    private <T extends Activity> T launchActivity(Instrumentation in, Class<T> activityClass) {
+        Intent intent = new Intent(in.getTargetContext(), activityClass);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        return activityClass.cast(in.startActivitySync(intent));
+    }
 
     private RemoteActivity launchRemote(Instrumentation in, int port) {
         Intent intent = new Intent(in.getTargetContext(), RemoteActivity.class);
@@ -87,7 +100,6 @@ public class UiTest {
 
                 T result = null;
                 if (activity != null) {
-                    assert activity.getClass().isAssignableFrom(activityClass);
                     result = activityClass.cast(activity);
                 }
 
@@ -131,11 +143,15 @@ public class UiTest {
         assertStringResourceMatch(a, id, expected);
     }
 
-    private void enterPairingCode(PairingActivity a, int code) {
-        a.runOnUiThread(() -> {
-            EditText pairingCodeText = a.findViewById(R.id.pairing_code_text);
-            pairingCodeText.setText(String.valueOf(code));
+    private void enterText(Activity a, @IdRes int target, String text) throws InterruptedException {
+        runOnUiThreadSync(a, () -> {
+            EditText pairingCodeText = a.findViewById(target);
+            pairingCodeText.setText(text);
         });
+    }
+
+    private void enterPairingCode(PairingActivity a, int code) throws InterruptedException {
+        enterText(a, R.id.pairing_code_text, String.valueOf(code));
     }
 
     private TVReceiverConnection getClientConnectionFromActivity(PairingActivity a) throws IllegalAccessException, NoSuchFieldException {
@@ -144,6 +160,21 @@ public class UiTest {
         conectionField.setAccessible(true);
         TVReceiverConnection connection = (TVReceiverConnection) conectionField.get(a);
         assert connection != null;
+        return connection;
+    }
+
+    private TVReceiverConnection getClientConnectionFromActivity(RemoteActivity a) throws IllegalAccessException, NoSuchFieldException, NoSuchMethodException, InvocationTargetException {
+        // use even more reflection for this
+        Field binderField = ConnectingActivity.class.getDeclaredField("binder");
+        binderField.setAccessible(true);
+        ConnectionService.ConnectionServiceBinder binder = (ConnectionService.ConnectionServiceBinder) binderField.get(a);
+        assert binder != null;
+
+        Method getConnectionMethod = ConnectionService.ConnectionServiceBinder.class.getDeclaredMethod("getConnection");
+        getConnectionMethod.setAccessible(true);
+        TVReceiverConnection connection = (TVReceiverConnection) getConnectionMethod.invoke(binder);
+        assert connection != null;
+
         return connection;
     }
 
@@ -172,6 +203,34 @@ public class UiTest {
 
     private void assertConnected(RemoteActivity remoteActivity) throws InterruptedException {
         assertStringResourceMatch(remoteActivity, R.id.connection_status_text, R.string.connection_status_ready, 5000);
+    }
+
+    private Activity[] toRemoteFromLauncherStack(Instrumentation in) throws Throwable {
+        // launch the launcher activity (discovery activity)
+        TVDiscoveryActivity discoveryActivity = launchActivity(in, TVDiscoveryActivity.class);
+
+        // go to the manual connection screen
+        Sec<ManualConnectionActivity> manualConnectionActivitySec = listenForActivity(in, ManualConnectionActivity.class, 3000);
+        clickButton(discoveryActivity, R.id.manual_connection_button);
+        ManualConnectionActivity manualConnectionActivity = blockAndFlatten(manualConnectionActivitySec, 3000);
+        assertNotNull("expecting ManualConnectionActivity to open", manualConnectionActivity);
+
+        // fill out the details
+        enterText(manualConnectionActivity, R.id.hostname_text, "127.0.0.1");
+        enterText(manualConnectionActivity, R.id.port_text, String.valueOf(server.getPort()));
+
+        // connect
+        Sec<RemoteActivity> remoteActivitySec = listenForActivity(in, RemoteActivity.class, 3000);
+        clickButton(manualConnectionActivity, R.id.connect_button);
+        RemoteActivity remoteActivity = blockAndFlatten(remoteActivitySec, 3000);
+        assertNotNull("expecting RemoteActivity to open", remoteActivity);
+
+        return new Activity[]{remoteActivity, manualConnectionActivity, discoveryActivity};
+    }
+
+    private RemoteActivity toRemoteFromLauncher(Instrumentation in) throws Throwable {
+        Activity[] stack = toRemoteFromLauncherStack(in);
+        return (RemoteActivity) stack[0];
     }
 
     private RemoteActivity doPairing(Instrumentation in, PairingActivity pairingActivity) throws Throwable {
@@ -245,6 +304,7 @@ public class UiTest {
     @Test
     public void pairing_Test() throws Throwable {
         Instrumentation in = InstrumentationRegistry.getInstrumentation();
+        clearAppData(in.getTargetContext());
         assert !ActivityManager.isUserAMonkey(); // mandatory check
 
         // these delays account for animations, without these it can grab the old buttons before they disappear
@@ -253,15 +313,19 @@ public class UiTest {
 
         server.start();
 
-        PairingActivity a = launchPairingActivity(in, server.getPort());
+        // navigate to remote to trigger pairing
+        Sec<PairingActivity> pairingActivitySec = listenForActivity(in, PairingActivity.class, 5000);
+        toRemoteFromLauncher(in);
+        PairingActivity a = blockAndFlatten(pairingActivitySec, 5000);
 
+        assertNotNull("expecting PairingActivity to open", a);
 
         // test disconnection
 
         assertTrue("expecting pairing screen",
                 waitForUiElement(a, R.id.pairing_code_text, 5000));
         TVReceiverConnection connection = getClientConnectionFromActivity(a);
-        connectionCounter.expectConnection();
+        connectionCounter.expect(2, 1);
 
         // kill connection from server
         FakeTvConnection serverConnection = server.getConnections().getFirst();
@@ -373,16 +437,20 @@ public class UiTest {
      * I've had a few bugs with pings that this would catch.
      */
     @Test
-    public void pairingIdle_test() throws NoSuchFieldException, IllegalAccessException, InterruptedException {
+    public void pairingIdle_test() throws Throwable {
         Instrumentation in = InstrumentationRegistry.getInstrumentation();
+        clearAppData(in.getTargetContext());
         server.start();
 
-        // open pairing activity
-        PairingActivity a = launchPairingActivity(in, server.getPort());
+        // navigate to remote to trigger pairing
+        Sec<PairingActivity> pairingActivitySec = listenForActivity(in, PairingActivity.class, 5000);
+        toRemoteFromLauncher(in);
+        PairingActivity a = blockAndFlatten(pairingActivitySec, 5000);
+
         assertTrue("expecting pairing screen",
                 waitForUiElement(a, R.id.pairing_code_text, 5000));
         TVReceiverConnection connection = getClientConnectionFromActivity(a);
-        connectionCounter.expectConnection();
+        connectionCounter.expect(2, 1);
 
         // wait for twice the keepalive interval
         Thread.sleep(TVReceiverConnection.KEEPALIVE_INTERVAL * 2);
@@ -403,6 +471,7 @@ public class UiTest {
     @Test
     public void testPairingData_Test() throws InterruptedException, IOException, CorruptedKeystoreException {
         Instrumentation in = InstrumentationRegistry.getInstrumentation();
+        clearAppData(in.getTargetContext());
         server.start();
         installTestPairingData(in);
 
@@ -413,6 +482,121 @@ public class UiTest {
 
         server.stop();
     }
+
+    /**
+     * tests connecting to a paired device via the manual connection button
+     */
+    @Test
+    public void manualConnection_Test() throws Throwable {
+        Instrumentation in = InstrumentationRegistry.getInstrumentation();
+        clearAppData(in.getTargetContext());
+        server.start();
+        installTestPairingData(in);
+
+        RemoteActivity remoteActivity = toRemoteFromLauncher(in);
+        assertConnected(remoteActivity);
+        connectionCounter.expectConnection();
+
+        server.stop();
+    }
+
+    /**
+     * tests pairing, closing the app, and reopening and reconnecting
+     */
+    @Test
+    public void pairingPersistence_Test() throws Throwable {
+        Instrumentation in = InstrumentationRegistry.getInstrumentation();
+        clearAppData(in.getTargetContext());
+        server.start();
+
+        // navigate to remote to trigger pairing
+        Sec<PairingActivity> pairingActivitySec = listenForActivity(in, PairingActivity.class, 5000);
+        Activity[] stack = toRemoteFromLauncherStack(in);
+        PairingActivity pairingActivity = blockAndFlatten(pairingActivitySec, 5000);
+        connectionCounter.expect(1, 1);
+
+        assertTrue("expecting pairing screen",
+                waitForUiElement(pairingActivity, R.id.pairing_code_text, 5000));
+
+        // pair
+        RemoteActivity remoteActivity = doPairing(in, pairingActivity);
+
+        // disconnect
+        TVReceiverConnection connection = getClientConnectionFromActivity(remoteActivity);
+        clickButton(remoteActivity, R.id.disconnect_button);
+
+        busyWait(connection::isDead, 100, 5000);
+        assertTrue("connection should be dead after hitting the disconnect button", connection.isDead());
+        connectionCounter.expectDisconnection();
+
+        // close all the remaining activities
+        for (int i = 1; i < stack.length; i++) {
+            stack[i].finish();
+        }
+
+
+        // launch remote again to ensure pairing data retention
+        remoteActivity = toRemoteFromLauncher(in);
+        assertConnected(remoteActivity);
+        connectionCounter.expectConnection();
+
+        server.stop();
+    }
+
+    /**
+     * test connecting for remote/pairing, then pressing the disconnect button
+     */
+    @Test
+    public void remoteDisconnection_Test() throws Throwable {
+        Instrumentation in = InstrumentationRegistry.getInstrumentation();
+        clearAppData(in.getTargetContext());
+        server.start();
+
+
+        // navigate to remote to trigger pairing
+        Sec<PairingActivity> pairingActivitySec = listenForActivity(in, PairingActivity.class, 5000);
+        Activity[] stack = toRemoteFromLauncherStack(in);
+        PairingActivity pairingActivity = blockAndFlatten(pairingActivitySec, 5000);
+
+        assertTrue("expecting pairing screen",
+                waitForUiElement(pairingActivity, R.id.pairing_code_text, 5000));
+        connectionCounter.expect(2, 1);
+
+        // disconnect
+        TVReceiverConnection connection = getClientConnectionFromActivity(pairingActivity);
+        clickButton(pairingActivity, R.id.cancel_button);
+
+        busyWait(connection::isDead, 100, 5000);
+        assertTrue("connection should be dead after hitting the disconnect button", connection.isDead());
+        connectionCounter.expectDisconnection();
+
+        // close all the remaining activities
+        for (int i = 1; i < stack.length; i++) {
+            stack[i].finish();
+        }
+
+
+        // now test RemoteActivity
+        installTestPairingData(in);
+
+
+        // open remote
+        RemoteActivity remoteActivity = toRemoteFromLauncher(in);
+        assertConnected(remoteActivity);
+        connectionCounter.expectConnection();
+
+        // disconnect
+        connection = getClientConnectionFromActivity(remoteActivity);
+        clickButton(remoteActivity, R.id.disconnect_button);
+
+        busyWait(connection::isDead, 100, 5000);
+        assertTrue("connection should be dead after hitting the disconnect button", connection.isDead());
+        connectionCounter.expectDisconnection();
+
+
+        server.stop();
+    }
+
 
 
 }
