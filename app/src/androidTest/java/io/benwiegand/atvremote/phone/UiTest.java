@@ -21,6 +21,7 @@ import java.lang.reflect.Field;
 
 import io.benwiegand.atvremote.phone.dummytv.FakeTVServer;
 import io.benwiegand.atvremote.phone.dummytv.FakeTvConnection;
+import io.benwiegand.atvremote.phone.helper.ConnectionCounter;
 import io.benwiegand.atvremote.phone.network.TVReceiverConnection;
 import io.benwiegand.atvremote.phone.ui.ConnectingActivity;
 import io.benwiegand.atvremote.phone.ui.PairingActivity;
@@ -29,7 +30,8 @@ import io.benwiegand.atvremote.phone.ui.RemoteActivity;
 @RunWith(AndroidJUnit4.class)
 public class UiTest {
 
-    private FakeTVServer server = new FakeTVServer();
+    private final FakeTVServer server = new FakeTVServer();
+    private final ConnectionCounter connectionCounter = new ConnectionCounter(server, 5000);
 
     private RemoteActivity launchRemote(Instrumentation in, String deviceName, String host, int port) {
         Intent intent = new Intent(in.getTargetContext(), RemoteActivity.class);
@@ -99,6 +101,7 @@ public class UiTest {
         assertTrue("expecting pairing screen",
                 waitForUiElement(a, R.id.pairing_code_text, 5000));
         TVReceiverConnection connection = getClientConnectionFromActivity(a);
+        connectionCounter.expectConnection();
 
         // kill connection from server
         FakeTvConnection serverConnection = server.getConnections().getFirst();
@@ -110,6 +113,7 @@ public class UiTest {
 
         assertTrue("expecting error screen",
                 waitForUiElement(a, R.id.stack_trace_dropdown, 5000));
+        connectionCounter.expectDisconnection();
 
         // todo: verify error text
 
@@ -125,6 +129,7 @@ public class UiTest {
         assertTrue("expecting pairing screen",
                 waitForUiElement(a, R.id.pairing_code_text, 5000));
         connection = getClientConnectionFromActivity(a);
+        connectionCounter.expectConnection();
 
         enterPairingCode(a, FakeTvConnection.TEST_INCORRECT_CODE);
 
@@ -144,6 +149,7 @@ public class UiTest {
 
         busyWait(connection::isDead, 100, 5000);
         assertTrue("connection should be dead after entering wrong code", connection.isDead());
+        connectionCounter.expectDisconnection();
 
         assertTrue( "expected to click retry button",
                 clickButton(a, R.id.positive_button));
@@ -157,6 +163,7 @@ public class UiTest {
         assertTrue("expecting pairing screen",
                 waitForUiElement(a, R.id.pairing_code_text, 5000));
         connection = getClientConnectionFromActivity(a);
+        connectionCounter.expectConnection();
 
         enterPairingCode(a, FakeTvConnection.TEST_CODE);
 
@@ -176,6 +183,7 @@ public class UiTest {
 
         busyWait(connection::isDead, 100, 5000);
         assertTrue("connection should be dead after entering wrong code", connection.isDead());
+        connectionCounter.expectDisconnection();
 
         assertTrue( "expected to click retry button",
                 clickButton(a, R.id.positive_button));
@@ -189,6 +197,7 @@ public class UiTest {
         assertTrue("expecting pairing screen",
                 waitForUiElement(a, R.id.pairing_code_text, 5000));
         connection = getClientConnectionFromActivity(a);
+        connectionCounter.expectConnection();
 
         enterPairingCode(a, FakeTvConnection.TEST_CODE);
 
@@ -203,6 +212,7 @@ public class UiTest {
 
         busyWait(connection::isDead, 100, 5000);
         assertTrue("connection should be dead after pairing completes", connection.isDead());
+        connectionCounter.expectDisconnection();
 
 
 
