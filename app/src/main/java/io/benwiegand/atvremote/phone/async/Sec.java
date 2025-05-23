@@ -37,7 +37,7 @@ public class Sec<T> {
         synchronized (lock) {
             if (!finished) throw new IllegalStateException("not finished, success is not yet known");
 
-            return error != null;
+            return error == null;
         }
     }
 
