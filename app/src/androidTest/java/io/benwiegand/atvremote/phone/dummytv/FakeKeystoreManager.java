@@ -39,8 +39,8 @@ public class FakeKeystoreManager {
         return catchAll(() -> {
             KeyFactory kfactory = KeyFactory.getInstance("RSA");
 
-            EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(Base64.decode(TEST_PRIVATE_KEY_B64, 0), "RSA");
-            EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(Base64.decode(TEST_PUBLIC_KEY_B64, 0), "RSA");
+            EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(Base64.decode(TEST_PRIVATE_KEY_B64, 0));
+            EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(Base64.decode(TEST_PUBLIC_KEY_B64, 0));
 
             PrivateKey privKey = kfactory.generatePrivate(privKeySpec);
             PublicKey pubKey = kfactory.generatePublic(pubKeySpec);

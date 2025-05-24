@@ -88,6 +88,7 @@ public class UiTest {
         return (PairingActivity) in.startActivitySync(intent);
     }
 
+    // todo: light mode breaks this because the activity gets relaunched, invalidating the one returned by this.
     private <T extends Activity> Sec<T> listenForActivity(Instrumentation in, Class<T> activityClass, long timeout) {
         Instrumentation.ActivityMonitor activityMonitor = in.addMonitor(activityClass.getName(), null, false);
 
@@ -328,7 +329,7 @@ public class UiTest {
         connectionCounter.expect(2, 1);
 
         // kill connection from server
-        FakeTvConnection serverConnection = server.getConnections().getFirst();
+        FakeTvConnection serverConnection = server.getConnections().get(0);
         serverConnection.stop(5000);
 
         // wait for it to disconnect on client
