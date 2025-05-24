@@ -263,6 +263,7 @@ public class ConnectionTest {
         stopService(context);
         busyWait(secondConnection::isDead, 100, 6000);
         assertTrue("expecting disconnect after calling unregister() with disconnect = true", secondConnection.isDead());
+        callback.waitForNextCall(5, TimeUnit.SECONDS);
         Object[] args = callback.assertCallTo("onDisconnected");
         assertNull("expecting no throwable in onDisconnected() callback for call to binder.disconnect()", args[0]);
         connectionCounter.expectDisconnection();
