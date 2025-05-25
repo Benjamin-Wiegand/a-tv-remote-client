@@ -13,7 +13,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -26,7 +25,7 @@ import io.benwiegand.atvremote.phone.network.discovery.ServiceDiscoveryCallback;
 import io.benwiegand.atvremote.phone.network.discovery.ServiceDiscoveryException;
 import io.benwiegand.atvremote.phone.network.discovery.ServiceExplorer;
 
-public class TVDiscoveryActivity extends AppCompatActivity implements ServiceDiscoveryCallback {
+public class TVDiscoveryActivity extends DynamicColorsCompatActivity implements ServiceDiscoveryCallback {
     private static final String TAG = TVDiscoveryActivity.class.getSimpleName();
 
     private final Map<String, View> discoveredServiceViewMap = new HashMap<>();

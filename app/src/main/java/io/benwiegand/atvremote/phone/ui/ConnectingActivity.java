@@ -9,7 +9,6 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.IOException;
 import java.security.KeyManagementException;
@@ -22,7 +21,7 @@ import io.benwiegand.atvremote.phone.network.TVReceiverConnection;
 import io.benwiegand.atvremote.phone.util.ErrorUtil;
 import io.benwiegand.atvremote.phone.util.UiUtil;
 
-public abstract class ConnectingActivity extends AppCompatActivity implements ConnectionService.Callback {
+public abstract class ConnectingActivity extends DynamicColorsCompatActivity implements ConnectionService.Callback {
     private static final String TAG = ConnectingActivity.class.getSimpleName();
 
     // intent extras

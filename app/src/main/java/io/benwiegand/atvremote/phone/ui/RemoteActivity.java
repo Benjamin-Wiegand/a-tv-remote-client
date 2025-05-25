@@ -23,6 +23,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.android.material.color.DynamicColors;
 import com.google.android.material.navigation.NavigationBarView;
 
 import java.io.IOException;
@@ -86,7 +87,10 @@ public class RemoteActivity extends ConnectingActivity {
         Log.d(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
 
-        setTheme(R.style.Theme_ATVRemote_Remote);
+        // applying themes using "@color/material_dynamic_*" will cause a crash if api level doesn't support it
+        setTheme(DynamicColors.isDynamicColorAvailable() ?
+                R.style.Theme_ATVRemote_Remote_DynamicColors :
+                R.style.Theme_ATVRemote_Remote);
         getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_YES);
 
         setContentView(R.layout.activity_remote);

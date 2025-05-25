@@ -7,14 +7,13 @@ import android.os.Bundle;
 import android.widget.EditText;
 
 import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import io.benwiegand.atvremote.phone.R;
 
-public class ManualConnectionActivity extends AppCompatActivity {
+public class ManualConnectionActivity extends DynamicColorsCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

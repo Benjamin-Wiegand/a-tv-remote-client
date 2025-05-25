@@ -92,7 +92,7 @@ public class ErrorUtil {
         View view = LayoutInflater.from(context).inflate(R.layout.layout_error, null, false);
 
         ErrorUtil.inflateErrorScreen(view, error.noButtons());
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(context, R.style.Theme_ATVRemote)
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(context, R.style.Theme_ATVRemote_Base)
                 .setView(view)
                 .setCancelable(false);
 
