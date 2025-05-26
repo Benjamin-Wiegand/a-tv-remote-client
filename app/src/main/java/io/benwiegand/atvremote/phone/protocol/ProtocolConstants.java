@@ -4,9 +4,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 public class ProtocolConstants {
-    // a very barbaric yet functional and simple protocol that's hard to fuck up
+    // a less barbaric yet still simple protocol that supports concurrent events both ways
 
-    public static final String NEWLINE = "\n"; // we do LF 'round here
+    public static final String NEWLINE = "\n";
     public static final Charset CHARSET = StandardCharsets.UTF_8;
 
     // version
@@ -14,18 +14,19 @@ public class ProtocolConstants {
 
     // responses
     public static final String OP_CONFIRM = "OK";
-    public static final String OP_READY = "RDY";
-    public static final String OP_UNREADY = "WAIT";
     public static final String OP_ERR = "ERR";
     public static final String OP_UNAUTHORIZED = "BAD_AUTH";
     public static final String OP_UNSUPPORTED = "HUH?";
 
-    // init operaions
+    // init operations
     public static final String INIT_OP_PAIR = "PAIR";
     public static final String INIT_OP_CONNECT = "CONN";
 
     // global operations
     public static final String OP_PING = "PING";
+
+    // pairing operations
+    public static final String OP_TRY_PAIRING_CODE = "IS_THIS_YOUR_CARD?";
 
     // remote control operations
     public static final String OP_DPAD_UP = "DPAD_UP";

@@ -223,9 +223,9 @@ public class ConnectionService extends Service {
                 tryClose(oldConnection);
 
             if (connectionSpec.pairing()) {
-                newConnection = connectionManager.startPairingToTV(connectionSpec.hostname(), connectionSpec.port(), connectionCallback);
+                newConnection = connectionManager.startPairingToTV(this, connectionSpec.hostname(), connectionSpec.port(), connectionCallback);
             } else {
-                newConnection = connectionManager.connectToTV(connectionSpec.hostname(), connectionSpec.port(), connectionCallback);
+                newConnection = connectionManager.connectToTV(this, connectionSpec.hostname(), connectionSpec.port(), connectionCallback);
             }
         } catch (Throwable t) {
             if (t instanceof IOException || t instanceof RequiresPairingException) {

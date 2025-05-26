@@ -3,6 +3,7 @@ package io.benwiegand.atvremote.phone.network;
 import static io.benwiegand.atvremote.phone.network.SocketUtil.tryClose;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.*;
 
+import android.content.Context;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -10,11 +11,6 @@ import com.google.gson.Gson;
 import java.io.Closeable;
 import java.io.IOException;
 import java.security.cert.Certificate;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLSocket;
 
@@ -22,14 +18,11 @@ import io.benwiegand.atvremote.phone.R;
 import io.benwiegand.atvremote.phone.auth.ssl.CorruptedKeystoreException;
 import io.benwiegand.atvremote.phone.auth.ssl.KeyUtil;
 import io.benwiegand.atvremote.phone.async.Sec;
-import io.benwiegand.atvremote.phone.async.SecAdapter;
 import io.benwiegand.atvremote.phone.control.InputHandler;
-import io.benwiegand.atvremote.phone.control.OperationQueueEntry;
+import io.benwiegand.atvremote.phone.protocol.OperationDefinition;
 import io.benwiegand.atvremote.phone.protocol.RemoteProtocolException;
 import io.benwiegand.atvremote.phone.protocol.RequiresPairingException;
-import io.benwiegand.atvremote.phone.protocol.UnauthorizedException;
 import io.benwiegand.atvremote.phone.protocol.json.ErrorDetails;
-import io.benwiegand.atvremote.phone.util.ErrorUtil;
 
 public class TVReceiverConnection implements Closeable {
     private static final String TAG = TVReceiverConnection.class.getSimpleName();
@@ -38,36 +31,43 @@ public class TVReceiverConnection implements Closeable {
 
     private static final int SOCKET_AUTH_TIMEOUT = 3000;
     public static final long KEEPALIVE_INTERVAL = 5000;
-    private static final long RESPONSE_TIMEOUT = 2500;
+    public static final long KEEPALIVE_TIMEOUT = KEEPALIVE_INTERVAL * 2;
 
-    private final ThreadPoolExecutor resultCallbackThreadPool;
-    private final Queue<OperationQueueEntry> operationQueue;
-    private final InputHandler inputForwarder;
+    private final Context context;
+    private final InputHandler inputForwarder = new InputForwarder();
+
     private final SSLSocket socket;
-    private final Thread thread;
-    private final String token;
-    private boolean dead;
-    private boolean init;
-
-    private TCPWriter writer;
-    private TCPReader reader;
+    private TCPWriter writer = null;
+    private TCPReader reader = null;
+    private EventJuggler eventJuggler = null;
 
     private final TVReceiverConnectionCallback callback;
+    private final String token;
+    private boolean dead = false;
+    private boolean init = false;
 
-    TVReceiverConnection(SSLSocket socket, TVReceiverConnectionCallback callback, String token) {
-        resultCallbackThreadPool = new ThreadPoolExecutor(4, 8, 500, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>());
-        operationQueue = new ConcurrentLinkedQueue<>();
-        inputForwarder = new InputForwarder();
+    /**
+     * connection to the TV receiver
+     * @param context context (for fetching string resources)
+     * @param socket the socket for the connection
+     * @param callback callback for various events
+     * @param token authentication token - a null value implies pairing mode
+     */
+    TVReceiverConnection(Context context, SSLSocket socket, TVReceiverConnectionCallback callback, String token) {
+        this.context = context;
         this.socket = socket;
         this.callback = callback;
-        this.thread = new Thread(this::run);
         this.token = token;
-        dead = false;
-        init = false;
     }
 
-    TVReceiverConnection(SSLSocket socket, TVReceiverConnectionCallback callback) {
-        this(socket, callback, null);
+    /**
+     * connection to the TV receiver but for pairing
+     * @param context context (for fetching string resources)
+     * @param socket the socket for the connection
+     * @param callback callback for various events
+     */
+    TVReceiverConnection(Context context, SSLSocket socket, TVReceiverConnectionCallback callback) {
+        this(context, socket, callback, null);
     }
 
     public InputHandler getInputForwarder() {
@@ -85,6 +85,7 @@ public class TVReceiverConnection implements Closeable {
 
             reader = TCPReader.createFromStream(socket.getInputStream(), CHARSET);
             writer = TCPWriter.createFromStream(socket.getOutputStream(), CHARSET);
+            eventJuggler = new EventJuggler(context, reader, writer, this::onSocketDeath, KEEPALIVE_INTERVAL, KEEPALIVE_TIMEOUT);
 
             writer.sendLine(VERSION_1);
 
@@ -136,7 +137,7 @@ public class TVReceiverConnection implements Closeable {
             }
 
             Log.i(TAG, "tv connected: " + socket.getRemoteSocketAddress());
-            thread.start();
+            eventJuggler.start(new OperationDefinition[0]);
 
         } catch (InterruptedException e) {
             Log.e(TAG, "interrupted");
@@ -149,83 +150,17 @@ public class TVReceiverConnection implements Closeable {
         }
     }
 
-    private void run() {
-        Throwable exitThrowable = null;
-        try {
-            connectionLoop();
-        } catch (IOException e) {
-            Log.e(TAG, "connection died:\n" + ErrorUtil.getLightStackTrace(e));
-            exitThrowable = e;
-        } catch (InterruptedException e) {
-            Log.e(TAG, "connection loop interrupted:\n" + ErrorUtil.getLightStackTrace(e));
-            exitThrowable = e;
-        } catch (Throwable t) {
-            Log.e(TAG, "unexpected error in connection", t);
-            exitThrowable = t;
-        } finally {
-            if (dead) exitThrowable = null; // discard reactions from an intentional close
-            tryClose(this);
-            callback.onDisconnected(exitThrowable);
-        }
+    private void onSocketDeath(Throwable t) {
+        tryClose(this);
+        callback.onDisconnected(t);
     }
 
-
-    private void connectionLoop() throws IOException, InterruptedException {
-        while (!dead) {
-
-            // pop the queue
-            OperationQueueEntry entry = popOperationQueueBlocking();
-            if (entry == null) {
-                ping();
-                continue;
-            }
-
-            SecAdapter<String> secAdapter = entry.responseAdapter();
-
-            try {
-                writer.sendLine(entry.operation());
-                String result = reader.nextLine(RESPONSE_TIMEOUT);
-
-                if (result == null) {
-                    IOException exception = new IOException("response timed out");
-                    resultCallbackThreadPool.execute(() -> secAdapter.throwError(exception));
-                    throw exception;
-                }
-
-                // thread pool so the socket loop doesn't block here
-                resultCallbackThreadPool.execute(() -> secAdapter.provideResult(result));
-            } catch (Throwable t) {
-                resultCallbackThreadPool.execute(() -> secAdapter.throwError(t));
-                throw t;
-            }
-
-        }
-    }
 
     public Certificate getCertificate() throws CorruptedKeystoreException {
         if (dead) throw new IllegalStateException("can't get fingerprint after death");
         return KeyUtil.getRemoteCertificate(socket);
     }
 
-    private OperationQueueEntry popOperationQueueBlocking() throws InterruptedException {
-        synchronized (operationQueue) {
-            OperationQueueEntry entry = operationQueue.poll();
-            if (entry != null) return entry;
-
-            operationQueue.wait(TVReceiverConnection.KEEPALIVE_INTERVAL);
-            return operationQueue.poll();
-        }
-    }
-
-    private void ping() throws IOException, InterruptedException {
-        assert init;
-        if (dead) throw new IOException("this connection is dead");
-
-        writer.sendLine(OP_PING);
-        String result = reader.nextLine(RESPONSE_TIMEOUT);
-        if (!OP_CONFIRM.equals(result))
-            throw new IOException("sent ping but didn't get a pong");
-    }
 
     private RemoteProtocolException parseError(String json) {
         Log.e(TAG, "error response: " + json);
@@ -235,40 +170,28 @@ public class TVReceiverConnection implements Closeable {
         return gson.fromJson(json, ErrorDetails.class).toException();
     }
 
-    private Sec<String[]> sendOperation(String operation) {
-        SecAdapter.SecWithAdapter<String> secWithAdapter = SecAdapter.createThreadless();
-
-        OperationQueueEntry entry = new OperationQueueEntry(secWithAdapter.secAdapter(), operation);
-        synchronized (operationQueue) {
-            operationQueue.add(entry);
-            operationQueue.notifyAll();
-        }
-
-        // do this after to prevent race conditions while avoiding needing a lock
-        if (dead) {
-            operationQueue.remove(entry);
-            return Sec.premeditatedError(new IOException("connection is dead"));
-        }
-
-        return secWithAdapter.sec()
+    private Sec<String> sendOperation(String event) {
+        if (eventJuggler == null) throw new IllegalStateException("connection init not finished yet");
+        return eventJuggler.sendEvent(event)
                 .map(r -> {
                     // parse errors
-                    String[] response = r.split(" ", 2);
-                    if (response.length == 0)
-                        throw new RemoteProtocolException(R.string.protocol_error_response_invalid, "response was empty");
+                    int iSep = r.responseLine().indexOf(' ');
+                    String op, extra;
+                    if (iSep > 1) {
+                        op = r.responseLine().substring(0, iSep);
+                        extra = r.responseLine().substring(iSep + 1);
+                    } else {
+                        op = r.responseLine();
+                        extra = null;
+                    }
 
-                    return switch (response[0]) {
-                        case OP_CONFIRM -> response;
-                        case OP_ERR -> throw parseError(response.length == 1 ? null : response[1]);
-                        case OP_UNAUTHORIZED -> throw new UnauthorizedException();
+                    return switch (op) {
+                        case OP_CONFIRM -> extra;
+                        case OP_ERR -> throw parseError(extra);
                         case OP_UNSUPPORTED -> throw new RemoteProtocolException(R.string.protocol_error_op_unsupported, "operation not supported by tv");
                         default -> throw new RemoteProtocolException(R.string.protocol_error_response_invalid, "unexpected response from tv");
                     };
                 });
-    }
-
-    private Sec<String[]> sendOperation(String... operation) {
-        return sendOperation(String.join(" ", operation));
     }
 
     private Sec<Void> sendBasicOperation(String operation) {
@@ -276,35 +199,8 @@ public class TVReceiverConnection implements Closeable {
                 .map(r -> null);
     }
 
-    private Sec<Void> sendBasicOperation(String... operation) {
-        return sendBasicOperation(String.join(" ", operation));
-    }
-
     public Sec<String> sendPairingCode(String code) {
-        // todo: this will be less atrocious when I update the protocol
-        synchronized (operationQueue) {
-
-            SecAdapter.SecWithAdapter<String> secWithAdapter = SecAdapter.createThreadless();
-
-            OperationQueueEntry entry = new OperationQueueEntry(secWithAdapter.secAdapter(), code);
-            synchronized (operationQueue) {
-                operationQueue.add(entry);
-                operationQueue.notifyAll();
-            }
-
-            // do this after to prevent race conditions while avoiding needing a lock
-            if (dead) {
-                operationQueue.remove(entry);
-                return Sec.premeditatedError(new IOException("connection is dead"));
-            }
-
-            return secWithAdapter.sec()
-                    .map(r -> switch (r) {
-                        case OP_UNAUTHORIZED -> throw new RemoteProtocolException(R.string.protocol_error_pairing_code_invalid, "pairing code invalid");
-                        case OP_UNSUPPORTED -> throw new RemoteProtocolException(R.string.protocol_error_op_unsupported, "operation not supported by tv");
-                        default -> r;
-                    });
-        }
+        return sendOperation(OP_TRY_PAIRING_CODE + " " + code);
     }
 
     public class InputForwarder implements InputHandler {
@@ -467,7 +363,7 @@ public class TVReceiverConnection implements Closeable {
 
         @Override
         public Sec<Void> cursorMove(int x, int y) {
-            return sendBasicOperation(OP_CURSOR_MOVE, String.valueOf(x), String.valueOf(y));
+            return sendBasicOperation(OP_CURSOR_MOVE + " " + x + " " + y);
         }
 
         @Override
@@ -509,17 +405,15 @@ public class TVReceiverConnection implements Closeable {
     public void close() {
         Log.d(TAG, "close()");
         dead = true;
-        thread.interrupt();
-
-        OperationQueueEntry entry;
-        while ((entry = operationQueue.poll()) != null)
-            entry.responseAdapter().throwError(new IOException("connection closed"));
-
-        resultCallbackThreadPool.shutdown();
 
         tryClose(socket);
-        tryClose(reader);
-        tryClose(writer);
+
+        if (eventJuggler != null && !eventJuggler.isDead()) {
+            eventJuggler.close();
+        } else if (eventJuggler == null) {
+            if (reader != null) tryClose(reader);
+            if (writer != null) tryClose(writer);
+        }
     }
 
 }

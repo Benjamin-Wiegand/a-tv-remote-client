@@ -1,6 +1,7 @@
 package io.benwiegand.atvremote.phone.helper;
 
 import android.content.Context;
+import android.os.SystemClock;
 import android.util.Log;
 
 import androidx.core.util.Supplier;
@@ -72,11 +73,11 @@ public class TestUtil {
      * @noinspection BusyWait
      */
     public static void busyWait(Supplier<Boolean> condition, long pollMs, long timeoutMs) {
-        long stopTime = System.currentTimeMillis() + timeoutMs;
+        long stopTime = SystemClock.elapsedRealtime() + timeoutMs;
         // busy waiting that I'm only allowing to make tests easier to write
         while (!condition.get()) {
             try {
-                long wait = Math.min(pollMs, stopTime - System.currentTimeMillis());
+                long wait = Math.min(pollMs, stopTime - SystemClock.elapsedRealtime());
                 if (wait < 0) break;
                 Thread.sleep(pollMs);
             } catch (InterruptedException e) {

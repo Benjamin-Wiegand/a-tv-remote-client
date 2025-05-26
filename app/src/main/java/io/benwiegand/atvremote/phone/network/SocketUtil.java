@@ -18,6 +18,11 @@ public class SocketUtil {
         tryClose((Closeable) connection);
     }
 
+    public static void tryClose(EventJuggler eventJuggler) {
+        if (eventJuggler.isDead()) return;
+        tryClose((Closeable) eventJuggler);
+    }
+
     public static void tryClose(TCPReader reader) {
         if (reader.isDead()) return;
         tryClose((Closeable) reader);

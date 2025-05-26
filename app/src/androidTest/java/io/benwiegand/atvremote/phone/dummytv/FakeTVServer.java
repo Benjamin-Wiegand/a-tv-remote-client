@@ -2,6 +2,7 @@ package io.benwiegand.atvremote.phone.dummytv;
 
 import static io.benwiegand.atvremote.phone.helper.TestUtil.catchAll;
 
+import android.os.SystemClock;
 import android.util.Log;
 
 import java.net.ServerSocket;
@@ -102,10 +103,10 @@ public class FakeTVServer {
     }
 
     public void waitForCounters(int connects, int disconnects, long timeoutMs) {
-        long stopTime = System.currentTimeMillis() + timeoutMs;
+        long stopTime = SystemClock.elapsedRealtime() + timeoutMs;
         synchronized (connectionCounterLock) {
             while (totalConnects != connects || totalDisconnects != disconnects) {
-                long waitTimeout = stopTime - System.currentTimeMillis();
+                long waitTimeout = stopTime - SystemClock.elapsedRealtime();
                 if (waitTimeout < 1) return;
                 catchAll(() -> connectionCounterLock.wait(waitTimeout));
             }

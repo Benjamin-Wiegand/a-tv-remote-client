@@ -83,7 +83,6 @@ public class ConnectionManager {
         Log.d(TAG, "connecting to tv at address: " + hostname + ":" + port);
         SSLSocket socket = (SSLSocket) factory.createSocket(hostname, port);
         try {
-            socket.setTcpNoDelay(true);
             socket.setTrafficClass(0x10 /* lowdelay */);
             socket.startHandshake();
             Log.d(TAG, "CipherSuite: " + socket.getSession().getCipherSuite());
@@ -98,7 +97,7 @@ public class ConnectionManager {
         }
     }
 
-    public TVReceiverConnection connectToTV(String hostname, int port, TVReceiverConnectionCallback callback) throws IOException, RequiresPairingException {
+    public TVReceiverConnection connectToTV(Context context, String hostname, int port, TVReceiverConnectionCallback callback) throws IOException, RequiresPairingException {
         SSLSocket socket;
         try {
             socket = openSocket(hostname, port, false);
@@ -122,14 +121,14 @@ public class ConnectionManager {
             throw new RuntimeException("TV sent bad cert", e);
         }
 
-        TVReceiverConnection connection = new TVReceiverConnection(socket, callback, token);
+        TVReceiverConnection connection = new TVReceiverConnection(context, socket, callback, token);
         connection.init();
         return connection;
     }
 
-    public TVReceiverConnection startPairingToTV(String hostname, int port, TVReceiverConnectionCallback callback) throws IOException {
+    public TVReceiverConnection startPairingToTV(Context context, String hostname, int port, TVReceiverConnectionCallback callback) throws IOException {
         SSLSocket socket = openSocket(hostname, port, true);
-        TVReceiverConnection connection = new TVReceiverConnection(socket, callback);
+        TVReceiverConnection connection = new TVReceiverConnection(context, socket, callback);
         try {
             connection.init();
         } catch (RequiresPairingException e) {
