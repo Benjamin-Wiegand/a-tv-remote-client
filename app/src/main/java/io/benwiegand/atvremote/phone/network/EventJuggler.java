@@ -25,6 +25,7 @@ import io.benwiegand.atvremote.phone.async.SecAdapter;
 import io.benwiegand.atvremote.phone.auth.ssl.KeyUtil;
 import io.benwiegand.atvremote.phone.network.event.EventResult;
 import io.benwiegand.atvremote.phone.network.event.InFlightEvent;
+import io.benwiegand.atvremote.phone.network.event.QueuedDisconnection;
 import io.benwiegand.atvremote.phone.network.event.QueuedEvent;
 import io.benwiegand.atvremote.phone.network.event.QueuedOutput;
 import io.benwiegand.atvremote.phone.network.event.QueuedResponse;
@@ -32,7 +33,6 @@ import io.benwiegand.atvremote.phone.protocol.MalformedEventException;
 import io.benwiegand.atvremote.phone.protocol.OperationDefinition;
 import io.benwiegand.atvremote.phone.protocol.RemoteProtocolException;
 import io.benwiegand.atvremote.phone.protocol.json.ErrorDetails;
-import io.benwiegand.atvremote.phone.stuff.ThrowingFunction;
 import io.benwiegand.atvremote.phone.stuff.ThrowingRunnable;
 import io.benwiegand.atvremote.phone.util.ErrorUtil;
 
@@ -57,7 +57,7 @@ public class EventJuggler implements Closeable {
     // incoming events
     private final Thread inThread = new Thread(runLoop(this::inputLoop));
     private final TCPReader reader;
-    private final Map<String, ThrowingFunction<String, String>> operationMap = new ConcurrentHashMap<>();
+    private final Map<String, OperationDefinition> operationMap = new ConcurrentHashMap<>();
     private final Semaphore outQueueSemaphore = new Semaphore(0);
 
     // outgoing events
@@ -93,7 +93,7 @@ public class EventJuggler implements Closeable {
         inThread.start();
         outThread.start();
         for (OperationDefinition operation : operations) {
-            operationMap.put(operation.operation(), operation.handler());
+            operationMap.put(operation.operation(), operation);
         }
     }
 
@@ -241,20 +241,22 @@ public class EventJuggler implements Closeable {
                 extra = line.substring(iExtra + 1);
             }
 
-            ThrowingFunction<String, String> opFunction = operationMap.get(op);
+            OperationDefinition definition = operationMap.get(op);
 
-            if (opFunction == null) {
+            if (definition == null) {
                 enqueueOutput(new QueuedResponse("!" + eventId + " " + OP_UNSUPPORTED));
                 return;
             }
 
             try {
-                String responseExtra = opFunction.apply(extra);
+                String responseExtra = definition.handler().apply(extra);
                 String response = "!" + eventId + " " + OP_CONFIRM;
                 if (responseExtra != null) response += " " + responseExtra;
                 enqueueOutput(new QueuedResponse(response));
             } catch (Throwable t) {
                 enqueueOutput(createErrorResponse(eventId, t));
+                if (definition.closeConnectionOnFailure())
+                    enqueueOutput(new QueuedDisconnection());
             }
         });
 
@@ -321,6 +323,10 @@ public class EventJuggler implements Closeable {
                         threadPool.execute(() -> event.adapter().throwError(t));
                         throw t;
                     }
+                }
+                case DISCONNECTION -> {
+                    Log.i(TAG, "disconnection event");
+                    tryClose(this);
                 }
             }
         }

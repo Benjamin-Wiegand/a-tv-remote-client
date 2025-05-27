@@ -351,6 +351,9 @@ public class ConnectionTest {
             binder.refreshCertificates();
             assertTrue("expecting service to refresh certificates without falling back to re-init", binder.isInitialized());
 
+            // TV no longer disconnects automatically
+            binder.disconnect();
+
             // ensure disconnected
             callback.waitForNextCall(6, TimeUnit.SECONDS);
             callback.assertCallTo("onDisconnected");    // throwable here is undefined behavior (it doesn't matter)

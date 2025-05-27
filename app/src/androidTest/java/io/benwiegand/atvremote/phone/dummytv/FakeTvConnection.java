@@ -124,7 +124,7 @@ public class FakeTvConnection {
                     } else {
                         throw new RemoteProtocolException(TEST_ERROR_CODE_INVALID);
                     }
-                }),
+                }, true),
                 new OperationDefinition(OP_PING, () -> {})
         });
 
