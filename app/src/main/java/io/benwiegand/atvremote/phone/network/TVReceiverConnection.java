@@ -137,7 +137,7 @@ public class TVReceiverConnection implements Closeable {
             }
 
             Log.i(TAG, "tv connected: " + socket.getRemoteSocketAddress());
-            eventJuggler.start(new OperationDefinition[0]);
+            eventJuggler.start(getOperationDefinitions());
 
         } catch (InterruptedException e) {
             Log.e(TAG, "interrupted");
@@ -414,6 +414,12 @@ public class TVReceiverConnection implements Closeable {
             if (reader != null) tryClose(reader);
             if (writer != null) tryClose(writer);
         }
+    }
+
+    private OperationDefinition[] getOperationDefinitions() {
+        return new OperationDefinition[] {
+                new OperationDefinition(OP_PING, () -> {}),
+        };
     }
 
 }
