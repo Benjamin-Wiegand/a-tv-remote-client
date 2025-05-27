@@ -131,6 +131,11 @@ public class UiTest {
                 a.getString(expected), getTextContent(a, id));
     }
 
+    private void assertStringMatch(Activity a, @IdRes int id, String expected) throws InterruptedException {
+        assertEquals("expecting text to match",
+                expected, getTextContent(a, id));
+    }
+
     private void assertStringResourceMatch(Activity a, @IdRes int id, @StringRes int expected, long timeoutMs) throws InterruptedException {
         busyWait(() -> {
             try {
@@ -238,7 +243,6 @@ public class UiTest {
         assertTrue("expecting pairing screen",
                 waitForUiElement(pairingActivity, R.id.pairing_code_text, 5000));
         TVReceiverConnection connection = getClientConnectionFromActivity(pairingActivity);
-        connectionCounter.expectConnection();
 
         // enter the pairing code
         enterPairingCode(pairingActivity, FakeTvConnection.TEST_CODE);
@@ -373,7 +377,7 @@ public class UiTest {
         assertTrue("expecting error screen",
                 waitForUiElement(a, R.id.stack_trace_dropdown, 5000));
         Thread.sleep(animationDelay);
-        assertStringResourceMatch(a, R.id.description_text, R.string.protocol_error_pairing_code_invalid);
+        assertStringMatch(a, R.id.description_text, FakeTvConnection.TEST_ERROR_CODE_INVALID);
 
         // should be disconnected
         busyWait(connection::isDead, 100, 5000);
@@ -426,7 +430,7 @@ public class UiTest {
 
 
         // test correct code
-
+        connectionCounter.expectConnection();
         doPairing(in, a);
 
 
@@ -514,7 +518,7 @@ public class UiTest {
         Sec<PairingActivity> pairingActivitySec = listenForActivity(in, PairingActivity.class, 5000);
         Activity[] stack = toRemoteFromLauncherStack(in);
         PairingActivity pairingActivity = blockAndFlatten(pairingActivitySec, 5000);
-        connectionCounter.expect(1, 1);
+        connectionCounter.expect(2, 1);
 
         assertTrue("expecting pairing screen",
                 waitForUiElement(pairingActivity, R.id.pairing_code_text, 5000));

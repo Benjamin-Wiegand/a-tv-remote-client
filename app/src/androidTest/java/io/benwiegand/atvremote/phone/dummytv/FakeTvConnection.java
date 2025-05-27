@@ -1,28 +1,32 @@
 package io.benwiegand.atvremote.phone.dummytv;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static io.benwiegand.atvremote.phone.helper.TestUtil.busyWait;
 import static io.benwiegand.atvremote.phone.helper.TestUtil.catchAll;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.INIT_OP_CONNECT;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.INIT_OP_PAIR;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_CONFIRM;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_PING;
-import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_UNAUTHORIZED;
+import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_TRY_PAIRING_CODE;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.VERSION_1;
 
 import android.util.Log;
 
+import androidx.test.platform.app.InstrumentationRegistry;
+
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
 
+import io.benwiegand.atvremote.phone.network.EventJuggler;
 import io.benwiegand.atvremote.phone.network.TCPReader;
 import io.benwiegand.atvremote.phone.network.TCPWriter;
+import io.benwiegand.atvremote.phone.protocol.OperationDefinition;
+import io.benwiegand.atvremote.phone.protocol.RemoteProtocolException;
 
 public class FakeTvConnection {
     private static final String TAG = FakeTvConnection.class.getSimpleName();
@@ -33,10 +37,12 @@ public class FakeTvConnection {
     private static final long KEEPALIVE_INTERVAL = 5000;
     private static final long KEEPALIVE_TIMEOUT = KEEPALIVE_INTERVAL * 2;
 
+    public static final String TEST_ERROR_CODE_INVALID = "THE PAIRING CODE WAS WRONG, BUT THIS MESSAGE IS HOPEFULLY RIGHT";
     public static final String TEST_TOKEN = "TEST_TOKEN_1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     public static final int TEST_CODE = 123456;
     public static final int TEST_INCORRECT_CODE = 696969;
 
+    private EventJuggler eventJuggler = null;
     private final SSLSocket socket;
 
     private final Thread thread = new Thread(this::run);
@@ -55,7 +61,8 @@ public class FakeTvConnection {
 
     public void stop(long timeout) {
         die = true;
-        catchAll(() -> thread.join(timeout));
+        eventJuggler.close();
+        busyWait(() -> dead, 100, timeout);
         assertTrue("expecting connection to die within timeout", dead);
     }
 
@@ -68,6 +75,7 @@ public class FakeTvConnection {
 
                 TCPReader reader = TCPReader.createFromStream(socket.getInputStream(), CHARSET);
                 TCPWriter writer = TCPWriter.createFromStream(socket.getOutputStream(), CHARSET);
+                eventJuggler = new EventJuggler(InstrumentationRegistry.getInstrumentation().getTargetContext(), reader, writer, this::onSocketDeath, KEEPALIVE_INTERVAL, KEEPALIVE_TIMEOUT);
 
                 assertEquals("protocol version 1",
                         VERSION_1, reader.nextLine(SOCKET_AUTH_TIMEOUT));
@@ -87,55 +95,47 @@ public class FakeTvConnection {
                 } catch (IOException e) {
                     Log.i(TAG, "lost connection with client", e);
                 }
-
-                Log.i(TAG, "end of connection for " + socket.getRemoteSocketAddress());
-                assertTrue("socket should be closed at end of test", socket.isClosed());
-
             } catch (SSLHandshakeException e) {
                 Log.v(TAG, "SSL error, client most likely failed certificate validation (not paired)", e);
-            } finally {
                 dead = true;
                 onDie.run();
             }
         });
     }
 
+    private void onSocketDeath(Throwable throwable) {
+        Log.d(TAG, "Socket Death!", throwable);
+        dead = true;
+        onDie.run();
+        catchAll(socket::close);
+    }
+
     private void doPair(SSLSocket socket, TCPReader reader, TCPWriter writer) throws IOException, InterruptedException {
-        String line;
-        do {
-            writer.sendLine(OP_CONFIRM);
-            line = reader.nextLine(KEEPALIVE_TIMEOUT);
-            assertNotNull("expecting a ping before the timeout", line);
-        } while (!die && line.equals(OP_PING));
+        // todo: test errors here
+        writer.sendLine(OP_CONFIRM);
 
-        if (die) {
-            socket.close();
-            return;
-        }
+        eventJuggler.start(new OperationDefinition[]{
+                new OperationDefinition(OP_TRY_PAIRING_CODE, codeString -> {
+                    int code = Integer.parseInt(codeString);
+                    Log.d(TAG, "got paring code: " + code);
 
-        int code = Integer.parseInt(line);
-        Log.d(TAG, "got paring code: " + code);
+                    if (code == TEST_CODE) {
+                        return TEST_TOKEN;
+                    } else {
+                        throw new RemoteProtocolException(TEST_ERROR_CODE_INVALID);
+                    }
+                }),
+                new OperationDefinition(OP_PING, () -> {})
+        });
 
-        if (code == TEST_CODE) {
-            writer.sendLine(TEST_TOKEN);
-        } else {
-            writer.sendLine(OP_UNAUTHORIZED);
-        }
-
-        socket.close();
     }
 
     private void doConnect(SSLSocket socket, TCPReader reader, TCPWriter writer) throws IOException, InterruptedException {
-        while (!die) {
-            String line = reader.nextLine(KEEPALIVE_TIMEOUT);
-            assertNotNull("expecting a ping before the timeout", line);
+        writer.sendLine(OP_CONFIRM);
 
-            // always confirm op
-            String[] opLine = line.split(" ", 2);
-            Log.v(TAG, "got op: " + Arrays.toString(opLine));
-            writer.sendLine(OP_CONFIRM);
-        }
-
-        socket.close();
+        eventJuggler.start(new OperationDefinition[]{
+                // todo: write actual operations
+                new OperationDefinition(OP_PING, () -> {})
+        });
     }
 }

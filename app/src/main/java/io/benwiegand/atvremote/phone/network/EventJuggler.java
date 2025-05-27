@@ -80,7 +80,7 @@ public class EventJuggler implements Closeable {
     private final Object handlingTimeoutsLock = new Object();
     private boolean handlingTimeouts = false;
 
-    EventJuggler(Context context, TCPReader reader, TCPWriter writer, Consumer<Throwable> onDeath, long pingInterval, long pingTimeout) {
+    public EventJuggler(Context context, TCPReader reader, TCPWriter writer, Consumer<Throwable> onDeath, long pingInterval, long pingTimeout) {
         this.context = context;
         this.reader = reader;
         this.writer = writer;
