@@ -126,27 +126,30 @@ public class UiTest {
         });
     }
 
-    private void assertStringResourceMatch(Activity a, @IdRes int id, @StringRes int expected) throws InterruptedException {
-        assertEquals("expecting text to match",
-                a.getString(expected), getTextContent(a, id));
-    }
-
     private void assertStringMatch(Activity a, @IdRes int id, String expected) throws InterruptedException {
         assertEquals("expecting text to match",
                 expected, getTextContent(a, id));
     }
 
-    private void assertStringResourceMatch(Activity a, @IdRes int id, @StringRes int expected, long timeoutMs) throws InterruptedException {
+    private void assertStringMatch(Activity a, @IdRes int id, String expected, long timeoutMs) throws InterruptedException {
         busyWait(() -> {
             try {
-                assertStringResourceMatch(a, id, expected);
+                assertStringMatch(a, id, expected);
                 return true;
             } catch (Throwable t) {
                 return false;
             }
         }, 100, timeoutMs);
 
-        assertStringResourceMatch(a, id, expected);
+        assertStringMatch(a, id, expected);
+    }
+
+    private void assertStringResourceMatch(Activity a, @IdRes int id, @StringRes int expected) throws InterruptedException {
+        assertStringMatch(a, id, a.getString(expected));
+    }
+
+    private void assertStringResourceMatch(Activity a, @IdRes int id, @StringRes int expected, long timeoutMs) throws InterruptedException {
+        assertStringMatch(a, id, a.getString(expected), timeoutMs);
     }
 
     private void enterText(Activity a, @IdRes int target, String text) throws InterruptedException {
@@ -320,7 +323,7 @@ public class UiTest {
 
         // navigate to remote to trigger pairing
         Sec<PairingActivity> pairingActivitySec = listenForActivity(in, PairingActivity.class, 5000);
-        toRemoteFromLauncher(in);
+        Activity[] stack = toRemoteFromLauncherStack(in);
         PairingActivity a = blockAndFlatten(pairingActivitySec, 5000);
 
         assertNotNull("expecting PairingActivity to open", a);
@@ -377,7 +380,7 @@ public class UiTest {
         assertTrue("expecting error screen",
                 waitForUiElement(a, R.id.stack_trace_dropdown, 5000));
         Thread.sleep(animationDelay);
-        assertStringMatch(a, R.id.description_text, FakeTvConnection.TEST_ERROR_CODE_INVALID);
+        assertStringMatch(a, R.id.description_text, FakeTvConnection.TEST_ERROR_CODE_INVALID, 5000);
 
         // should be disconnected
         busyWait(connection::isDead, 100, 5000);
@@ -431,7 +434,10 @@ public class UiTest {
 
         // test correct code
         connectionCounter.expectConnection();
-        doPairing(in, a);
+        doPairing(in, a).finish();
+
+        for (int i = 1; i < stack.length; i++)
+            stack[i].finish();
 
 
         server.stop();
@@ -602,6 +608,16 @@ public class UiTest {
         server.stop();
     }
 
+//    @Test
+    public void pairing_Test_Loop() throws Throwable {
+        for (int i = 0; i < 500; i++) {
+            try {
+                new UiTest().pairing_Test();
+            } catch (Throwable t) {
+                throw new Exception("Failed on iteration " + i, t);
+            }
+        }
+    }
 
 
 }
