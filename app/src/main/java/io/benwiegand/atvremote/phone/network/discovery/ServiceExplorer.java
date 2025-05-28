@@ -58,7 +58,7 @@ public class ServiceExplorer implements NsdManager.DiscoveryListener {
     public void onStartDiscoveryFailed(String serviceType, int errorCode, Throwable t) {
         ServiceDiscoveryException e = createExceptionForErrorCode(errorCode, t);
         Log.e(TAG, "discovery failed for service type: " + serviceType, e);
-        discoveryCallback.discoveryFailure(e);
+        discoveryCallback.discoveryFailure(e, false);
     }
 
     @Override
@@ -111,7 +111,7 @@ public class ServiceExplorer implements NsdManager.DiscoveryListener {
     public void onStopDiscoveryFailed(String serviceType, int errorCode, Throwable t) {
         ServiceDiscoveryException e = createExceptionForErrorCode(errorCode, t);
         Log.e(TAG, "stop discovery failed for service type: " + serviceType, e);
-        discoveryCallback.discoveryFailure(e);
+        discoveryCallback.discoveryFailure(e, true);
         // the documentation example has a call to stopServiceDiscovery() here, but that just seems to cause a crash
     }
 

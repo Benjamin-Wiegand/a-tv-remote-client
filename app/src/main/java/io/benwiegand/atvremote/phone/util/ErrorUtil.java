@@ -62,7 +62,7 @@ public class ErrorUtil {
         }
     }
 
-    public static void inflateErrorScreen(View root, ErrorSpec error) {
+    public static void inflateErrorScreen(View root, ErrorSpec error, Runnable onClose) {
         TextView titleText = root.findViewById(R.id.title_text);
         titleText.setText(error.title());
 
@@ -83,9 +83,23 @@ public class ErrorUtil {
             dropdown.setVisibility(View.GONE);
         }
 
-        inflateButtonPreset(root.findViewById(R.id.positive_button), error.positiveAction());
-        inflateButtonPreset(root.findViewById(R.id.neutral_button), error.neutralAction());
-        inflateButtonPreset(root.findViewById(R.id.negative_button), error.negativeAction());
+        UiUtil.ButtonPreset positiveAction = error.positiveAction();
+        UiUtil.ButtonPreset neutralAction = error.neutralAction();
+        UiUtil.ButtonPreset negativeAction = error.negativeAction();
+
+        if (onClose != null) {
+            if (positiveAction != null) positiveAction = positiveAction.wrapAction(onClose);
+            if (neutralAction != null) neutralAction = neutralAction.wrapAction(onClose);
+            if (negativeAction != null) negativeAction = negativeAction.wrapAction(onClose);
+        }
+
+        inflateButtonPreset(root.findViewById(R.id.positive_button), positiveAction);
+        inflateButtonPreset(root.findViewById(R.id.neutral_button), neutralAction);
+        inflateButtonPreset(root.findViewById(R.id.negative_button), negativeAction);
+    }
+
+    public static void inflateErrorScreen(View root, ErrorSpec error) {
+        inflateErrorScreen(root, error, null);
     }
 
     public static AlertDialog inflateErrorScreenAsDialog(Context context, ErrorSpec error) {

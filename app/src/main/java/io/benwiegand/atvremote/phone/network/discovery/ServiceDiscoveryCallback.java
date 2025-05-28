@@ -10,5 +10,5 @@ public interface ServiceDiscoveryCallback {
 
     void discoveryStarted();
     void discoveryStopped();
-    void discoveryFailure(ServiceDiscoveryException e);
+    void discoveryFailure(ServiceDiscoveryException e, boolean whileStopping);
 }

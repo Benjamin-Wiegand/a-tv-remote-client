@@ -45,6 +45,10 @@ public class ServiceDiscoveryException extends ErrorMessageException {
         };
     }
 
+    public int getErrorCode() {
+        return errorCode;
+    }
+
     public static String errorCodeDebugString(int errorCode) {
         return switch (errorCode) {
             case NsdManager.FAILURE_INTERNAL_ERROR -> "FAILURE_INTERNAL_ERROR";

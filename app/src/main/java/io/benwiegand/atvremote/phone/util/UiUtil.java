@@ -29,7 +29,17 @@ public class UiUtil {
     public record ButtonPreset(
             @StringRes int text,
             View.OnClickListener clickListener
-    ) {}
+    ) {
+
+        public ButtonPreset wrapAction(Runnable after) {
+            return new ButtonPreset(text(), v -> {
+                if (clickListener() != null)
+                    clickListener().onClick(v);
+                after.run();
+            });
+        }
+
+    }
 
     public static void inflateButtonPreset(Button button, ButtonPreset preset) {
         if (preset == null) {

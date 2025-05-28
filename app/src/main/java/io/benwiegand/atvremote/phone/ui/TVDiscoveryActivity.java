@@ -1,5 +1,6 @@
 package io.benwiegand.atvremote.phone.ui;
 
+import static io.benwiegand.atvremote.phone.network.discovery.ServiceExplorer.FAILURE_THE_DOCUMENTATION_LIES;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.MDNS_SERVICE_TYPE;
 
 import android.content.Intent;
@@ -8,6 +9,7 @@ import android.net.nsd.NsdServiceInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -28,6 +30,7 @@ import io.benwiegand.atvremote.phone.network.discovery.ServiceDiscoveryCallback;
 import io.benwiegand.atvremote.phone.network.discovery.ServiceDiscoveryException;
 import io.benwiegand.atvremote.phone.network.discovery.ServiceExplorer;
 import io.benwiegand.atvremote.phone.util.ErrorUtil;
+import io.benwiegand.atvremote.phone.util.UiUtil;
 
 public class TVDiscoveryActivity extends DynamicColorsCompatActivity implements ServiceDiscoveryCallback {
     private static final String TAG = TVDiscoveryActivity.class.getSimpleName();
@@ -40,27 +43,55 @@ public class TVDiscoveryActivity extends DynamicColorsCompatActivity implements 
     private final List<View> staleServices = new ArrayList<>();
     private ServiceExplorer serviceExplorer = null;
 
+    private View errorView = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_tvdiscovery);
+        setContentView(R.layout.layout_frame);
+
+        FrameLayout frame = findViewById(R.id.frame);
+        getLayoutInflater().inflate(R.layout.activity_tvdiscovery, frame, true);
 
         EdgeToEdge.enable(this);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.frame), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
         findViewById(R.id.manual_connection_button)
-                .setOnClickListener(v -> {
-                    Intent intent = new Intent(this, ManualConnectionActivity.class);
-                    startActivity(intent);
-                });
+                .setOnClickListener(v -> launchManualConnection());
 
     }
 
-    private void removeStaleEntries() {
+    private void launchManualConnection() {
+        Intent intent = new Intent(this, ManualConnectionActivity.class);
+        startActivity(intent);
+    }
+
+    private void hideError() {
+        runOnUiThread(() -> {
+            if (errorView == null) return;
+            FrameLayout frame = findViewById(R.id.frame);
+            frame.removeView(errorView);
+            errorView = null;
+        });
+    }
+
+    private void showError(ErrorUtil.ErrorSpec error) {
+        runOnUiThread(() -> {
+            hideError();
+
+            FrameLayout frame = findViewById(R.id.frame);
+            errorView = getLayoutInflater().inflate(R.layout.layout_error, frame, false);
+            ErrorUtil.inflateErrorScreen(errorView, error, this::hideError);
+            frame.addView(errorView);
+        });
+    }
+
+
+        private void removeStaleEntries() {
         runOnUiThread(() -> {
             LinearLayout resultList = findViewById(R.id.discovery_result_list);
             staleServices.forEach(resultList::removeView);
@@ -224,19 +255,27 @@ public class TVDiscoveryActivity extends DynamicColorsCompatActivity implements 
 
     @Override
     public void discoveryStopped() {
-        runOnUiThread(() -> {
-            findViewById(R.id.service_discovery_indicator)
-                    .setVisibility(View.INVISIBLE);
-        });
+        serviceExplorer = null;
+        runOnUiThread(() -> findViewById(R.id.service_discovery_indicator)
+                .setVisibility(View.INVISIBLE));
     }
 
     @Override
-    public void discoveryFailure(ServiceDiscoveryException e) {
+    public void discoveryFailure(ServiceDiscoveryException e, boolean whileStopping) {
+        if (whileStopping && e.getErrorCode() == FAILURE_THE_DOCUMENTATION_LIES & e.getCause() instanceof IllegalArgumentException) {
+            // it's complaining that discovery was already stopped
+            return;
+        }
+
         runOnUiThread(() -> {
             findViewById(R.id.service_discovery_indicator)
                     .setVisibility(View.INVISIBLE);
 
-            // todo: error message
+            showError(new ErrorUtil.ErrorSpec(R.string.discovery_failed_init, e,
+                    new UiUtil.ButtonPreset(R.string.button_retry, v -> startDiscovery()),
+                    new UiUtil.ButtonPreset(R.string.button_cancel, v -> finish()),
+                    new UiUtil.ButtonPreset(R.string.button_manual_connection, v -> launchManualConnection())
+            ));
         });
     }
 
