@@ -7,6 +7,13 @@ import android.util.Log;
 public class ServiceExplorer implements NsdManager.DiscoveryListener {
     private static final String TAG = ServiceExplorer.class.getSimpleName();
 
+    /**
+     * despite the documentation claiming start failures are sent to onStartDiscoveryFailed(),
+     * sometimes (most of the time) it does not do that and instead throws in startServiceDiscovery().
+     * the same goes for onStopDiscoveryFailed() with stopServiceDiscovery()
+     */
+    private static final int FAILURE_THE_DOCUMENTATION_LIES = -0xDEADBEEF;
+
     private final NsdManager nsdManager;
 
     private final ServiceDiscoveryCallback discoveryCallback;
@@ -17,11 +24,19 @@ public class ServiceExplorer implements NsdManager.DiscoveryListener {
     }
 
     public void startDiscovery(String serviceType) {
-        nsdManager.discoverServices(serviceType, NsdManager.PROTOCOL_DNS_SD, this);
+        try {
+            nsdManager.discoverServices(serviceType, NsdManager.PROTOCOL_DNS_SD, this);
+        } catch (Throwable t) {
+            onStartDiscoveryFailed(serviceType, FAILURE_THE_DOCUMENTATION_LIES, t);
+        }
     }
 
     public void stopDiscovery() {
-        nsdManager.stopServiceDiscovery(this);
+        try {
+            nsdManager.stopServiceDiscovery(this);
+        } catch (Throwable t) {
+            onStopDiscoveryFailed(null, FAILURE_THE_DOCUMENTATION_LIES, t);
+        }
     }
 
     @Override
@@ -32,7 +47,11 @@ public class ServiceExplorer implements NsdManager.DiscoveryListener {
 
     @Override
     public void onStartDiscoveryFailed(String serviceType, int errorCode) {
-        ServiceDiscoveryException e = createExceptionForErrorCode(errorCode);
+        onStartDiscoveryFailed(serviceType, errorCode, null);
+    }
+
+    public void onStartDiscoveryFailed(String serviceType, int errorCode, Throwable t) {
+        ServiceDiscoveryException e = createExceptionForErrorCode(errorCode, t);
         Log.e(TAG, "discovery failed for service type: " + serviceType, e);
         discoveryCallback.discoveryFailure(e);
     }
@@ -53,7 +72,7 @@ public class ServiceExplorer implements NsdManager.DiscoveryListener {
 
             @Override
             public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                ServiceDiscoveryException e = createExceptionForErrorCode(errorCode);
+                ServiceDiscoveryException e = createExceptionForErrorCode(errorCode, null);
                 Log.w(TAG, "resolve failed for: " + serviceInfo, e);
 
                 if (maxTries > 0)
@@ -78,14 +97,19 @@ public class ServiceExplorer implements NsdManager.DiscoveryListener {
 
     @Override
     public void onStopDiscoveryFailed(String serviceType, int errorCode) {
-        ServiceDiscoveryException e = createExceptionForErrorCode(errorCode);
-        Log.e(TAG, "stop discovery failed for service type: " + serviceType, e);
-        nsdManager.stopServiceDiscovery(this);
-        discoveryCallback.discoveryFailure(e);
+        onStopDiscoveryFailed(serviceType, errorCode, null);
     }
 
-    private ServiceDiscoveryException createExceptionForErrorCode(int errorCode) {
-        return new ServiceDiscoveryException(mapErrorCodeDebugString(errorCode));
+    public void onStopDiscoveryFailed(String serviceType, int errorCode, Throwable t) {
+        ServiceDiscoveryException e = createExceptionForErrorCode(errorCode, t);
+        Log.e(TAG, "stop discovery failed for service type: " + serviceType, e);
+        discoveryCallback.discoveryFailure(e);
+        // the documentation example has a call to stopServiceDiscovery() here, but that just seems to cause a crash
+    }
+
+    private ServiceDiscoveryException createExceptionForErrorCode(int errorCode, Throwable t) {
+        if (t == null) return new ServiceDiscoveryException(mapErrorCodeDebugString(errorCode));
+        return new ServiceDiscoveryException(mapErrorCodeDebugString(errorCode), t);
     }
 
     private String mapErrorCodeDebugString(int errorCode) {
@@ -95,6 +119,7 @@ public class ServiceExplorer implements NsdManager.DiscoveryListener {
             case NsdManager.FAILURE_MAX_LIMIT -> "FAILURE_MAX_LIMIT";
             case NsdManager.FAILURE_OPERATION_NOT_RUNNING -> "FAILURE_OPERATION_NOT_RUNNING";
             case NsdManager.FAILURE_BAD_PARAMETERS -> "FAILURE_BAD_PARAMETERS";
+            case FAILURE_THE_DOCUMENTATION_LIES -> "FAILURE_THE_DOCUMENTATION_LIES";
             default -> "(UNKNOWN_ERROR_CODE " + errorCode + ")";
         };
     }
