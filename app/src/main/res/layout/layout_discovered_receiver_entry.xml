@@ -8,20 +8,44 @@
     android:paddingVertical="8dp"
     android:paddingHorizontal="12dp"
     android:background="?attr/selectableItemBackground"
-    android:clickable="true">
+    android:clickable="false"
+    >
 
-    <ImageView
+    <FrameLayout
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_marginRight="8dp"
-        app:tint="?android:attr/colorForeground"
-        android:src="@drawable/tv"
-        android:importantForAccessibility="no"
-        tools:ignore="RtlHardcoded" /> <!-- no accessibility, it's just a meaningless static tv icon -->
+        android:layout_weight="0"
+        android:layout_marginEnd="8dp"
+        android:padding="8dp"
+        >
+
+        <ProgressBar
+            android:id="@+id/resolving_indicator"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:indeterminate="true"
+            android:contentDescription="@string/discovery_result_entry_resolving"
+            android:visibility="visible"
+            />
+
+        <ImageView
+            android:id="@+id/resolved_indicator"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:tint="?android:attr/colorForeground"
+            android:src="@drawable/tv"
+            android:importantForAccessibility="no"
+            android:visibility="gone"
+            tools:visibility="visible"
+            /> <!-- no accessibility, it's just a meaningless static tv icon -->
+
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_gravity="center_vertical"
         android:orientation="vertical">
 
         <TextView
@@ -39,5 +63,16 @@
             tools:text="tcp://42.0.69.69:6969" />
 
     </LinearLayout>
+
+    <Button
+        android:id="@+id/retry_resolve_button"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:text="@string/button_retry"
+        android:visibility="gone"
+        tools:visibility="visible"
+        />
 
 </LinearLayout>
