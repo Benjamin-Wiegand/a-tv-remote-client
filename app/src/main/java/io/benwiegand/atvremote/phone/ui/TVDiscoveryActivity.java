@@ -87,7 +87,10 @@ public class TVDiscoveryActivity extends DynamicColorsCompatActivity implements 
         View resolvingIndicator = receiverEntry.findViewById(R.id.resolving_indicator);
         View retryButton = receiverEntry.findViewById(R.id.retry_resolve_button);
 
-        uriText.setText("tcp://" + hostname + ":" + port);
+        uriText.setText(MessageFormat.format(
+                getString(R.string.discovery_result_entry_uri_format),
+                hostname, String.valueOf(port) /* port numbers shouldn't have commas */));
+
         receiverEntry.setOnClickListener(v -> {
             Log.d(TAG, "Starting remote activity");
 

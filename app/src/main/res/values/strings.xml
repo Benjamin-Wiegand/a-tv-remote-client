@@ -52,6 +52,7 @@
     <string name="searching_for_tvs">searching for TVs running the receiver app</string>
     <string name="button_manual_connection">connect manually</string>
     <string name="discovery_result_entry_resolving">resolving…</string>
+    <string name="discovery_result_entry_uri_format">tcp://{0}:{1}</string>
 
     <!-- tv discovery errors -->
     <string name="discovery_failed_resolution">resolve failed: {0}</string>
