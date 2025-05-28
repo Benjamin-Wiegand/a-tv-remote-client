@@ -386,4 +386,14 @@ public class ConnectionTest {
         server.stop();
     }
 
+//    @Test
+    public void autoDisconnect_Test_Loop() throws Exception {
+        for (int i = 0; i < 500; i++) {
+            try {
+                new ConnectionTest().autoDisconnect_Test();
+            } catch (Throwable t) {
+                throw new Exception("Failed on iteration " + i, t);
+            }
+        }
+    }
 }

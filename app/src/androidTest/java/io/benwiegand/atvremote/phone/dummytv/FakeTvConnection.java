@@ -80,7 +80,7 @@ public class FakeTvConnection {
 
                 TCPReader reader = TCPReader.createFromStream(socket.getInputStream(), CHARSET);
                 TCPWriter writer = TCPWriter.createFromStream(socket.getOutputStream(), CHARSET);
-                eventJuggler = new EventJuggler(InstrumentationRegistry.getInstrumentation().getTargetContext(), reader, writer, this::onSocketDeath, KEEPALIVE_INTERVAL, KEEPALIVE_TIMEOUT);
+                eventJuggler = new EventJuggler(InstrumentationRegistry.getInstrumentation().getTargetContext(), socket, reader, writer, this::onSocketDeath, KEEPALIVE_INTERVAL, KEEPALIVE_TIMEOUT);
 
                 assertEquals("protocol version 1",
                         VERSION_1, reader.nextLine(SOCKET_AUTH_TIMEOUT));

@@ -85,7 +85,7 @@ public class TVReceiverConnection implements Closeable {
 
             reader = TCPReader.createFromStream(socket.getInputStream(), CHARSET);
             writer = TCPWriter.createFromStream(socket.getOutputStream(), CHARSET);
-            eventJuggler = new EventJuggler(context, reader, writer, this::onSocketDeath, KEEPALIVE_INTERVAL, KEEPALIVE_TIMEOUT);
+            eventJuggler = new EventJuggler(context, socket, reader, writer, this::onSocketDeath, KEEPALIVE_INTERVAL, KEEPALIVE_TIMEOUT);
 
             writer.sendLine(VERSION_1);
 
@@ -406,11 +406,10 @@ public class TVReceiverConnection implements Closeable {
         Log.d(TAG, "close()");
         dead = true;
 
-        tryClose(socket);
-
         if (eventJuggler != null && !eventJuggler.isDead()) {
             eventJuggler.close();
         } else if (eventJuggler == null) {
+            tryClose(socket);
             if (reader != null) tryClose(reader);
             if (writer != null) tryClose(writer);
         }
