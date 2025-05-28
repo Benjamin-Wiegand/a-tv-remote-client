@@ -9,6 +9,7 @@ import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.INIT_OP_P
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_CONFIRM;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_PING;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_TRY_PAIRING_CODE;
+import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_UNAUTHORIZED;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.VERSION_1;
 
 import android.util.Log;
@@ -110,6 +111,10 @@ public class FakeTvConnection {
         catchAll(socket::close);
     }
 
+    private void close() {
+        catchAll(socket::close);
+    }
+
     private void doPair(SSLSocket socket, TCPReader reader, TCPWriter writer) throws IOException, InterruptedException {
         // todo: test errors here
         writer.sendLine(OP_CONFIRM);
@@ -131,7 +136,16 @@ public class FakeTvConnection {
     }
 
     private void doConnect(SSLSocket socket, TCPReader reader, TCPWriter writer) throws IOException, InterruptedException {
-        writer.sendLine(OP_CONFIRM);
+        String auth = reader.nextLine(SOCKET_AUTH_TIMEOUT);
+        if (TEST_TOKEN.equals(auth)) {
+            Log.v(TAG, "auth valid");
+            writer.sendLine(OP_CONFIRM);
+        } else {
+            Log.v(TAG, "auth rejected: " + auth);
+            writer.sendLine(OP_UNAUTHORIZED);
+            close();
+            return;
+        }
 
         eventJuggler.start(new OperationDefinition[]{
                 // todo: write actual operations
