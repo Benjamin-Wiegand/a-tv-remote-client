@@ -7,6 +7,10 @@ import static io.benwiegand.atvremote.phone.helper.TestUtil.catchAll;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.INIT_OP_CONNECT;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.INIT_OP_PAIR;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_CONFIRM;
+import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_DPAD_DOWN;
+import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_DPAD_LEFT;
+import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_DPAD_RIGHT;
+import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_DPAD_UP;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_PING;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_TRY_PAIRING_CODE;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_UNAUTHORIZED;
@@ -148,7 +152,10 @@ public class FakeTvConnection {
         }
 
         eventJuggler.start(new OperationDefinition[]{
-                // todo: write actual operations
+                new OperationDefinition(OP_DPAD_UP, () -> Log.d(TAG, "got DPAD_UP")),
+                new OperationDefinition(OP_DPAD_DOWN, () -> Log.d(TAG, "got DPAD_DOWN")),
+                new OperationDefinition(OP_DPAD_LEFT, () -> Log.d(TAG, "got DPAD_LEFT")),
+                new OperationDefinition(OP_DPAD_RIGHT, () -> Log.d(TAG, "got DPAD_RIGHT")),
                 new OperationDefinition(OP_PING, () -> {})
         });
     }
