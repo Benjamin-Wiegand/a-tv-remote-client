@@ -2,7 +2,6 @@ package io.benwiegand.atvremote.phone.ui;
 
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.MDNS_SERVICE_TYPE;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
@@ -18,6 +17,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import java.net.InetAddress;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +27,7 @@ import io.benwiegand.atvremote.phone.R;
 import io.benwiegand.atvremote.phone.network.discovery.ServiceDiscoveryCallback;
 import io.benwiegand.atvremote.phone.network.discovery.ServiceDiscoveryException;
 import io.benwiegand.atvremote.phone.network.discovery.ServiceExplorer;
+import io.benwiegand.atvremote.phone.util.ErrorUtil;
 
 public class TVDiscoveryActivity extends DynamicColorsCompatActivity implements ServiceDiscoveryCallback {
     private static final String TAG = TVDiscoveryActivity.class.getSimpleName();
@@ -70,18 +71,21 @@ public class TVDiscoveryActivity extends DynamicColorsCompatActivity implements 
         TextView uriText = receiverEntry.findViewById(R.id.uri);
         View resolvedIndicator = receiverEntry.findViewById(R.id.resolved_indicator);
         View resolvingIndicator = receiverEntry.findViewById(R.id.resolving_indicator);
+        View retryButton = receiverEntry.findViewById(R.id.retry_resolve_button);
 
-        uriText.setText("resolving..."); //todo
+        uriText.setText(R.string.discovery_result_entry_resolving);
         resolvedIndicator.setVisibility(View.GONE);
         resolvingIndicator.setVisibility(View.VISIBLE);
         receiverEntry.setEnabled(false);
         receiverEntry.setAlpha(ENTRY_DISABLED_ALPHA);
+        retryButton.setVisibility(View.GONE);
     }
 
     private void setEntryViewResolved(View receiverEntry, String deviceName, String hostname, int port) {
         TextView uriText = receiverEntry.findViewById(R.id.uri);
         View resolvedIndicator = receiverEntry.findViewById(R.id.resolved_indicator);
         View resolvingIndicator = receiverEntry.findViewById(R.id.resolving_indicator);
+        View retryButton = receiverEntry.findViewById(R.id.retry_resolve_button);
 
         uriText.setText("tcp://" + hostname + ":" + port);
         receiverEntry.setOnClickListener(v -> {
@@ -99,7 +103,31 @@ public class TVDiscoveryActivity extends DynamicColorsCompatActivity implements 
         resolvingIndicator.setVisibility(View.GONE);
         receiverEntry.setEnabled(true);
         receiverEntry.setAlpha(ENTRY_ENABLED_ALPHA);
+        retryButton.setVisibility(View.GONE);
+    }
 
+    private void setEntryViewResolveFailed(View receiverEntry, NsdServiceInfo serviceInfo, Throwable resolveError) {
+        TextView uriText = receiverEntry.findViewById(R.id.uri);
+        View resolvedIndicator = receiverEntry.findViewById(R.id.resolved_indicator);
+        View resolvingIndicator = receiverEntry.findViewById(R.id.resolving_indicator);
+        View retryButton = receiverEntry.findViewById(R.id.retry_resolve_button);
+
+        String message;
+        if (resolveError instanceof ErrorMessageException e) {
+            message = e.getLocalizedMessage(this);
+        } else {
+            message = ErrorUtil.getExceptionLine(this, resolveError);
+        }
+
+        uriText.setText(MessageFormat.format(getString(R.string.discovery_failed_resolution), message));
+
+        retryButton.setOnClickListener(v -> serviceExplorer.retryResolve(serviceInfo));
+
+        resolvedIndicator.setVisibility(View.VISIBLE);
+        resolvingIndicator.setVisibility(View.GONE);
+        receiverEntry.setEnabled(false);
+        receiverEntry.setAlpha(ENTRY_ENABLED_ALPHA);
+        retryButton.setVisibility(View.VISIBLE);
     }
 
     private void inflatePartialEntry(String key, String deviceName) {
@@ -120,10 +148,11 @@ public class TVDiscoveryActivity extends DynamicColorsCompatActivity implements 
         });
     }
 
-    private void updateOrInflateEntry(String key, NsdServiceInfo serviceInfo) {
+    private void updateOrInflateEntry(String key, NsdServiceInfo serviceInfo, Throwable resolveError) {
         InetAddress host = serviceInfo.getHost();
         String hostname = host == null ? null : host.getHostAddress();
         String deviceName = serviceInfo.getServiceName();
+        int port = serviceInfo.getPort();
 
         runOnUiThread(() -> {
             View receiverEntry = discoveredServiceViewMap.get(key);
@@ -136,19 +165,24 @@ public class TVDiscoveryActivity extends DynamicColorsCompatActivity implements 
             TextView hostnameText = receiverEntry.findViewById(R.id.device_name);
             hostnameText.setText(deviceName);
 
-            if (host == null) {
+            if (resolveError != null) {
+                setEntryViewResolveFailed(receiverEntry, serviceInfo, resolveError);
+            } else if (host == null) {
                 setEntryViewResolving(receiverEntry);
             } else {
-                setEntryViewResolved(receiverEntry, deviceName, hostname, serviceInfo.getPort());
+                setEntryViewResolved(receiverEntry, deviceName, hostname, port);
             }
 
         });
     }
 
+    private void updateOrInflateEntry(String key, NsdServiceInfo serviceInfo) {
+        updateOrInflateEntry(key, serviceInfo, null);
+    }
+
     @Override
     public void serviceDiscoveredPreResolution(String key, NsdServiceInfo partialServiceInfo) {
-        String deviceName = partialServiceInfo.getServiceName();
-        inflatePartialEntry(key, deviceName);
+        updateOrInflateEntry(key, partialServiceInfo);
         removeStaleEntries();
     }
 
@@ -160,6 +194,7 @@ public class TVDiscoveryActivity extends DynamicColorsCompatActivity implements 
 
     @Override
     public void resolveFailed(String key, NsdServiceInfo partialServiceInfo, ServiceDiscoveryException e) {
+        updateOrInflateEntry(key, partialServiceInfo, e);
         removeStaleEntries();
     }
 

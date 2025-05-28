@@ -51,7 +51,13 @@
     <string name="title_tvdiscovery">connect to TV</string>
     <string name="searching_for_tvs">searching for TVs running the receiver app</string>
     <string name="button_manual_connection">connect manually</string>
-    <string name="discovery_result_entry_resolving">resolving</string>
+    <string name="discovery_result_entry_resolving">resolving…</string>
+
+    <!-- tv discovery errors -->
+    <string name="discovery_failed_resolution">resolve failed: {0}</string>
+    <string name="discovery_failed_internal_error">internal error</string>
+    <string name="discovery_failed_max_limit">too many service discovery instances open on your device</string>
+    <string name="discovery_failed_unexpected">unexpected error {0}</string>
 
     <!-- manual connection -->
     <string name="title_manual_connection">manual connection</string>

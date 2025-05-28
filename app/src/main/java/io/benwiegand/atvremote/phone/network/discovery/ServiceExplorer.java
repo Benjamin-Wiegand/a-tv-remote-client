@@ -12,7 +12,7 @@ public class ServiceExplorer implements NsdManager.DiscoveryListener {
      * sometimes (most of the time) it does not do that and instead throws in startServiceDiscovery().
      * the same goes for onStopDiscoveryFailed() with stopServiceDiscovery()
      */
-    private static final int FAILURE_THE_DOCUMENTATION_LIES = -0xDEADBEEF;
+    public static final int FAILURE_THE_DOCUMENTATION_LIES = -0xDEADBEEF;
 
     private final NsdManager nsdManager;
 
@@ -37,6 +37,11 @@ public class ServiceExplorer implements NsdManager.DiscoveryListener {
         } catch (Throwable t) {
             onStopDiscoveryFailed(null, FAILURE_THE_DOCUMENTATION_LIES, t);
         }
+    }
+
+    public void retryResolve(NsdServiceInfo serviceInfo) {
+        discoveryCallback.serviceDiscoveredPreResolution(serviceInfo.getServiceName(), serviceInfo);
+        tryResolve(serviceInfo, 1);
     }
 
     @Override
@@ -111,20 +116,10 @@ public class ServiceExplorer implements NsdManager.DiscoveryListener {
     }
 
     private ServiceDiscoveryException createExceptionForErrorCode(int errorCode, Throwable t) {
-        if (t == null) return new ServiceDiscoveryException(mapErrorCodeDebugString(errorCode));
-        return new ServiceDiscoveryException(mapErrorCodeDebugString(errorCode), t);
+        return t == null ?
+                new ServiceDiscoveryException(errorCode):
+                new ServiceDiscoveryException(errorCode, t);
     }
 
-    private String mapErrorCodeDebugString(int errorCode) {
-        return switch (errorCode) {
-            case NsdManager.FAILURE_INTERNAL_ERROR -> "FAILURE_INTERNAL_ERROR";
-            case NsdManager.FAILURE_ALREADY_ACTIVE -> "FAILURE_ALREADY_ACTIVE";
-            case NsdManager.FAILURE_MAX_LIMIT -> "FAILURE_MAX_LIMIT";
-            case NsdManager.FAILURE_OPERATION_NOT_RUNNING -> "FAILURE_OPERATION_NOT_RUNNING";
-            case NsdManager.FAILURE_BAD_PARAMETERS -> "FAILURE_BAD_PARAMETERS";
-            case FAILURE_THE_DOCUMENTATION_LIES -> "FAILURE_THE_DOCUMENTATION_LIES";
-            default -> "(UNKNOWN_ERROR_CODE " + errorCode + ")";
-        };
-    }
 
 }
