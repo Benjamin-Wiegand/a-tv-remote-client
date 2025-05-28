@@ -67,7 +67,7 @@ public class ServiceExplorer implements NsdManager.DiscoveryListener {
             @Override
             public void onServiceResolved(NsdServiceInfo serviceInfo) {
                 Log.v(TAG, "resolved: " + serviceInfo);
-                discoveryCallback.serviceDiscovered(serviceInfo.getServiceName(), serviceInfo);;
+                discoveryCallback.serviceDiscovered(serviceInfo.getServiceName(), serviceInfo);
             }
 
             @Override
@@ -75,10 +75,12 @@ public class ServiceExplorer implements NsdManager.DiscoveryListener {
                 ServiceDiscoveryException e = createExceptionForErrorCode(errorCode, null);
                 Log.w(TAG, "resolve failed for: " + serviceInfo, e);
 
-                if (maxTries > 0)
+                if (maxTries > 0) {
                     tryResolve(serviceInfo, maxTries - 1);
-                else
+                } else {
                     Log.e(TAG, "giving up resolving: " + serviceInfo);
+                    discoveryCallback.resolveFailed(serviceInfo, e);
+                }
             }
         });
     }

@@ -4,6 +4,7 @@ import android.net.nsd.NsdServiceInfo;
 
 public interface ServiceDiscoveryCallback {
     void serviceDiscovered(String key, NsdServiceInfo serviceInfo);
+    void resolveFailed(NsdServiceInfo partialServiceInfo, ServiceDiscoveryException e);
     void serviceLost(String key);
 
     void discoveryStarted();

@@ -87,6 +87,11 @@ public class TVDiscoveryActivity extends DynamicColorsCompatActivity implements 
     }
 
     @Override
+    public void resolveFailed(NsdServiceInfo partialServiceInfo, ServiceDiscoveryException e) {
+
+    }
+
+    @Override
     public void serviceLost(String key) {
         runOnUiThread(() -> {
             View view = discoveredServiceViewMap.remove(key);
