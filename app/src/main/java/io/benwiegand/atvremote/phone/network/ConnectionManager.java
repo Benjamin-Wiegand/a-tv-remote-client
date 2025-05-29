@@ -118,9 +118,12 @@ public class ConnectionManager {
             if (pairingData == null) throw new RequiresPairingException("certificate unknown");
             token = pairingData.token();
 
-            // update additional pairing info
-            pairingData = pairingData.updateLastConnection(hostname, Instant.now().getEpochSecond());
-            pairingManager.updatePairingData(pairingData);  // not the end of the world if this fails
+            // update additional pairing info in a new thread because it takes forever
+            new Thread(() -> {
+                PairingData updatedPairingData = pairingData.updateLastConnection(hostname, Instant.now().getEpochSecond());
+                boolean committed = pairingManager.updatePairingData(updatedPairingData);  // not the end of the world if this fails
+                if (!committed) Log.w(TAG, "failed to commit updated pairing data");
+            }).start();
 
         } catch (CorruptedKeystoreException e) {
             throw new RuntimeException("TV sent bad cert", e);
