@@ -23,6 +23,8 @@ import io.benwiegand.atvremote.phone.protocol.OperationDefinition;
 import io.benwiegand.atvremote.phone.protocol.RemoteProtocolException;
 import io.benwiegand.atvremote.phone.protocol.RequiresPairingException;
 import io.benwiegand.atvremote.phone.protocol.json.ErrorDetails;
+import io.benwiegand.atvremote.phone.protocol.json.ReceiverDeviceMeta;
+import io.benwiegand.atvremote.phone.protocol.json.RemoteDeviceMeta;
 
 public class TVReceiverConnection implements Closeable {
     private static final String TAG = TVReceiverConnection.class.getSimpleName();
@@ -40,6 +42,8 @@ public class TVReceiverConnection implements Closeable {
     private TCPWriter writer = null;
     private TCPReader reader = null;
     private EventJuggler eventJuggler = null;
+
+    private ReceiverDeviceMeta receiverDeviceMeta = null;
 
     private final TVReceiverConnectionCallback callback;
     private final String token;
@@ -136,6 +140,9 @@ public class TVReceiverConnection implements Closeable {
                 }
             }
 
+            if (!pairing)
+                exchangeMeta();
+
             Log.i(TAG, "tv connected: " + socket.getRemoteSocketAddress());
             eventJuggler.start(getOperationDefinitions());
 
@@ -147,6 +154,27 @@ public class TVReceiverConnection implements Closeable {
             Log.e(TAG, "error during connection init", t);
             tryClose(this);
             throw t;
+        }
+    }
+
+    private void exchangeMeta() throws IOException, InterruptedException {
+        writer.sendLine(OP_META + " " + gson.toJson(RemoteDeviceMeta.getDeviceMeta(context)));
+
+        String line = reader.nextLine(SOCKET_AUTH_TIMEOUT);
+        if (line == null) {
+            Log.w(TAG, "metadata fetch timed out");
+            return;
+        }
+
+        String[] opLine = line.split(" ", 2);
+
+        if (opLine[0].equals(OP_META) && opLine.length == 2) {
+            receiverDeviceMeta = gson.fromJson(opLine[1], ReceiverDeviceMeta.class);
+            Log.v(TAG, "got metadata: " + receiverDeviceMeta);
+        } else if (opLine[0].equals("!" + OP_META)) {
+            Log.v(TAG, "no meta");
+        } else {
+            Log.w(TAG, "invalid metadata response: " + line);
         }
     }
 
