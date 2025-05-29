@@ -55,7 +55,7 @@ public class TVDiscoveryActivity extends DynamicColorsCompatActivity implements 
 
         EdgeToEdge.enable(this);
         ViewCompat.setOnApplyWindowInsetsListener(frame, (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
