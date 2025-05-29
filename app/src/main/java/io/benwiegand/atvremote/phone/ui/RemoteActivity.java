@@ -73,7 +73,7 @@ public class RemoteActivity extends ConnectingActivity {
 
     // ui
     private final List<View> tvControlButtons = new ArrayList<>(/* todo: define size */);
-    private AlertDialog errorDialog = null;
+    private View errorView = null;
     private Toast toast = null;
     private Vibrator vibrator;
     @IdRes private int selectedLayout = DEFAULT_LAYOUT;
@@ -93,20 +93,28 @@ public class RemoteActivity extends ConnectingActivity {
                 R.style.Theme_ATVRemote_Remote);
         getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_YES);
 
-        setContentView(R.layout.activity_remote);
+        setContentView(R.layout.layout_frame);
+
+        FrameLayout frame = findViewById(R.id.frame);
+        View remoteView = getLayoutInflater().inflate(R.layout.activity_remote, frame, true);
 
         EdgeToEdge.enable(this);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars());
-            v.setPadding(statusBars.left, 0, statusBars.right, 0);
-            v.findViewById(R.id.action_bar).setPadding(0, statusBars.top, 0, 0);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.frame), (v, insets) -> {
+            Insets avoidZone = insets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+
+            // the remote
+            v.findViewById(R.id.action_bar).setPadding(avoidZone.left, avoidZone.top, avoidZone.right, 0);
+            v.findViewById(R.id.remote_frame).setPadding(avoidZone.left, 0, avoidZone.right, 0);
+
+            // error screen
+            if (errorView != null)
+                errorView.setPadding(avoidZone.left, avoidZone.top, avoidZone.right, avoidZone.bottom);
 
             return insets;
         });
 
-
         // ui setup
-        TextView tvNameText = findViewById(R.id.connected_tv_name_text);
+        TextView tvNameText = remoteView.findViewById(R.id.connected_tv_name_text);
         tvNameText.setText(deviceName);
 
         vibrator = getSystemService(Vibrator.class);
@@ -117,7 +125,7 @@ public class RemoteActivity extends ConnectingActivity {
         }
 
         // ensure navbar matches selected value
-        NavigationBarView controlMethodSelector = findViewById(R.id.control_method_selector);
+        NavigationBarView controlMethodSelector = remoteView.findViewById(R.id.control_method_selector);
         controlMethodSelector.setSelectedItemId(selectedLayout);
 
         setupFixedButtons();
@@ -141,7 +149,6 @@ public class RemoteActivity extends ConnectingActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        hideError();
     }
 
     private void scheduleReconnect() {
@@ -164,8 +171,10 @@ public class RemoteActivity extends ConnectingActivity {
 
     private void hideError() {
         runOnUiThread(() -> {
-            if (errorDialog == null || !errorDialog.isShowing()) return;
-            errorDialog.cancel();
+            if (errorView == null) return;
+            FrameLayout frame = findViewById(R.id.frame);
+            frame.removeView(errorView);
+            errorView = null;
         });
     }
 
@@ -174,8 +183,11 @@ public class RemoteActivity extends ConnectingActivity {
         runOnUiThread(() -> {
             hideError();
 
-            errorDialog = ErrorUtil.inflateErrorScreenAsDialog(this, error);
-            errorDialog.show();
+            FrameLayout frame = findViewById(R.id.frame);
+            errorView = getLayoutInflater().inflate(R.layout.layout_error, frame, false);
+            ErrorUtil.inflateErrorScreen(errorView, error, this::hideError);
+            frame.addView(errorView);
+            ViewCompat.requestApplyInsets(frame);
         });
     }
 

@@ -1,12 +1,9 @@
 package io.benwiegand.atvremote.phone.util;
 
-import static io.benwiegand.atvremote.phone.util.UiUtil.applyButtonPresetToDialog;
 import static io.benwiegand.atvremote.phone.util.UiUtil.inflateButtonPreset;
 import static io.benwiegand.atvremote.phone.util.UiUtil.inflateDropdown;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 
@@ -100,21 +97,6 @@ public class ErrorUtil {
 
     public static void inflateErrorScreen(View root, ErrorSpec error) {
         inflateErrorScreen(root, error, null);
-    }
-
-    public static AlertDialog inflateErrorScreenAsDialog(Context context, ErrorSpec error) {
-        View view = LayoutInflater.from(context).inflate(R.layout.layout_error, null, false);
-
-        ErrorUtil.inflateErrorScreen(view, error.noButtons());
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(context, R.style.Theme_ATVRemote_Base)
-                .setView(view)
-                .setCancelable(false);
-
-        applyButtonPresetToDialog(dialogBuilder::setPositiveButton, error.positiveAction());
-        applyButtonPresetToDialog(dialogBuilder::setNeutralButton, error.neutralAction());
-        applyButtonPresetToDialog(dialogBuilder::setNegativeButton, error.negativeAction());
-
-        return dialogBuilder.create();
     }
 
     public static String generateErrorDescription(Context context, Throwable t) {
