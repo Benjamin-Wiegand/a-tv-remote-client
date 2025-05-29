@@ -76,7 +76,8 @@ public class ConnectionTest {
         Log.d(TAG, "starting service");
         Intent intent = new Intent(context, ConnectionService.class);
         context.startService(intent);
-        assert context.bindService(intent, conn, Context.BIND_AUTO_CREATE);
+        boolean bindResult = context.bindService(intent, conn, Context.BIND_AUTO_CREATE);
+        assert bindResult;
 
         catchAll(() -> bindLatch.await(5, TimeUnit.SECONDS));
         assertNotNull("ConnectionService bind", binder);
@@ -306,7 +307,7 @@ public class ConnectionTest {
 
             // try the wrong code
             Sec<String> tokenSec = connection.sendPairingCode(String.valueOf(FakeTvConnection.TEST_INCORRECT_CODE));
-            assert block(tokenSec, 5, TimeUnit.SECONDS);
+            block(tokenSec, 5, TimeUnit.SECONDS);
             assertFalse("expecting unsuccessful pairing", tokenSec.isSuccessful());
             assertTrue("expecting an error extending ErrorMessageException", tokenSec.getError() instanceof ErrorMessageException);
 
@@ -336,7 +337,7 @@ public class ConnectionTest {
 
             // try to pair for real this time
             Sec<String> tokenSec = connection.sendPairingCode(String.valueOf(FakeTvConnection.TEST_CODE));
-            assert block(tokenSec, 5, TimeUnit.SECONDS);
+            block(tokenSec, 5, TimeUnit.SECONDS);
             assertTrue("expecting successful pairing", tokenSec.isSuccessful());
 
             // check the received token

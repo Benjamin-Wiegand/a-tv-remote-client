@@ -56,7 +56,8 @@ public abstract class ConnectingActivity extends DynamicColorsCompatActivity imp
 
         serviceIntent = new Intent(this, ConnectionService.class);
         startService(serviceIntent);
-        assert bindService(serviceIntent, connectionServiceConnection, BIND_IMPORTANT | BIND_AUTO_CREATE);
+        boolean bindResult = bindService(serviceIntent, connectionServiceConnection, BIND_IMPORTANT | BIND_AUTO_CREATE);
+        assert bindResult;
     }
 
     @Override

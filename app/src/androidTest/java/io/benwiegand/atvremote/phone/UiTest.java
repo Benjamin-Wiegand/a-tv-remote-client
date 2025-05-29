@@ -193,7 +193,7 @@ public class UiTest {
             runnable.run();
             latch.countDown();
         });
-        assert latch.await(5, TimeUnit.SECONDS);
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
     }
 
     private <T> T runOnUiThreadForResult(Activity a, Supplier<T> supplier) throws InterruptedException {
@@ -289,13 +289,13 @@ public class UiTest {
 
         PairingManager pm = new PairingManager(context, km);
 
-        assert pm.addNewDevice(
+        assertTrue(pm.addNewDevice(
                 FakeKeystoreManager.getTestCert(),
                 new PairingData(
                         FakeTvConnection.TEST_TOKEN,
                         FakeKeystoreManager.TEST_CERTIFICATE_FINGERPRINT,
                         "test device", "127.0.0.1",
-                        Instant.now().getEpochSecond()));
+                        Instant.now().getEpochSecond())));
 
     }
 

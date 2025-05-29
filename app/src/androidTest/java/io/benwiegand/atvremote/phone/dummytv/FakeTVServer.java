@@ -1,5 +1,6 @@
 package io.benwiegand.atvremote.phone.dummytv;
 
+import static org.junit.Assert.assertTrue;
 import static io.benwiegand.atvremote.phone.helper.TestUtil.catchAll;
 
 import android.os.SystemClock;
@@ -51,7 +52,7 @@ public class FakeTVServer {
 
             thread.start();
 
-            assert spinUpLatch.await(5, TimeUnit.SECONDS);
+            assertTrue(spinUpLatch.await(5, TimeUnit.SECONDS));
         });
     }
 
