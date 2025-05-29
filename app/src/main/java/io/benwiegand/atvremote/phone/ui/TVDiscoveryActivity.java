@@ -51,16 +51,16 @@ public class TVDiscoveryActivity extends DynamicColorsCompatActivity implements 
         setContentView(R.layout.layout_frame);
 
         FrameLayout frame = findViewById(R.id.frame);
-        getLayoutInflater().inflate(R.layout.activity_tvdiscovery, frame, true);
+        View mainView = getLayoutInflater().inflate(R.layout.activity_tvdiscovery, frame, true);
 
         EdgeToEdge.enable(this);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.frame), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(frame, (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
-        findViewById(R.id.manual_connection_button)
+        mainView.findViewById(R.id.manual_connection_button)
                 .setOnClickListener(v -> launchManualConnection());
 
     }
@@ -90,8 +90,7 @@ public class TVDiscoveryActivity extends DynamicColorsCompatActivity implements 
         });
     }
 
-
-        private void removeStaleEntries() {
+    private void removeStaleEntries() {
         runOnUiThread(() -> {
             LinearLayout resultList = findViewById(R.id.discovery_result_list);
             staleServices.forEach(resultList::removeView);
