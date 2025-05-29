@@ -17,6 +17,10 @@ public record PairingData(String token, String fingerprint, String friendlyName,
         return Instant.ofEpochSecond(lastConnectedTimestamp());
     }
 
+    public PairingData updateLastConnection(String ipAddress, long timestamp) {
+        return new PairingData(token, fingerprint, friendlyName, ipAddress, timestamp);
+    }
+
     // for shared preferences
     public static final String KEY_TOKEN = "token";
     public static final String KEY_FINGERPRINT = "fingerprint";

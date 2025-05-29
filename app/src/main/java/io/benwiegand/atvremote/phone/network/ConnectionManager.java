@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
+import java.time.Instant;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
@@ -116,6 +117,10 @@ public class ConnectionManager {
             PairingData pairingData = pairingManager.fetchPairingData(fingerprint);
             if (pairingData == null) throw new RequiresPairingException("certificate unknown");
             token = pairingData.token();
+
+            // update additional pairing info
+            pairingData = pairingData.updateLastConnection(hostname, Instant.now().getEpochSecond());
+            pairingManager.updatePairingData(pairingData);  // not the end of the world if this fails
 
         } catch (CorruptedKeystoreException e) {
             throw new RuntimeException("TV sent bad cert", e);

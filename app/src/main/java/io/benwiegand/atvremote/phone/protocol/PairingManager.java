@@ -100,7 +100,7 @@ public class PairingManager {
     public boolean updatePairingData(PairingData pairingData) {
         String deviceId;
         synchronized (fingerprintMap) {
-            deviceId = fingerprintMap.get(pairingData.token());
+            deviceId = fingerprintMap.get(pairingData.fingerprint());
             if (deviceId == null) return false;
         }
 
