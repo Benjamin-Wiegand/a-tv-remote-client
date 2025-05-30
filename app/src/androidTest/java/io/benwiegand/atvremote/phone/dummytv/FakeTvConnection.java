@@ -11,6 +11,7 @@ import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_DPAD_D
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_DPAD_LEFT;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_DPAD_RIGHT;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_DPAD_UP;
+import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_META;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_PING;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_TRY_PAIRING_CODE;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.OP_UNAUTHORIZED;
@@ -19,6 +20,8 @@ import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.VERSION_1
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -32,6 +35,8 @@ import io.benwiegand.atvremote.phone.network.TCPReader;
 import io.benwiegand.atvremote.phone.network.TCPWriter;
 import io.benwiegand.atvremote.phone.protocol.OperationDefinition;
 import io.benwiegand.atvremote.phone.protocol.RemoteProtocolException;
+import io.benwiegand.atvremote.phone.protocol.json.ReceiverCapabilities;
+import io.benwiegand.atvremote.phone.protocol.json.ReceiverDeviceMeta;
 
 public class FakeTvConnection {
     private static final String TAG = FakeTvConnection.class.getSimpleName();
@@ -150,6 +155,9 @@ public class FakeTvConnection {
             close();
             return;
         }
+
+        //todo: read meta / validate
+        writer.sendLine(OP_META + " " + new Gson().toJson(new ReceiverDeviceMeta(ReceiverCapabilities.getDefault())));
 
         eventJuggler.start(new OperationDefinition[]{
                 new OperationDefinition(OP_DPAD_UP, () -> Log.d(TAG, "got DPAD_UP")),

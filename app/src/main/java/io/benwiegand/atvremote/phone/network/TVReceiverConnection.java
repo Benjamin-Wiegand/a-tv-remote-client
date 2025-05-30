@@ -191,9 +191,17 @@ public class TVReceiverConnection implements Closeable {
     }
 
     public ReceiverCapabilities getCapabilities() {
-        if (receiverDeviceMeta == null) return ReceiverCapabilities.getDefault();
-        ReceiverCapabilities capabilities = receiverDeviceMeta.capabilities();
-        if (capabilities == null) return ReceiverCapabilities.getDefault();
+        ReceiverCapabilities capabilities = null;
+        if (receiverDeviceMeta != null)
+            capabilities = receiverDeviceMeta.capabilities();
+
+        if (capabilities == null) {
+            // this ideally shouldn't happen
+            Log.w(TAG, "default capabilities requested");
+            assert false;
+            return ReceiverCapabilities.getDefault();
+        }
+
         return capabilities;
     }
 

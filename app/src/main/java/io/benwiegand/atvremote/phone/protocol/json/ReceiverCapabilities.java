@@ -16,10 +16,6 @@ public record ReceiverCapabilities(HashSet<String> supportedFeatures, HashSet<St
     }
 
     public static ReceiverCapabilities getDefault() {
-        // this ideally shouldn't happen
-        Log.w(TAG, "default capabilities requested");
-        assert false;
-
         HashSet<String> features = new HashSet<>();
 
         // just assume all generic functions are supported
