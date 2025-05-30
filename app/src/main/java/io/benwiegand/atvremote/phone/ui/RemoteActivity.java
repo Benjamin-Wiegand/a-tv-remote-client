@@ -91,8 +91,8 @@ public class RemoteActivity extends ConnectingActivity {
                 R.style.Theme_ATVRemote_Remote);
         getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_YES);
 
+        // use frame to allow an error screen to be inflated if needed
         setContentView(R.layout.layout_frame);
-
         FrameLayout frame = findViewById(R.id.frame);
         View remoteView = getLayoutInflater().inflate(R.layout.activity_remote, frame, true);
 
@@ -127,15 +127,14 @@ public class RemoteActivity extends ConnectingActivity {
         controlMethodSelector.setSelectedItemId(selectedLayout);
 
         setupFixedButtons();
-    }
 
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        Log.d(TAG, "focus changed");
         // layout is different depending on aspect ratio
         // the aspect ratio is taken from the view showing said layout, not the device orientation
         // this can't be done in onCreate because the view hasn't drawn
-        setupLayout();
+        getFullyDrawnReporter().addOnReportDrawnListener(() -> {
+            refreshRemoteLayout();
+            return null;
+        });
     }
 
     @Override
@@ -154,11 +153,7 @@ public class RemoteActivity extends ConnectingActivity {
     }
 
     private void connect() {
-        runOnUiThread(() -> {
-            setConnectionStatus(R.string.connection_status_connecting, true);
-            setControlsEnabled(false);
-        });
-
+        setConnectionStatus(R.string.connection_status_connecting, true, false);
         binder.connect(deviceName, remoteHostname, remotePort, false);
     }
 
@@ -191,22 +186,16 @@ public class RemoteActivity extends ConnectingActivity {
 
     @Override
     public void onSocketConnected() {
-        runOnUiThread(() -> {
-            setConnectionStatus(R.string.connection_status_hand_shaking, true);
-            setControlsEnabled(false);
-        });
+        setConnectionStatus(R.string.connection_status_hand_shaking, true, false);
     }
 
     @Override
     public void onConnected(TVReceiverConnection connection) {
         inputHandler = connection.getInputForwarder();
         capabilities = connection.getCapabilities();
+        refreshRemoteLayout(); // new capability set
 
-        runOnUiThread(() -> {
-            setControlsEnabled(true);
-            setConnectionStatus(R.string.connection_status_ready, false);
-            setupLayout(); // refresh buttons/features
-        });
+        setConnectionStatus(R.string.connection_status_ready, false, true);
     }
 
     @Override
@@ -232,10 +221,7 @@ public class RemoteActivity extends ConnectingActivity {
 
     @Override
     public void onDisconnected(Throwable t) {
-        runOnUiThread(() -> {
-            setControlsEnabled(false);
-            setConnectionStatus(R.string.connection_status_connection_lost, false);
-        });
+        setConnectionStatus(R.string.connection_status_connection_lost, false, false);
 
         if (isFinishing() || isDestroyed()) return;
         if (t != null) toast(ErrorUtil.getExceptionLine(this, t));
@@ -254,26 +240,17 @@ public class RemoteActivity extends ConnectingActivity {
         });
     }
 
-    private void setControlsEnabled(boolean enabled) {
+    private void setConnectionStatus(@StringRes int text, boolean connecting, boolean allowInput) {
         runOnUiThread(() -> {
-            View disabledOverlay = findViewById(R.id.disabled_overlay);
-            disabledOverlay.setVisibility(enabled ? View.GONE : View.VISIBLE);
+            TextView connectionStatusText = findViewById(R.id.connection_status_text);
+            connectionStatusText.setText(text);
+
+            findViewById(R.id.connecting_indicator)
+                    .setVisibility(connecting ? View.VISIBLE : View.GONE);
+
+            findViewById(R.id.disabled_overlay)
+                    .setVisibility(allowInput ? View.GONE : View.VISIBLE);
         });
-    }
-
-    private void setConnectionStatus(@StringRes int text, boolean connecting) {
-        TextView connectionStatusText = findViewById(R.id.connection_status_text);
-        connectionStatusText.setText(text);
-
-        findViewById(R.id.connecting_indicator)
-                .setVisibility(connecting ? View.VISIBLE : View.GONE);
-    }
-
-    private void switchToLayout(@LayoutRes int layout) {
-        FrameLayout remoteFrame = findViewById(R.id.remote_frame);
-        remoteFrame.removeAllViews();
-
-        getLayoutInflater().inflate(layout, remoteFrame, true);
     }
 
     private void handleActionError(Throwable t) {
@@ -429,22 +406,23 @@ public class RemoteActivity extends ConnectingActivity {
         setupExtraRemoteButtons();
     }
 
-    private void setLayout(@IdRes int selector) {
-        if (!LAYOUT_MAP.containsKey(selector)) throw new IllegalArgumentException("Layout selector has no mapping defined!");
-        selectedLayout = selector;
-        setupLayout();
-    }
+    private void refreshRemoteLayout() {
+        runOnUiThread(() -> {
+            FrameLayout remoteFrame = findViewById(R.id.remote_frame);
+            remoteFrame.removeAllViews();
 
-    private void setupLayout() {
-        LayoutOrientationSelector selector = LAYOUT_MAP.get(selectedLayout);
-        if (selector == null) throw new IllegalStateException("selected layout does not exist in layout map!");
+            // layout
+            LayoutOrientationSelector selector = LAYOUT_MAP.get(selectedLayout);
+            if (selector == null) throw new IllegalStateException("selected layout does not exist in layout map!");
 
-        View view = findViewById(R.id.remote_frame);
-        boolean portrait = view.getHeight() > view.getWidth();
-        int layout = portrait ? selector.portraitLayout() : selector.landscapeLayout();
+            // orientation
+            boolean portrait = remoteFrame.getHeight() > remoteFrame.getWidth();
+            int layout = portrait ? selector.portraitLayout() : selector.landscapeLayout();
 
-        switchToLayout(layout);
-        setupRemoteButtons();
+            // inflate
+            getLayoutInflater().inflate(layout, remoteFrame, true);
+            setupRemoteButtons();
+        });
     }
 
     private void setupFixedButtons() {
@@ -453,12 +431,10 @@ public class RemoteActivity extends ConnectingActivity {
 
         NavigationBarView controlMethodSelector = findViewById(R.id.control_method_selector);
         controlMethodSelector.setOnItemSelectedListener(item -> {
-            try {
-                setLayout(item.getItemId());
-            } catch (IllegalArgumentException e) {
-                Log.wtf(TAG, "failed to set layout", e);
-                return false;
-            }
+            @IdRes int layout = item.getItemId();
+            assert (LAYOUT_MAP.containsKey(layout));
+            selectedLayout = layout;
+            refreshRemoteLayout();
             return true;
         });
 
