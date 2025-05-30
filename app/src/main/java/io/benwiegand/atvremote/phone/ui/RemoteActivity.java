@@ -9,6 +9,7 @@ import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -131,9 +132,13 @@ public class RemoteActivity extends ConnectingActivity {
         // layout is different depending on aspect ratio
         // the aspect ratio is taken from the view showing said layout, not the device orientation
         // this can't be done in onCreate because the view hasn't drawn
-        getFullyDrawnReporter().addOnReportDrawnListener(() -> {
-            refreshRemoteLayout();
-            return null;
+        remoteView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                Log.v(TAG, "global layout");
+                remoteView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                refreshRemoteLayout();
+            }
         });
     }
 
