@@ -360,10 +360,22 @@ public class RemoteActivity extends ConnectingActivity {
         });
     }
 
-    private void setupExtraRemoteButtons() {
+    private void setupRemoteButtons() {
         if (capabilities == null) return;
 
-        // menu button
+        // dpad
+        setupRepeatableButton(R.id.up_button, InputHandler::dpadUp, 150);
+        setupRepeatableButton(R.id.down_button, InputHandler::dpadDown, 150);
+        setupRepeatableButton(R.id.left_button, InputHandler::dpadLeft, 150);
+        setupRepeatableButton(R.id.right_button, InputHandler::dpadRight, 150);
+        setupBasicButton(R.id.select_button, InputHandler::dpadSelect, InputHandler::dpadLongPress);
+
+        // nav bar
+        setupBasicButton(R.id.back_button, InputHandler::navBack);
+        setupBasicButton(R.id.home_button, InputHandler::navHome);
+        setupBasicButton(R.id.recent_button, InputHandler::navRecent);
+
+        // menu button (notifications/dashboard)
         RemoteButton menuButton = findViewById(R.id.menu_button);
         if (menuButton != null) {
             if (capabilities.hasButton(ReceiverCapabilities.EXTRA_BUTTON_GTV_DASHBOARD)) {
@@ -377,20 +389,6 @@ public class RemoteActivity extends ConnectingActivity {
                 menuButton.setImageResource(R.drawable.notifications);
             }
         }
-    }
-
-    private void setupRemoteButtons() {
-        // dpad
-        setupRepeatableButton(R.id.up_button, InputHandler::dpadUp, 150);
-        setupRepeatableButton(R.id.down_button, InputHandler::dpadDown, 150);
-        setupRepeatableButton(R.id.left_button, InputHandler::dpadLeft, 150);
-        setupRepeatableButton(R.id.right_button, InputHandler::dpadRight, 150);
-        setupBasicButton(R.id.select_button, InputHandler::dpadSelect, InputHandler::dpadLongPress);
-
-        // nav bar
-        setupBasicButton(R.id.back_button, InputHandler::navBack);
-        setupBasicButton(R.id.home_button, InputHandler::navHome);
-        setupBasicButton(R.id.recent_button, InputHandler::navRecent);
 
 //        setupBasicButton(R.id.quick_settings_button, InputHandler::navQuickSettings);
 
@@ -406,9 +404,6 @@ public class RemoteActivity extends ConnectingActivity {
 
         // trackpad
         setupTrackpad();
-
-        // extra buttons
-        setupExtraRemoteButtons();
     }
 
     private void refreshRemoteLayout() {
