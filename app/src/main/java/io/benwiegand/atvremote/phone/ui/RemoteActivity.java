@@ -27,8 +27,6 @@ import com.google.android.material.color.DynamicColors;
 import com.google.android.material.navigation.NavigationBarView;
 
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -74,12 +72,10 @@ public class RemoteActivity extends ConnectingActivity {
     private ReceiverCapabilities capabilities = null;
 
     // ui
-    private final List<View> tvControlButtons = new LinkedList<>();
     private View errorView = null;
     private Toast toast = null;
     private Vibrator vibrator;
     @IdRes private int selectedLayout = DEFAULT_LAYOUT;
-    private boolean controlsEnabled = false;
 
     // events
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -258,14 +254,11 @@ public class RemoteActivity extends ConnectingActivity {
         });
     }
 
-    private void updateControlsEnabled() {
-        runOnUiThread(() ->
-                tvControlButtons.forEach(b -> b.setEnabled(controlsEnabled)));
-    }
-
     private void setControlsEnabled(boolean enabled) {
-        controlsEnabled = enabled;
-        updateControlsEnabled();
+        runOnUiThread(() -> {
+            View disabledOverlay = findViewById(R.id.disabled_overlay);
+            disabledOverlay.setVisibility(enabled ? View.GONE : View.VISIBLE);
+        });
     }
 
     private void setConnectionStatus(@StringRes int text, boolean connecting) {
@@ -279,7 +272,6 @@ public class RemoteActivity extends ConnectingActivity {
     private void switchToLayout(@LayoutRes int layout) {
         FrameLayout remoteFrame = findViewById(R.id.remote_frame);
         remoteFrame.removeAllViews();
-        tvControlButtons.clear();
 
         getLayoutInflater().inflate(layout, remoteFrame, true);
     }
@@ -298,7 +290,6 @@ public class RemoteActivity extends ConnectingActivity {
 
     private void setupBasicButton(View button, Function<InputHandler, Sec<Void>> action, Function<InputHandler, Sec<Void>> longPressAction) {
         if (button == null) return;
-        tvControlButtons.add(button);
 
         button.setOnClickListener(v -> {
             if (inputHandler == null) return;
@@ -371,7 +362,6 @@ public class RemoteActivity extends ConnectingActivity {
     private void setupVolumeAdjustButton() {
         View volumeAdjustButton = findViewById(R.id.volume_adjust_button);
         if (volumeAdjustButton == null) return;
-        tvControlButtons.add(volumeAdjustButton);
 
         volumeAdjustButton.setOnClickListener(v -> {
             View view = getLayoutInflater().inflate(R.layout.layout_remote_dialog_volume_adjustment, null, false);
@@ -437,8 +427,6 @@ public class RemoteActivity extends ConnectingActivity {
 
         // extra buttons
         setupExtraRemoteButtons();
-
-        updateControlsEnabled();
     }
 
     private void setLayout(@IdRes int selector) {
