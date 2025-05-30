@@ -45,4 +45,6 @@ public interface InputHandler {
 
     Sec<Void> scrollVertical(double trajectory, boolean glide);
     Sec<Void> scrollHorizontal(double trajectory, boolean glide);
+
+    Sec<Void> pressExtraButton(String button);
 }

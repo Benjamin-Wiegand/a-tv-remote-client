@@ -23,6 +23,7 @@ import io.benwiegand.atvremote.phone.protocol.OperationDefinition;
 import io.benwiegand.atvremote.phone.protocol.RemoteProtocolException;
 import io.benwiegand.atvremote.phone.protocol.RequiresPairingException;
 import io.benwiegand.atvremote.phone.protocol.json.ErrorDetails;
+import io.benwiegand.atvremote.phone.protocol.json.ReceiverCapabilities;
 import io.benwiegand.atvremote.phone.protocol.json.ReceiverDeviceMeta;
 import io.benwiegand.atvremote.phone.protocol.json.RemoteDeviceMeta;
 
@@ -189,6 +190,12 @@ public class TVReceiverConnection implements Closeable {
         return KeyUtil.getRemoteCertificate(socket);
     }
 
+    public ReceiverCapabilities getCapabilities() {
+        if (receiverDeviceMeta == null) return ReceiverCapabilities.getDefault();
+        ReceiverCapabilities capabilities = receiverDeviceMeta.capabilities();
+        if (capabilities == null) return ReceiverCapabilities.getDefault();
+        return capabilities;
+    }
 
     private RemoteProtocolException parseError(String json) {
         Log.e(TAG, "error response: " + json);
@@ -423,6 +430,11 @@ public class TVReceiverConnection implements Closeable {
             return null;
             // TODO
 
+        }
+
+        @Override
+        public Sec<Void> pressExtraButton(String extra) {
+            return sendBasicOperation(OP_EXTRA_BUTTON + " " + extra);
         }
     }
 

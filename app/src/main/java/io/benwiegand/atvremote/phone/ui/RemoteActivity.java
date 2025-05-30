@@ -27,7 +27,7 @@ import com.google.android.material.color.DynamicColors;
 import com.google.android.material.navigation.NavigationBarView;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -37,6 +37,7 @@ import io.benwiegand.atvremote.phone.async.Sec;
 import io.benwiegand.atvremote.phone.control.InputHandler;
 import io.benwiegand.atvremote.phone.network.TVReceiverConnection;
 import io.benwiegand.atvremote.phone.protocol.RequiresPairingException;
+import io.benwiegand.atvremote.phone.protocol.json.ReceiverCapabilities;
 import io.benwiegand.atvremote.phone.ui.view.RemoteButton;
 import io.benwiegand.atvremote.phone.ui.view.TrackpadButton;
 import io.benwiegand.atvremote.phone.ui.view.TrackpadSurface;
@@ -70,9 +71,10 @@ public class RemoteActivity extends ConnectingActivity {
 
     // connection
     private InputHandler inputHandler = null;
+    private ReceiverCapabilities capabilities = null;
 
     // ui
-    private final List<View> tvControlButtons = new ArrayList<>(/* todo: define size */);
+    private final List<View> tvControlButtons = new LinkedList<>();
     private View errorView = null;
     private Toast toast = null;
     private Vibrator vibrator;
@@ -202,10 +204,12 @@ public class RemoteActivity extends ConnectingActivity {
     @Override
     public void onConnected(TVReceiverConnection connection) {
         inputHandler = connection.getInputForwarder();
+        capabilities = connection.getCapabilities();
 
         runOnUiThread(() -> {
             setControlsEnabled(true);
             setConnectionStatus(R.string.connection_status_ready, false);
+            setupLayout(); // refresh buttons/features
         });
     }
 
@@ -328,6 +332,10 @@ public class RemoteActivity extends ConnectingActivity {
         setupBasicButton(buttonId, action, null);
     }
 
+    private void setupExtraButton(View button, String buttonString) {
+        setupBasicButton(button, i -> i.pressExtraButton(buttonString));
+    }
+
     private void setupRepeatableButton(RemoteButton button, Function<InputHandler, Sec<Void>> action, int repeatInterval) {
         if (button == null) return;
         setupBasicButton(button, action);
@@ -380,6 +388,25 @@ public class RemoteActivity extends ConnectingActivity {
         });
     }
 
+    private void setupExtraRemoteButtons() {
+        if (capabilities == null) return;
+
+        // menu button
+        RemoteButton menuButton = findViewById(R.id.menu_button);
+        if (menuButton != null) {
+            if (capabilities.hasButton(ReceiverCapabilities.EXTRA_BUTTON_GTV_DASHBOARD)) {
+                setupExtraButton(menuButton, ReceiverCapabilities.EXTRA_BUTTON_GTV_DASHBOARD);
+                menuButton.setImageResource(R.drawable.gtv_dashboard);
+            } else if (capabilities.hasButton(ReceiverCapabilities.EXTRA_BUTTON_LINEAGE_SYSTEM_OPTIONS)) {
+                setupExtraButton(menuButton, ReceiverCapabilities.EXTRA_BUTTON_LINEAGE_SYSTEM_OPTIONS);
+                menuButton.setImageResource(R.drawable.notifications);
+            } else {
+                setupBasicButton(menuButton, InputHandler::navNotifications);
+                menuButton.setImageResource(R.drawable.notifications);
+            }
+        }
+    }
+
     private void setupRemoteButtons() {
         // dpad
         setupRepeatableButton(R.id.up_button, InputHandler::dpadUp, 150);
@@ -393,7 +420,6 @@ public class RemoteActivity extends ConnectingActivity {
         setupBasicButton(R.id.home_button, InputHandler::navHome);
         setupBasicButton(R.id.recent_button, InputHandler::navRecent);
 
-//        setupBasicButton(R.id.notifications_button, InputHandler::navNotifications);
 //        setupBasicButton(R.id.quick_settings_button, InputHandler::navQuickSettings);
 
         // volume
@@ -408,6 +434,9 @@ public class RemoteActivity extends ConnectingActivity {
 
         // trackpad
         setupTrackpad();
+
+        // extra buttons
+        setupExtraRemoteButtons();
 
         updateControlsEnabled();
     }

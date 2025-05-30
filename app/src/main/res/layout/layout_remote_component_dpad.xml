@@ -25,21 +25,32 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1" />
 
-                <io.benwiegand.atvremote.phone.ui.view.RemoteButton
-                    android:id="@+id/up_button"
-                    style="@style/Widget.Theme.ATVRemote.RemoteButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:contentDescription="@string/button_up"
-                    android:rotation="-90"
-                    app:srcCompat="@drawable/arrow" />
+            <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+                android:id="@+id/up_button"
+                style="@style/Widget.Theme.ATVRemote.RemoteButton"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:contentDescription="@string/button_up"
+                android:rotation="-90"
+                app:srcCompat="@drawable/arrow" />
 
-                <Space
-                    android:layout_height="match_parent"
-                    android:layout_width="match_parent"
-                    android:layout_weight="1"
-                    />
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                >
+
+                <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+                    android:id="@+id/menu_button"
+                    style="@style/Widget.Theme.ATVRemote.RemoteButton"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/button_up"
+                    app:srcCompat="@drawable/notifications" />
+
+            </FrameLayout>
 
         </TableRow>
 

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="512"
+   height="512"
+   viewBox="0 0 512 512"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   sodipodi:docname="gtv_dashboard.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     inkscape:zoom="0.5"
+     inkscape:cx="435"
+     inkscape:cy="272"
+     inkscape:window-width="1920"
+     inkscape:window-height="1016"
+     inkscape:window-x="2048"
+     inkscape:window-y="1168"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     showgrid="false" />
+  <defs
+     id="defs1">
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1699"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1699-3"
+       is_visible="true"
+       lpeversion="1" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <circle
+       style="fill:#000000;fill-opacity:1;stroke-width:29.3637;stroke-linecap:square"
+       id="path1975"
+       cx="253.13527"
+       cy="154.60039"
+       r="74.892212" />
+    <path
+       id="path2081"
+       style="stroke-width:20.98;stroke-linecap:square"
+       d="m 415.94284,323.31219 c 13.08049,19.64421 14.63292,52.28536 0,70.80216 -33.97606,42.99401 -105.14451,38 -159.94284,38 -54.79833,0 -125.96678,4.99401 -159.942841,-38 -14.632916,-18.5168 -13.080486,-51.15795 0,-70.80216 C 128.08328,275.21553 167.66601,256.46208 256,256.46208 c 88.33399,0 127.91672,18.75345 159.94284,66.85011 z"
+       sodipodi:nodetypes="aaaaasa" />
+  </g>
+</svg>
