@@ -372,8 +372,14 @@ public class RemoteActivity extends ConnectingActivity {
 
         // nav bar
         setupBasicButton(R.id.back_button, InputHandler::navBack);
-        setupBasicButton(R.id.home_button, InputHandler::navHome);
         setupBasicButton(R.id.recent_button, InputHandler::navRecent);
+
+        // home button (hold for dashboard on gtv)
+        if (capabilities.hasButton(ReceiverCapabilities.EXTRA_BUTTON_GTV_DASHBOARD)) {
+            setupBasicButton(R.id.home_button, InputHandler::navHome, i -> i.pressExtraButton(ReceiverCapabilities.EXTRA_BUTTON_GTV_DASHBOARD));
+        } else {
+            setupBasicButton(R.id.home_button, InputHandler::navHome);
+        }
 
         // menu button (notifications/dashboard)
         RemoteButton menuButton = findViewById(R.id.menu_button);
