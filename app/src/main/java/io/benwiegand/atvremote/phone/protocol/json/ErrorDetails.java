@@ -10,7 +10,7 @@ import io.benwiegand.atvremote.phone.ui.ErrorMessageException;
 
 public record ErrorDetails(String text) {
     public RemoteProtocolException toException() {
-        return new RemoteProtocolException(text());
+        return new RemoteProtocolException(text(), true);
     }
 
     public static ErrorDetails fromException(Context context, Throwable t) {

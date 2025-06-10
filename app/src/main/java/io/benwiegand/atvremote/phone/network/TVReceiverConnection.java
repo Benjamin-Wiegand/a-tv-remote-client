@@ -208,7 +208,7 @@ public class TVReceiverConnection implements Closeable {
     private RemoteProtocolException parseError(String json) {
         Log.e(TAG, "error response: " + json);
         if (json == null)
-            return new RemoteProtocolException(R.string.protocol_error_unspecified, "tv gave no error details");
+            return new RemoteProtocolException(R.string.protocol_error_unspecified, "tv gave no error details", true);
 
         return gson.fromJson(json, ErrorDetails.class).toException();
     }
@@ -231,8 +231,8 @@ public class TVReceiverConnection implements Closeable {
                     return switch (op) {
                         case OP_CONFIRM -> extra;
                         case OP_ERR -> throw parseError(extra);
-                        case OP_UNSUPPORTED -> throw new RemoteProtocolException(R.string.protocol_error_op_unsupported, "operation not supported by tv");
-                        default -> throw new RemoteProtocolException(R.string.protocol_error_response_invalid, "unexpected response from tv");
+                        case OP_UNSUPPORTED -> throw new RemoteProtocolException(R.string.protocol_error_op_unsupported, "operation not supported by tv", true);
+                        default -> throw new RemoteProtocolException(R.string.protocol_error_response_invalid, "unexpected response from tv", true);
                     };
                 });
     }
