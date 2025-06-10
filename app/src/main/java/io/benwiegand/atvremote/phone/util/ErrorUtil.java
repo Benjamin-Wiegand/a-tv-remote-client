@@ -183,4 +183,8 @@ public class ErrorUtil {
 
         return sb.toString();
     }
+
+    public static String getLightStackTrace() {
+        return getLightStackTrace(new Throwable().fillInStackTrace());
+    }
 }

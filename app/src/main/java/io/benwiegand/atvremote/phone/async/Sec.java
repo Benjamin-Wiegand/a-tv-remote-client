@@ -198,4 +198,10 @@ public class Sec<T> {
         return secWithAdapter.sec();
     }
 
+    public static <T> Sec<T> premeditatedResult(T r) {
+        SecAdapter.SecWithAdapter<T> secWithAdapter = createThreadless();
+        secWithAdapter.secAdapter().provideResult(r);
+        return secWithAdapter.sec();
+    }
+
 }

@@ -11,6 +11,7 @@ import com.google.gson.Gson;
 import java.io.Closeable;
 import java.io.IOException;
 import java.security.cert.Certificate;
+import java.util.function.Consumer;
 
 import javax.net.ssl.SSLSocket;
 
@@ -26,6 +27,7 @@ import io.benwiegand.atvremote.phone.protocol.json.ErrorDetails;
 import io.benwiegand.atvremote.phone.protocol.json.ReceiverCapabilities;
 import io.benwiegand.atvremote.phone.protocol.json.ReceiverDeviceMeta;
 import io.benwiegand.atvremote.phone.protocol.json.RemoteDeviceMeta;
+import io.benwiegand.atvremote.phone.protocol.stream.EventStreamSubscriptionManager;
 
 public class TVReceiverConnection implements Closeable {
     private static final String TAG = TVReceiverConnection.class.getSimpleName();
@@ -38,6 +40,8 @@ public class TVReceiverConnection implements Closeable {
 
     private final Context context;
     private final InputHandler inputForwarder = new InputForwarder();
+
+    private final EventStreamSubscriptionManager eventStreamSubscriptionManager = new EventStreamSubscriptionManager(this::sendOperation);
 
     private final SSLSocket socket;
     private TCPWriter writer = null;
@@ -244,6 +248,30 @@ public class TVReceiverConnection implements Closeable {
 
     public Sec<String> sendPairingCode(String code) {
         return sendOperation(OP_TRY_PAIRING_CODE + " " + code);
+    }
+
+    /**
+     * subscribes to an event stream.
+     * for information about how this is handled,
+     * see {@link EventStreamSubscriptionManager#subscribe(String, Consumer)}.
+     * @param eventType the event type to subscribe to
+     * @param listener the listener to get called on events
+     * @return a Sec result for the subscription request
+     */
+    public Sec<Void> subscribeToEventStream(String eventType, Consumer<String> listener) {
+        return eventStreamSubscriptionManager.subscribe(eventType, listener);
+    }
+
+    /**
+     * unsubscribes from an event stream.
+     * for information about how this is handled,
+     * see {@link EventStreamSubscriptionManager#unsubscribe(String, Consumer)}.
+     * @param eventType the event type to unsubscribe from
+     * @param listener the listener
+     * @return a Sec result for the unsubscription result/request
+     */
+    public Sec<Void> unsubscribeFromEventStream(String eventType, Consumer<String> listener) {
+        return eventStreamSubscriptionManager.unsubscribe(eventType, listener);
     }
 
     public class InputForwarder implements InputHandler {
@@ -465,6 +493,9 @@ public class TVReceiverConnection implements Closeable {
 
     private OperationDefinition[] getOperationDefinitions() {
         return new OperationDefinition[] {
+                new OperationDefinition(OP_EVENT_STREAM_EVENT, extra -> {
+                    eventStreamSubscriptionManager.onIncomingStreamedEvent(extra);
+                }),
                 new OperationDefinition(OP_PING, () -> {}),
         };
     }
