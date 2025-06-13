@@ -206,7 +206,7 @@ public class RemoteActivity extends ConnectingActivity {
     @Override
     public void onConnectError(Throwable t) {
         if (t instanceof IOException) {
-            toast(ErrorUtil.getExceptionLine(this, t));
+            toast(t);
             scheduleReconnect();
         } else if (t instanceof RequiresPairingException) {
             Log.i(TAG, "not paired, starting pairing: " + t.getMessage());
@@ -229,7 +229,7 @@ public class RemoteActivity extends ConnectingActivity {
         setConnectionStatus(R.string.connection_status_connection_lost, false, false);
 
         if (isFinishing() || isDestroyed()) return;
-        if (t != null) toast(ErrorUtil.getExceptionLine(this, t));
+        if (t != null) toast(t);
         connect();
     }
 
@@ -243,6 +243,10 @@ public class RemoteActivity extends ConnectingActivity {
             toast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
             toast.show();
         });
+    }
+
+    private void toast(Throwable t) {
+        toast(ErrorUtil.getExceptionLine(this, t));
     }
 
     private void setConnectionStatus(@StringRes int text, boolean connecting, boolean allowInput) {
