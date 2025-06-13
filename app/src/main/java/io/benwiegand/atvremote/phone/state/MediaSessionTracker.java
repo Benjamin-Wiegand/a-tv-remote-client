@@ -14,6 +14,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -42,7 +43,7 @@ public class MediaSessionTracker {
 
     private static final Gson gson = new Gson();
 
-    private final List<String> subscribedEventTypes = new ArrayList<>(4);
+    private final Set<String> subscribedEventTypes = Collections.synchronizedSet(new HashSet<>(4));
 
     private final Map<String, Consumer<String>> listenerMap = Map.of(
             EVENT_TYPE_MEDIA_SESSIONS,  CallbackUtil.wrapJsonParse(gson, this::onMediaSessionsUpdated, MediaSessionsEvent.class, this::onJsonParseError),
@@ -89,12 +90,22 @@ public class MediaSessionTracker {
         this.connection = connection;
     }
 
-    public Sec<Void> subscribeFor(String type) {
+    private Sec<Void> subscribeFor(String type) {
         return connection.subscribeToEventStream(type, listenerMap.get(type))
                 .map(r -> {
                     subscribedEventTypes.add(type);
                     return null;
                 });
+    }
+
+    private void unsubscribeFrom(String type) {
+        connection.unsubscribeFromEventStream(type, listenerMap.get(type))
+                .doOnResult(r -> subscribedEventTypes.remove(type))
+                .doOnError(t -> {
+                    Log.w(TAG, "failed to unsubscribe from event type: " + type + "\n" + getLightStackTrace(t));
+                    subscribedEventTypes.remove(type);
+                })
+                .callMeWhenDone();
     }
 
     public Sec<Void> init() {
@@ -137,10 +148,9 @@ public class MediaSessionTracker {
     }
 
     public void destroy() {
-        for (String eventType : subscribedEventTypes)
-            connection.unsubscribeFromEventStream(eventType, listenerMap.get(eventType))
-                    .doOnError(t -> Log.w(TAG, "failed to unsubscribe from event type: " + eventType + "\n" + getLightStackTrace(t)))
-                    .callMeWhenDone();
+        List<String> subscribed = new ArrayList<>(subscribedEventTypes);
+        for (String eventType : subscribed)
+            unsubscribeFrom(eventType);
     }
 
     private void updatePrimarySessionCallbackLocked(MediaSessionState sessionState) {
@@ -166,6 +176,15 @@ public class MediaSessionTracker {
         synchronized (lock) {
             return mediaSessionPriorities.length > 0 ? mediaSessionPriorities[0] : null;
         }
+    }
+
+    public Sec<Void> trackPosition() {
+        return subscribeFor(EVENT_TYPE_MEDIA_POSITION);
+    }
+
+    public void stopTrackingPosition() {
+        if (!subscribedEventTypes.contains(EVENT_TYPE_MEDIA_POSITION)) return;
+        unsubscribeFrom(EVENT_TYPE_MEDIA_POSITION);
     }
 
     private MediaSessionState getPrimaryMediaSessionState() {

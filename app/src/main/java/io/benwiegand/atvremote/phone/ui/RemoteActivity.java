@@ -565,8 +565,21 @@ public class RemoteActivity extends ConnectingActivity {
             setupRemoteButtons();
 
             // media
-            if (mediaSessionTracker != null)
+            if (mediaSessionTracker != null) {
                 mediaSessionTracker.setPrimarySessionCallback(new PrimaryMediaSessionCallback());
+                if (selectedLayout == R.id.media_selector_button) {
+                    // media layout has a seek bar
+                    mediaSessionTracker.trackPosition()
+                            .doOnError(t -> {
+                                Log.e(TAG, "failed to start tracking media", t);
+                                toast(t);
+                            })
+                            .callMeWhenDone();
+                } else {
+                    mediaSessionTracker.stopTrackingPosition();
+                }
+            }
+
         });
     }
 
