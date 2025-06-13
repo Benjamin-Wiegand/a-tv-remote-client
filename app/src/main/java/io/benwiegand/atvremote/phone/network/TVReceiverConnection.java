@@ -493,9 +493,7 @@ public class TVReceiverConnection implements Closeable {
 
     private OperationDefinition[] getOperationDefinitions() {
         return new OperationDefinition[] {
-                new OperationDefinition(OP_EVENT_STREAM_EVENT, extra -> {
-                    eventStreamSubscriptionManager.onIncomingStreamedEvent(extra);
-                }),
+                new OperationDefinition(OP_EVENT_STREAM_EVENT, eventStreamSubscriptionManager::onIncomingStreamedEvent),
                 new OperationDefinition(OP_PING, () -> {}),
         };
     }
