@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,6 +29,7 @@ import com.google.android.material.color.DynamicColors;
 import com.google.android.material.navigation.NavigationBarView;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -36,7 +38,11 @@ import io.benwiegand.atvremote.phone.async.Sec;
 import io.benwiegand.atvremote.phone.control.InputHandler;
 import io.benwiegand.atvremote.phone.network.TVReceiverConnection;
 import io.benwiegand.atvremote.phone.protocol.RequiresPairingException;
+import io.benwiegand.atvremote.phone.protocol.json.MediaMetaEvent;
+import io.benwiegand.atvremote.phone.protocol.json.MediaPositionEvent;
+import io.benwiegand.atvremote.phone.protocol.json.MediaStateEvent;
 import io.benwiegand.atvremote.phone.protocol.json.ReceiverCapabilities;
+import io.benwiegand.atvremote.phone.state.MediaSessionTracker;
 import io.benwiegand.atvremote.phone.ui.view.RemoteButton;
 import io.benwiegand.atvremote.phone.ui.view.TrackpadButton;
 import io.benwiegand.atvremote.phone.ui.view.TrackpadSurface;
@@ -47,6 +53,8 @@ public class RemoteActivity extends ConnectingActivity {
     private static final String TAG = RemoteActivity.class.getSimpleName();
 
     private static final long CONNECT_RETRY_DELAY = 1500;
+
+    private static final int SEEK_BAR_MAX = 10000; // most displays are not 10k pixels wide, so this should be more than precise enough
 
     private static final VibrationEffect CLICK_VIBRATION_EFFECT = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK);
     private static final VibrationEffect LONG_CLICK_VIBRATION_EFFECT = VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK);
@@ -71,6 +79,7 @@ public class RemoteActivity extends ConnectingActivity {
     // connection
     private InputHandler inputHandler = null;
     private ReceiverCapabilities capabilities = null;
+    private MediaSessionTracker mediaSessionTracker = null;
 
     // ui
     private View errorView = null;
@@ -151,6 +160,9 @@ public class RemoteActivity extends ConnectingActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
+        if (mediaSessionTracker != null)
+            mediaSessionTracker.destroy();
     }
 
     private void scheduleReconnect() {
@@ -198,7 +210,13 @@ public class RemoteActivity extends ConnectingActivity {
     public void onConnected(TVReceiverConnection connection) {
         inputHandler = connection.getInputForwarder();
         capabilities = connection.getCapabilities();
-        refreshRemoteLayout(); // new capability set
+
+        if (mediaSessionTracker != null)
+            mediaSessionTracker.destroy();
+        mediaSessionTracker = new MediaSessionTracker(connection);
+        mediaSessionTracker.init();
+
+        refreshRemoteLayout(); // new capability set and mediaSessionTracker
 
         setConnectionStatus(R.string.connection_status_ready, false, true);
     }
@@ -416,6 +434,119 @@ public class RemoteActivity extends ConnectingActivity {
         setupTrackpad();
     }
 
+    private class PrimaryMediaSessionCallback implements MediaSessionTracker.MediaSessionCallback {
+        private long duration = 0;
+
+        private void setNullableText(TextView textView, String text) {
+            if (textView != null) {
+                if (text == null) {
+                    textView.setVisibility(View.GONE);
+                } else {
+                    textView.setVisibility(View.VISIBLE);
+                    textView.setText(text);
+                }
+            }
+        }
+
+        private int calculateSeekProgress(long elapsed) {
+            return (int) (elapsed * SEEK_BAR_MAX / duration);
+        }
+
+        @Override
+        public void onMetadataUpdated(MediaMetaEvent metaEvent) {
+            TextView mediaTitle = findViewById(R.id.media_title_text);
+            TextView mediaSubtitle = findViewById(R.id.media_subtitle_text);
+            TextView appLabel = findViewById(R.id.media_app_label_text);
+
+            TextView endTimeText = findViewById(R.id.media_end_text);
+            SeekBar seekBar = findViewById(R.id.media_seek_bar);
+
+            if (metaEvent == null) {
+                if (mediaTitle != null) mediaTitle.setVisibility(View.GONE);
+                if (mediaSubtitle != null) mediaSubtitle.setVisibility(View.GONE);
+                if (appLabel != null) appLabel.setVisibility(View.GONE);
+                if (endTimeText != null) endTimeText.setVisibility(View.GONE);
+                if (seekBar != null) seekBar.setVisibility(View.GONE);
+            } else {
+
+                setNullableText(mediaTitle, metaEvent.title());
+                setNullableText(mediaSubtitle, metaEvent.subtitle());
+                setNullableText(appLabel, metaEvent.sourceName());
+
+                if (metaEvent.length() == null || metaEvent.length() < 1) {
+                    // likely unknown, live stream, or loading
+                    if(endTimeText != null) endTimeText.setText(R.string.media_display_timestamp_end_placeholder);
+                    duration = -1;
+                } else {
+                    // known timestamp
+                    if (endTimeText != null) endTimeText.setText(MessageFormat.format(
+                            getString(R.string.media_display_timestamp_end_format),
+                            UiUtil.formatMediaTimestampMS(RemoteActivity.this, metaEvent.length())
+                    ));
+                    duration = metaEvent.length();
+                }
+            }
+        }
+
+        @Override
+        public void onStateUpdated(MediaStateEvent stateEvent) {
+            RemoteButton pausePlayButton = findViewById(R.id.pause_button);
+            if (pausePlayButton == null) return;
+
+            if (stateEvent == null) {
+                // default to pause
+                pausePlayButton.setImageResource(android.R.drawable.ic_media_pause);
+            } else {
+                if (stateEvent.paused()) pausePlayButton.setImageResource(android.R.drawable.ic_media_play);
+                else if (stateEvent.playing()) pausePlayButton.setImageResource(android.R.drawable.ic_media_pause);
+            }
+        }
+
+        @Override
+        public void onPositionUpdated(MediaPositionEvent positionEvent) {
+            TextView elapsedTimeText = findViewById(R.id.media_elapsed_text);
+            TextView endTimeText = findViewById(R.id.media_end_text);
+            SeekBar seekBar = findViewById(R.id.media_seek_bar);
+
+            if (positionEvent == null) {
+                if (endTimeText != null) endTimeText.setVisibility(View.GONE);
+                if (elapsedTimeText != null) elapsedTimeText.setVisibility(View.GONE);
+                if (seekBar != null) seekBar.setVisibility(View.GONE);
+            } else {
+                if (seekBar != null) {
+                    if (positionEvent.position() != null && duration > 0) {
+                        seekBar.setProgress(calculateSeekProgress(positionEvent.position()));
+                        if (positionEvent.bufferedPosition() != null)
+                            seekBar.setSecondaryProgress(calculateSeekProgress(positionEvent.bufferedPosition()));
+
+                        seekBar.setVisibility(View.VISIBLE);
+                    } else {
+                        seekBar.setVisibility(View.GONE);
+                    }
+                }
+
+                if (elapsedTimeText != null) {
+                    // show timestamps if position known
+                    if (positionEvent.position() == null) {
+                        elapsedTimeText.setVisibility(View.GONE);
+                        if (endTimeText != null) endTimeText.setVisibility(View.GONE);
+                    } else {
+                        elapsedTimeText.setText(UiUtil.formatMediaTimestampMS(RemoteActivity.this, positionEvent.position()));
+                        elapsedTimeText.setVisibility(View.VISIBLE);
+                        if (endTimeText != null) endTimeText.setVisibility(View.VISIBLE);
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void onDestroyed() {
+            onMetadataUpdated(null);
+            onStateUpdated(null);
+            onPositionUpdated(null);
+        }
+    }
+
     private void refreshRemoteLayout() {
         runOnUiThread(() -> {
             FrameLayout remoteFrame = findViewById(R.id.remote_frame);
@@ -432,6 +563,10 @@ public class RemoteActivity extends ConnectingActivity {
             // inflate
             getLayoutInflater().inflate(layout, remoteFrame, true);
             setupRemoteButtons();
+
+            // media
+            if (mediaSessionTracker != null)
+                mediaSessionTracker.setPrimarySessionCallback(new PrimaryMediaSessionCallback());
         });
     }
 

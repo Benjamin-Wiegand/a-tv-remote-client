@@ -1,6 +1,7 @@
 package io.benwiegand.atvremote.phone.util;
 
 import android.animation.TimeInterpolator;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.view.View;
 import android.widget.Button;
@@ -8,6 +9,7 @@ import android.widget.TextView;
 
 import androidx.annotation.StringRes;
 
+import java.text.MessageFormat;
 import java.util.function.BiConsumer;
 
 import io.benwiegand.atvremote.phone.R;
@@ -57,6 +59,40 @@ public class UiUtil {
         apply.accept(
                 preset.text(),
                 preset.clickListener() == null ? null : (d, w) -> preset.clickListener().onClick(null));
+    }
+
+    public static String formatMediaTimestamp(Context context, long seconds) {
+        // note: this ~~may not be~~ is definitely not flexible with locales
+
+        long minutes = seconds / 60;
+        seconds %= 60;
+
+        long hours = minutes / 60;
+        minutes %= 60;
+
+        String minutesString = String.valueOf(minutes);
+        String secondsString = (seconds > 9 ? "" : "0") + seconds;
+
+        if (hours == 0) {
+            return MessageFormat.format(
+                    context.getString(R.string.media_display_timestamp_minutes),
+                    minutesString,
+                    secondsString
+            );
+        }
+
+        String hoursString = String.valueOf(hours);
+        minutesString = (minutes > 9 ? "" : "0") + minutesString;
+        return MessageFormat.format(
+                context.getString(R.string.media_display_timestamp_hours),
+                hoursString,
+                minutesString,
+                secondsString
+        );
+    }
+
+    public static String formatMediaTimestampMS(Context context, long milliseconds) {
+        return formatMediaTimestamp(context, milliseconds / 1000);
     }
 
     private static class DropdownHandler {

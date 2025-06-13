@@ -142,5 +142,7 @@
     <string name="media_display_timestamp_elapsed_placeholder" tools:ignore="TypographyDashes">- : - -</string>
     <string name="media_display_timestamp_end_placeholder" tools:ignore="TypographyDashes">" / - : - -"</string>
     <string name="media_display_timestamp_end_format">" / {0} "</string>
+    <string name="media_display_timestamp_minutes">{0}:{1}</string>
+    <string name="media_display_timestamp_hours">{0}:{1}:{2}</string>
 
 </resources>
