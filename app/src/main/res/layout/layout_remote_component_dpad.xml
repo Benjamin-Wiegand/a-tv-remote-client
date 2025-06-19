@@ -47,7 +47,7 @@
                     android:layout_width="64dp"
                     android:layout_height="64dp"
                     android:layout_gravity="center"
-                    android:contentDescription="@string/button_up"
+                    android:contentDescription="@string/button_notifications"
                     app:srcCompat="@drawable/notifications" />
 
             </FrameLayout>
