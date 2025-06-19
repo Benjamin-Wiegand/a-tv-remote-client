@@ -32,7 +32,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:contentDescription="@string/button_up"
-                android:rotation="-90"
+                app:rotateDrawable="270"
                 app:srcCompat="@drawable/arrow" />
 
             <FrameLayout
@@ -66,7 +66,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:contentDescription="@string/button_left"
-                android:rotation="180"
+                app:rotateDrawable="180"
                 app:srcCompat="@drawable/arrow" />
 
             <io.benwiegand.atvremote.phone.ui.view.RemoteButton
@@ -106,7 +106,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:contentDescription="@string/button_down"
-                android:rotation="90"
+                app:rotateDrawable="90"
                 app:srcCompat="@drawable/arrow" />
 
             <Space

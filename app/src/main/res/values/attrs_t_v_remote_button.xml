@@ -1,0 +1,5 @@
+<resources>
+    <declare-styleable name="RemoteButton">
+        <attr name="rotateDrawable" format="float" />
+    </declare-styleable>
+</resources>
