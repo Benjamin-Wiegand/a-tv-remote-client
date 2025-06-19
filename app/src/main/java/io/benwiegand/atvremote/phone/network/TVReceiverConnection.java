@@ -20,6 +20,7 @@ import io.benwiegand.atvremote.phone.auth.ssl.CorruptedKeystoreException;
 import io.benwiegand.atvremote.phone.auth.ssl.KeyUtil;
 import io.benwiegand.atvremote.phone.async.Sec;
 import io.benwiegand.atvremote.phone.control.InputHandler;
+import io.benwiegand.atvremote.phone.protocol.KeyEventType;
 import io.benwiegand.atvremote.phone.protocol.OperationDefinition;
 import io.benwiegand.atvremote.phone.protocol.RemoteProtocolException;
 import io.benwiegand.atvremote.phone.protocol.RequiresPairingException;
@@ -322,11 +323,6 @@ public class TVReceiverConnection implements Closeable {
         }
 
         @Override
-        public Sec<Void> navApps() {
-            return sendBasicOperation(OP_NAV_APPS);
-        }
-
-        @Override
         public Sec<Void> navNotifications() {
             return sendBasicOperation(OP_NAV_NOTIFICATIONS);
         }
@@ -347,13 +343,13 @@ public class TVReceiverConnection implements Closeable {
         }
 
         @Override
-        public Sec<Void> mute() {
-            return sendBasicOperation(OP_MUTE);
+        public Sec<Void> toggleMute() {
+            return sendBasicOperation(OP_MUTE_TOGGLE);
         }
 
         @Override
-        public Sec<Void> pause() {
-            return sendBasicOperation(OP_PAUSE);
+        public Sec<Void> playPause() {
+            return sendBasicOperation(OP_PLAY_PAUSE);
         }
 
         @Override
@@ -438,13 +434,8 @@ public class TVReceiverConnection implements Closeable {
         }
 
         @Override
-        public Sec<Void> cursorDown() {
-            return sendBasicOperation(OP_CURSOR_DOWN);
-        }
-
-        @Override
-        public Sec<Void> cursorUp() {
-            return sendBasicOperation(OP_CURSOR_UP);
+        public Sec<Void> leftClick(KeyEventType type) {
+            return sendBasicOperation(OP_CURSOR_LEFT_BUTTON + " " + type);
         }
 
         @Override

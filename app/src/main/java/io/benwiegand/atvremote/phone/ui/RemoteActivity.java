@@ -37,6 +37,7 @@ import io.benwiegand.atvremote.phone.R;
 import io.benwiegand.atvremote.phone.async.Sec;
 import io.benwiegand.atvremote.phone.control.InputHandler;
 import io.benwiegand.atvremote.phone.network.TVReceiverConnection;
+import io.benwiegand.atvremote.phone.protocol.KeyEventType;
 import io.benwiegand.atvremote.phone.protocol.RequiresPairingException;
 import io.benwiegand.atvremote.phone.protocol.json.MediaMetaEvent;
 import io.benwiegand.atvremote.phone.protocol.json.MediaPositionEvent;
@@ -353,12 +354,12 @@ public class RemoteActivity extends ConnectingActivity {
         TrackpadButton trackpadLeftClickButton = findViewById(R.id.trackpad_click_button);
         trackpadLeftClickButton.setOnPress(() -> {
             if (inputHandler == null) return;
-            inputHandler.cursorDown();
+            inputHandler.leftClick(KeyEventType.DOWN);
             vibrator.vibrate(CLICK_VIBRATION_EFFECT);
         });
         trackpadLeftClickButton.setOnRelease(() -> {
             if (inputHandler == null) return;
-            inputHandler.cursorUp();
+            inputHandler.leftClick(KeyEventType.UP);
             vibrator.vibrate(LONG_CLICK_VIBRATION_EFFECT);
         });
     }
@@ -372,7 +373,7 @@ public class RemoteActivity extends ConnectingActivity {
 
             setupRepeatableButton(view.findViewById(R.id.volume_up_button), InputHandler::volumeUp, 100);
             setupRepeatableButton(view.findViewById(R.id.volume_down_button), InputHandler::volumeDown, 100);
-            setupBasicButton(view.findViewById(R.id.mute_button), InputHandler::mute);
+            setupBasicButton(view.findViewById(R.id.mute_button), InputHandler::toggleMute);
 
             new AlertDialog.Builder(this)
                     .setTitle(R.string.title_volume_dialog)
@@ -426,7 +427,7 @@ public class RemoteActivity extends ConnectingActivity {
         // media
         setupRepeatableButton(R.id.skip_backward_button, InputHandler::skipBackward, 690);
         setupBasicButton(R.id.prev_track_button, InputHandler::prevTrack);
-        setupBasicButton(R.id.pause_button, InputHandler::pause);
+        setupBasicButton(R.id.pause_button, InputHandler::playPause);
         setupBasicButton(R.id.next_track_button, InputHandler::nextTrack);
         setupRepeatableButton(R.id.skip_forward_button, InputHandler::skipForward, 690);
 

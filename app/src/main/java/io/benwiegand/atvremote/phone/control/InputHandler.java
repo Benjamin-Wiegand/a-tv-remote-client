@@ -1,6 +1,7 @@
 package io.benwiegand.atvremote.phone.control;
 
 import io.benwiegand.atvremote.phone.async.Sec;
+import io.benwiegand.atvremote.phone.protocol.KeyEventType;
 
 public interface InputHandler {
 
@@ -14,15 +15,14 @@ public interface InputHandler {
     Sec<Void> navHome();
     Sec<Void> navBack();
     Sec<Void> navRecent();
-    Sec<Void> navApps();
     Sec<Void> navNotifications();
     Sec<Void> navQuickSettings();
 
     Sec<Void> volumeUp();
     Sec<Void> volumeDown();
-    Sec<Void> mute();
+    Sec<Void> toggleMute();
 
-    Sec<Void> pause();
+    Sec<Void> playPause();
     Sec<Void> nextTrack();
     Sec<Void> prevTrack();
     Sec<Void> skipBackward();
@@ -39,8 +39,7 @@ public interface InputHandler {
     Sec<Void> showCursor();
     Sec<Void> hideCursor();
     Sec<Void> cursorMove(int x, int y);
-    Sec<Void> cursorDown();
-    Sec<Void> cursorUp();
+    Sec<Void> leftClick(KeyEventType type);
     Sec<Void> cursorContext();
 
     Sec<Void> scrollVertical(double trajectory, boolean glide);
