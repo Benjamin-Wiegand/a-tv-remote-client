@@ -8,6 +8,7 @@ import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
@@ -31,6 +32,8 @@ import com.google.android.material.navigation.NavigationBarView;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import io.benwiegand.atvremote.phone.R;
@@ -45,7 +48,6 @@ import io.benwiegand.atvremote.phone.protocol.json.MediaStateEvent;
 import io.benwiegand.atvremote.phone.protocol.json.ReceiverCapabilities;
 import io.benwiegand.atvremote.phone.state.MediaSessionTracker;
 import io.benwiegand.atvremote.phone.ui.view.RemoteButton;
-import io.benwiegand.atvremote.phone.ui.view.TrackpadButton;
 import io.benwiegand.atvremote.phone.ui.view.TrackpadSurface;
 import io.benwiegand.atvremote.phone.util.ErrorUtil;
 import io.benwiegand.atvremote.phone.util.UiUtil;
@@ -57,11 +59,13 @@ public class RemoteActivity extends ConnectingActivity {
 
     private static final int SEEK_BAR_MAX = 10000; // most displays are not 10k pixels wide, so this should be more than precise enough
 
-    private static final VibrationEffect CLICK_VIBRATION_EFFECT = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK);
-    private static final VibrationEffect LONG_CLICK_VIBRATION_EFFECT = VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK);
     private static final VibrationEffect ATTENTION_VIBRATION_EFFECT = VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK);
 
     private static final int BUTTON_REPEAT_DELAY = 420;
+    private static final int VOLUME_BUTTON_REPEAT_INTERVAL = 100;
+    private static final int DPAD_BUTTON_REPEAT_INTERVAL = 50;
+    private static final int SKIP_BUTTON_REPEAT_INTERVAL = 150;
+    private static final int TRACK_BUTTON_REPEAT_INTERVAL = 150;
 
     private static final String KEY_STATE_SELECTED_LAYOUT = "selected_layout";
     private static final int DEFAULT_LAYOUT = R.id.dpad_selector_button;
@@ -293,53 +297,63 @@ public class RemoteActivity extends ConnectingActivity {
 
     }
 
-    private void setupBasicButton(View button, Function<InputHandler, Sec<Void>> action, Function<InputHandler, Sec<Void>> longPressAction) {
-        if (button == null) return;
-
-        button.setOnClickListener(v -> {
+    private Consumer<KeyEventType> wrapToHandleButtonResult(BiFunction<InputHandler, KeyEventType, Sec<Void>> sender) {
+        return event -> {
             if (inputHandler == null) return;
-            action.apply(inputHandler)
+            sender.apply(inputHandler, event)
                     .doOnError(this::handleActionError)
                     .callMeWhenDone();
-            vibrator.vibrate(CLICK_VIBRATION_EFFECT);
-        });
-
-        if (longPressAction == null) return;
-
-        button.setOnLongClickListener(v -> {
-            if (inputHandler == null) return false;
-            longPressAction.apply(inputHandler)
-                    .doOnError(this::handleActionError)
-                    .callMeWhenDone();
-            vibrator.vibrate(LONG_CLICK_VIBRATION_EFFECT);
-            return true;
-        });
+        };
     }
 
-    private void setupBasicButton(@IdRes int buttonId, Function<InputHandler, Sec<Void>> action, Function<InputHandler, Sec<Void>> longPressAction) {
-        setupBasicButton(findViewById(buttonId), action, longPressAction);
+    private Runnable wrapToHandleButtonResult(Function<InputHandler, Sec<Void>> sender) {
+        return () -> wrapToHandleButtonResult((ih, event) -> sender.apply(ih)).accept(KeyEventType.CLICK);
     }
 
-    private void setupBasicButton(View button, Function<InputHandler, Sec<Void>> action) {
-        setupBasicButton(button, action, null);
-    }
-
-    private void setupBasicButton(@IdRes int buttonId, Function<InputHandler, Sec<Void>> action) {
-        setupBasicButton(buttonId, action, null);
-    }
-
-    private void setupExtraButton(View button, String buttonString) {
-        setupBasicButton(button, i -> i.pressExtraButton(buttonString));
-    }
-
-    private void setupRepeatableButton(RemoteButton button, Function<InputHandler, Sec<Void>> action, int repeatInterval) {
+    private void setupClickableButton(RemoteButton button, Function<InputHandler, Sec<Void>> clickSender, Function<InputHandler, Sec<Void>> longClickSender) {
         if (button == null) return;
-        setupBasicButton(button, action);
-        button.setRepeat(BUTTON_REPEAT_DELAY, repeatInterval);
+        if (longClickSender == null) {
+            button.setClickKeyEvent(wrapToHandleButtonResult(clickSender));
+        } else {
+            button.setClickKeyEvent(
+                    wrapToHandleButtonResult(clickSender),
+                    wrapToHandleButtonResult(longClickSender));
+        }
     }
 
-    private void setupRepeatableButton(@IdRes int buttonId, Function<InputHandler, Sec<Void>> action, int repeatInterval) {
-        setupRepeatableButton(findViewById(buttonId), action, repeatInterval);
+    private void setupClickableButton(@IdRes int buttonId, Function<InputHandler, Sec<Void>> clickSender, Function<InputHandler, Sec<Void>> longClickSender) {
+        setupClickableButton(findViewById(buttonId), clickSender, longClickSender);
+    }
+
+    private void setupDownUpButton(RemoteButton button, BiFunction<InputHandler, KeyEventType, Sec<Void>> sender) {
+        if (button == null) return;
+        button.setDownUpKeyEvent(wrapToHandleButtonResult(sender));
+    }
+
+    private void setupDownUpButton(@IdRes int id, BiFunction<InputHandler, KeyEventType, Sec<Void>> sender) {
+        setupDownUpButton(findViewById(id), sender);
+    }
+
+    private void setupExtraButton(RemoteButton button, String buttonString) {
+        setupClickableButton(button, ih -> ih.pressExtraButton(buttonString), null);
+    }
+
+    private void setupRepeatableDownUpButton(RemoteButton button, BiFunction<InputHandler, KeyEventType, Sec<Void>> sender, int repeatInterval) {
+        if (button == null) return;
+        button.setDownUpKeyEvent(wrapToHandleButtonResult(sender), BUTTON_REPEAT_DELAY, repeatInterval);
+    }
+
+    private void setupRepeatableDownUpButton(@IdRes int buttonId, BiFunction<InputHandler, KeyEventType, Sec<Void>> sender, int repeatInterval) {
+        setupRepeatableDownUpButton(findViewById(buttonId), sender, repeatInterval);
+    }
+
+    private void setupRepeatableUpDownButtonWithResult(@IdRes int buttonId, BiFunction<InputHandler, KeyEventType, Sec<Boolean>> sender, int repeatInterval) {
+        RemoteButton button = findViewById(buttonId);
+        setupRepeatableDownUpButton(button, (ih, e) -> sender.apply(ih, e)
+                .map(r -> {
+                    if (!r) vibrator.vibrate(ATTENTION_VIBRATION_EFFECT);
+                    return null;
+                }), repeatInterval);
     }
 
     private void setupTrackpad() {
@@ -351,17 +365,7 @@ public class RemoteActivity extends ConnectingActivity {
             return inputHandler.cursorMove(x, y);
         });
 
-        TrackpadButton trackpadLeftClickButton = findViewById(R.id.trackpad_click_button);
-        trackpadLeftClickButton.setOnPress(() -> {
-            if (inputHandler == null) return;
-            inputHandler.leftClick(KeyEventType.DOWN);
-            vibrator.vibrate(CLICK_VIBRATION_EFFECT);
-        });
-        trackpadLeftClickButton.setOnRelease(() -> {
-            if (inputHandler == null) return;
-            inputHandler.leftClick(KeyEventType.UP);
-            vibrator.vibrate(LONG_CLICK_VIBRATION_EFFECT);
-        });
+        setupDownUpButton(R.id.trackpad_click_button, InputHandler::leftClick);
     }
 
     private void setupVolumeAdjustButton() {
@@ -371,9 +375,9 @@ public class RemoteActivity extends ConnectingActivity {
         volumeAdjustButton.setOnClickListener(v -> {
             View view = getLayoutInflater().inflate(R.layout.layout_remote_dialog_volume_adjustment, null, false);
 
-            setupRepeatableButton(view.findViewById(R.id.volume_up_button), InputHandler::volumeUp, 100);
-            setupRepeatableButton(view.findViewById(R.id.volume_down_button), InputHandler::volumeDown, 100);
-            setupBasicButton(view.findViewById(R.id.mute_button), InputHandler::toggleMute);
+            setupRepeatableDownUpButton(view.findViewById(R.id.volume_up_button), InputHandler::volumeUp, VOLUME_BUTTON_REPEAT_INTERVAL);
+            setupRepeatableDownUpButton(view.findViewById(R.id.volume_down_button), InputHandler::volumeDown, VOLUME_BUTTON_REPEAT_INTERVAL);
+            setupDownUpButton(view.findViewById(R.id.mute_button), InputHandler::toggleMute);
 
             new AlertDialog.Builder(this)
                     .setTitle(R.string.title_volume_dialog)
@@ -387,21 +391,22 @@ public class RemoteActivity extends ConnectingActivity {
         if (capabilities == null) return;
 
         // dpad
-        setupRepeatableButton(R.id.up_button, InputHandler::dpadUp, 150);
-        setupRepeatableButton(R.id.down_button, InputHandler::dpadDown, 150);
-        setupRepeatableButton(R.id.left_button, InputHandler::dpadLeft, 150);
-        setupRepeatableButton(R.id.right_button, InputHandler::dpadRight, 150);
-        setupBasicButton(R.id.select_button, InputHandler::dpadSelect, InputHandler::dpadLongPress);
+        setupRepeatableDownUpButton(R.id.up_button, InputHandler::dpadUp, DPAD_BUTTON_REPEAT_INTERVAL);
+        setupRepeatableDownUpButton(R.id.down_button, InputHandler::dpadDown, DPAD_BUTTON_REPEAT_INTERVAL);
+        setupRepeatableDownUpButton(R.id.left_button, InputHandler::dpadLeft, DPAD_BUTTON_REPEAT_INTERVAL);
+        setupRepeatableDownUpButton(R.id.right_button, InputHandler::dpadRight, DPAD_BUTTON_REPEAT_INTERVAL);
+        setupDownUpButton(R.id.select_button, InputHandler::dpadSelect);
 
         // nav bar
-        setupBasicButton(R.id.back_button, InputHandler::navBack);
-        setupBasicButton(R.id.recent_button, InputHandler::navRecent);
+        setupDownUpButton(R.id.back_button, InputHandler::navBack);
+        setupDownUpButton(R.id.recent_button, InputHandler::navRecent);
 
         // home button (hold for dashboard on gtv)
+        // todo: the receiver should handle this on control methods that don't support up/down events
         if (capabilities.hasButton(ReceiverCapabilities.EXTRA_BUTTON_GTV_DASHBOARD)) {
-            setupBasicButton(R.id.home_button, InputHandler::navHome, i -> i.pressExtraButton(ReceiverCapabilities.EXTRA_BUTTON_GTV_DASHBOARD));
+            setupClickableButton(R.id.home_button, ih -> ih.navHome(KeyEventType.CLICK), i -> i.pressExtraButton(ReceiverCapabilities.EXTRA_BUTTON_GTV_DASHBOARD));
         } else {
-            setupBasicButton(R.id.home_button, InputHandler::navHome);
+            setupDownUpButton(R.id.home_button, InputHandler::navHome);
         }
 
         // menu button (notifications/dashboard)
@@ -414,7 +419,7 @@ public class RemoteActivity extends ConnectingActivity {
                 setupExtraButton(menuButton, ReceiverCapabilities.EXTRA_BUTTON_LINEAGE_SYSTEM_OPTIONS);
                 menuButton.setImageResource(R.drawable.notifications);
             } else {
-                setupBasicButton(menuButton, InputHandler::navNotifications);
+                setupDownUpButton(menuButton, InputHandler::navNotifications);
                 menuButton.setImageResource(R.drawable.notifications);
             }
         }
@@ -425,11 +430,11 @@ public class RemoteActivity extends ConnectingActivity {
         setupVolumeAdjustButton();
 
         // media
-        setupRepeatableButton(R.id.skip_backward_button, InputHandler::skipBackward, 690);
-        setupBasicButton(R.id.prev_track_button, InputHandler::prevTrack);
-        setupBasicButton(R.id.pause_button, InputHandler::playPause);
-        setupBasicButton(R.id.next_track_button, InputHandler::nextTrack);
-        setupRepeatableButton(R.id.skip_forward_button, InputHandler::skipForward, 690);
+        setupRepeatableDownUpButton(R.id.skip_backward_button, InputHandler::skipBackward, SKIP_BUTTON_REPEAT_INTERVAL);
+        setupRepeatableDownUpButton(R.id.prev_track_button, InputHandler::prevTrack, TRACK_BUTTON_REPEAT_INTERVAL);
+        setupDownUpButton(R.id.pause_button, InputHandler::playPause);
+        setupRepeatableDownUpButton(R.id.next_track_button, InputHandler::nextTrack, TRACK_BUTTON_REPEAT_INTERVAL);
+        setupRepeatableDownUpButton(R.id.skip_forward_button, InputHandler::skipForward, SKIP_BUTTON_REPEAT_INTERVAL);
 
         // trackpad
         setupTrackpad();

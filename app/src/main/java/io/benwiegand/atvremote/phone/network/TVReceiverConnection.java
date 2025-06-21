@@ -291,28 +291,28 @@ public class TVReceiverConnection implements Closeable {
     public class InputForwarder implements InputHandler {
 
         @Override
-        public Sec<Void> dpadDown() {
-            return sendBasicOperation(OP_DPAD_DOWN);
+        public Sec<Void> dpadDown(KeyEventType type) {
+            return sendBasicOperation(OP_DPAD_DOWN + " " + type);
         }
 
         @Override
-        public Sec<Void> dpadUp() {
-            return sendBasicOperation(OP_DPAD_UP);
+        public Sec<Void> dpadUp(KeyEventType type) {
+            return sendBasicOperation(OP_DPAD_UP + " " + type);
         }
 
         @Override
-        public Sec<Void> dpadLeft() {
-            return sendBasicOperation(OP_DPAD_LEFT);
+        public Sec<Void> dpadLeft(KeyEventType type) {
+            return sendBasicOperation(OP_DPAD_LEFT + " " + type);
         }
 
         @Override
-        public Sec<Void> dpadRight() {
-            return sendBasicOperation(OP_DPAD_RIGHT);
+        public Sec<Void> dpadRight(KeyEventType type) {
+            return sendBasicOperation(OP_DPAD_RIGHT + " " + type);
         }
 
         @Override
-        public Sec<Void> dpadSelect() {
-            return sendBasicOperation(OP_DPAD_SELECT);
+        public Sec<Void> dpadSelect(KeyEventType type) {
+            return sendBasicOperation(OP_DPAD_SELECT + " " + type);
         }
 
         @Override
@@ -321,23 +321,23 @@ public class TVReceiverConnection implements Closeable {
         }
 
         @Override
-        public Sec<Void> navHome() {
-            return sendBasicOperation(OP_NAV_HOME);
+        public Sec<Void> navHome(KeyEventType type) {
+            return sendBasicOperation(OP_NAV_HOME + " " + type);
         }
 
         @Override
-        public Sec<Void> navBack() {
-            return sendBasicOperation(OP_NAV_BACK);
+        public Sec<Void> navBack(KeyEventType type) {
+            return sendBasicOperation(OP_NAV_BACK + " " + type);
         }
 
         @Override
-        public Sec<Void> navRecent() {
-            return sendBasicOperation(OP_NAV_RECENT);
+        public Sec<Void> navRecent(KeyEventType type) {
+            return sendBasicOperation(OP_NAV_RECENT + " " + type);
         }
 
         @Override
-        public Sec<Void> navNotifications() {
-            return sendBasicOperation(OP_NAV_NOTIFICATIONS);
+        public Sec<Void> navNotifications(KeyEventType type) {
+            return sendBasicOperation(OP_NAV_NOTIFICATIONS + " " + type);
         }
 
         @Override
@@ -346,43 +346,43 @@ public class TVReceiverConnection implements Closeable {
         }
 
         @Override
-        public Sec<Void> volumeUp() {
-            return sendBasicOperation(OP_VOLUME_UP);
+        public Sec<Void> volumeUp(KeyEventType type) {
+            return sendBasicOperation(OP_VOLUME_UP + " " + type);
         }
 
         @Override
-        public Sec<Void> volumeDown() {
-            return sendBasicOperation(OP_VOLUME_DOWN);
+        public Sec<Void> volumeDown(KeyEventType type) {
+            return sendBasicOperation(OP_VOLUME_DOWN + " " + type);
         }
 
         @Override
-        public Sec<Void> toggleMute() {
-            return sendBasicOperation(OP_MUTE_TOGGLE);
+        public Sec<Void> toggleMute(KeyEventType type) {
+            return sendBasicOperation(OP_MUTE_TOGGLE + " " + type);
         }
 
         @Override
-        public Sec<Void> playPause() {
-            return sendBasicOperation(OP_PLAY_PAUSE);
+        public Sec<Void> playPause(KeyEventType type) {
+            return sendBasicOperation(OP_PLAY_PAUSE + " " + type);
         }
 
         @Override
-        public Sec<Void> nextTrack() {
-            return sendBasicOperation(OP_NEXT_TRACK);
+        public Sec<Void> nextTrack(KeyEventType type) {
+            return sendBasicOperation(OP_NEXT_TRACK + " " + type);
         }
 
         @Override
-        public Sec<Void> prevTrack() {
-            return sendBasicOperation(OP_PREV_TRACK);
+        public Sec<Void> prevTrack(KeyEventType type) {
+            return sendBasicOperation(OP_PREV_TRACK + " " + type);
         }
 
         @Override
-        public Sec<Void> skipBackward() {
-            return sendBasicOperation(OP_SKIP_BACKWARD);
+        public Sec<Void> skipBackward(KeyEventType type) {
+            return sendBasicOperation(OP_SKIP_BACKWARD + " " + type);
         }
 
         @Override
-        public Sec<Void> skipForward() {
-            return sendBasicOperation(OP_SKIP_FORWARD);
+        public Sec<Void> skipForward(KeyEventType type) {
+            return sendBasicOperation(OP_SKIP_FORWARD + " " + type);
         }
 
         @Override
