@@ -21,10 +21,14 @@ import io.benwiegand.atvremote.phone.auth.ssl.KeyUtil;
 import io.benwiegand.atvremote.phone.async.Sec;
 import io.benwiegand.atvremote.phone.control.InputHandler;
 import io.benwiegand.atvremote.phone.protocol.KeyEventType;
+import io.benwiegand.atvremote.phone.protocol.MalformedResponseException;
 import io.benwiegand.atvremote.phone.protocol.OperationDefinition;
 import io.benwiegand.atvremote.phone.protocol.RemoteProtocolException;
 import io.benwiegand.atvremote.phone.protocol.RequiresPairingException;
+import io.benwiegand.atvremote.phone.protocol.json.CommitTextParams;
+import io.benwiegand.atvremote.phone.protocol.json.DeleteTextParams;
 import io.benwiegand.atvremote.phone.protocol.json.ErrorDetails;
+import io.benwiegand.atvremote.phone.protocol.json.KeyEventParams;
 import io.benwiegand.atvremote.phone.protocol.json.ReceiverCapabilities;
 import io.benwiegand.atvremote.phone.protocol.json.ReceiverDeviceMeta;
 import io.benwiegand.atvremote.phone.protocol.json.RemoteDeviceMeta;
@@ -247,6 +251,15 @@ public class TVReceiverConnection implements Closeable {
                 .map(r -> null);
     }
 
+    private Sec<Boolean> sendOperationForBooleanResponse(String operation) {
+        return sendOperation(operation)
+                .map(e -> switch (e.toLowerCase()) {
+                    case "true" -> true;
+                    case "false" -> false;
+                    default -> throw new MalformedResponseException("not a boolean: " + e);
+                });
+    }
+
     public Sec<String> sendPairingCode(String code) {
         return sendOperation(OP_TRY_PAIRING_CODE + " " + code);
     }
@@ -462,6 +475,21 @@ public class TVReceiverConnection implements Closeable {
         @Override
         public Sec<Void> pressExtraButton(String extra) {
             return sendBasicOperation(OP_EXTRA_BUTTON + " " + extra);
+        }
+
+        @Override
+        public Sec<Boolean> commitText(String input, int newCursorPosition) {
+            return sendOperationForBooleanResponse(OP_COMMIT_TEXT + " " + gson.toJson(new CommitTextParams(input, newCursorPosition)));
+        }
+
+        @Override
+        public Sec<Boolean> deleteSurroundingText(int beforeLength, int afterLength) {
+            return sendOperationForBooleanResponse(OP_DELETE_TEXT + " " + gson.toJson(new DeleteTextParams(beforeLength, afterLength)));
+        }
+
+        @Override
+        public Sec<Boolean> sendKeyEvent(int keyCode, KeyEventType type) {
+            return sendOperationForBooleanResponse(OP_KEY_EVENT + " " + gson.toJson(new KeyEventParams(keyCode, type)));
         }
     }
 

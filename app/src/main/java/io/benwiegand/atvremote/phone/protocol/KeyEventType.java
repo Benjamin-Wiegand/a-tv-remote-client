@@ -1,5 +1,8 @@
 package io.benwiegand.atvremote.phone.protocol;
 
+import static android.view.KeyEvent.ACTION_DOWN;
+import static android.view.KeyEvent.ACTION_UP;
+
 /**
  * enum representation of the optional key event type extra.
  * <ul>
@@ -12,5 +15,15 @@ package io.benwiegand.atvremote.phone.protocol;
 public enum KeyEventType {
     CLICK,
     DOWN,
-    UP
+    UP;
+
+    public static KeyEventType fromKeyEventAction(int action) {
+        return switch (action) {
+            case ACTION_UP -> DOWN;
+            case ACTION_DOWN -> UP;
+            // ACTION_MULTIPLE is deprecated
+            default -> throw new IllegalStateException("Unexpected value: " + action);
+        };
+
+    }
 }
