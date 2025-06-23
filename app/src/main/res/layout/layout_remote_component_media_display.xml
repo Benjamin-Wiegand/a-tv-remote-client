@@ -20,7 +20,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             tools:text="VLC"
-            android:visibility="gone"
+            android:visibility="invisible"
             tools:visibility="visible"
             />
 
@@ -30,7 +30,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             tools:text="Some Media"
-            android:visibility="gone"
+            android:visibility="invisible"
             tools:visibility="visible"
             />
 
@@ -39,7 +39,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             tools:text="Some Artist"
-            android:visibility="gone"
+            android:visibility="invisible"
             tools:visibility="visible"
             />
 
@@ -58,7 +58,7 @@
             android:layout_height="wrap_content"
             android:textColor="?android:attr/textColorPrimary"
             android:text="@string/media_display_timestamp_elapsed_placeholder"
-            android:visibility="gone"
+            android:visibility="invisible"
             tools:visibility="visible"
             />
 
@@ -68,7 +68,7 @@
             android:layout_height="wrap_content"
             android:textColor="?android:attr/textColorSecondary"
             android:text="@string/media_display_timestamp_end_placeholder"
-            android:visibility="gone"
+            android:visibility="invisible"
             tools:visibility="visible"
             />
 
@@ -83,7 +83,7 @@
         android:paddingEnd="12dp"
         android:enabled="false"
         android:max="10000"
-        android:visibility="gone"
+        android:visibility="invisible"
         tools:visibility="visible"
         />
 

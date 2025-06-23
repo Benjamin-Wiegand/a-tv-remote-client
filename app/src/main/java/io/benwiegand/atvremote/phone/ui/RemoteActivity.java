@@ -502,7 +502,7 @@ public class RemoteActivity extends ConnectingActivity {
         private void setNullableText(TextView textView, String text) {
             if (textView != null) {
                 if (text == null) {
-                    textView.setVisibility(View.GONE);
+                    textView.setVisibility(View.INVISIBLE);
                 } else {
                     textView.setVisibility(View.VISIBLE);
                     textView.setText(text);
@@ -524,11 +524,11 @@ public class RemoteActivity extends ConnectingActivity {
             SeekBar seekBar = findViewById(R.id.media_seek_bar);
 
             if (metaEvent == null) {
-                if (mediaTitle != null) mediaTitle.setVisibility(View.GONE);
-                if (mediaSubtitle != null) mediaSubtitle.setVisibility(View.GONE);
-                if (appLabel != null) appLabel.setVisibility(View.GONE);
-                if (endTimeText != null) endTimeText.setVisibility(View.GONE);
-                if (seekBar != null) seekBar.setVisibility(View.GONE);
+                if (mediaTitle != null) mediaTitle.setVisibility(View.INVISIBLE);
+                if (mediaSubtitle != null) mediaSubtitle.setVisibility(View.INVISIBLE);
+                if (appLabel != null) appLabel.setVisibility(View.INVISIBLE);
+                if (endTimeText != null) endTimeText.setVisibility(View.INVISIBLE);
+                if (seekBar != null) seekBar.setVisibility(View.INVISIBLE);
             } else {
 
                 setNullableText(mediaTitle, metaEvent.title());
@@ -571,9 +571,9 @@ public class RemoteActivity extends ConnectingActivity {
             SeekBar seekBar = findViewById(R.id.media_seek_bar);
 
             if (positionEvent == null) {
-                if (endTimeText != null) endTimeText.setVisibility(View.GONE);
-                if (elapsedTimeText != null) elapsedTimeText.setVisibility(View.GONE);
-                if (seekBar != null) seekBar.setVisibility(View.GONE);
+                if (endTimeText != null) endTimeText.setVisibility(View.INVISIBLE);
+                if (elapsedTimeText != null) elapsedTimeText.setVisibility(View.INVISIBLE);
+                if (seekBar != null) seekBar.setVisibility(View.INVISIBLE);
             } else {
                 if (seekBar != null) {
                     if (positionEvent.position() != null && duration > 0) {
@@ -583,15 +583,15 @@ public class RemoteActivity extends ConnectingActivity {
 
                         seekBar.setVisibility(View.VISIBLE);
                     } else {
-                        seekBar.setVisibility(View.GONE);
+                        seekBar.setVisibility(View.INVISIBLE);
                     }
                 }
 
                 if (elapsedTimeText != null) {
                     // show timestamps if position known
                     if (positionEvent.position() == null) {
-                        elapsedTimeText.setVisibility(View.GONE);
-                        if (endTimeText != null) endTimeText.setVisibility(View.GONE);
+                        elapsedTimeText.setVisibility(View.INVISIBLE);
+                        if (endTimeText != null) endTimeText.setVisibility(View.INVISIBLE);
                     } else {
                         elapsedTimeText.setText(UiUtil.formatMediaTimestampMS(RemoteActivity.this, positionEvent.position()));
                         elapsedTimeText.setVisibility(View.VISIBLE);
