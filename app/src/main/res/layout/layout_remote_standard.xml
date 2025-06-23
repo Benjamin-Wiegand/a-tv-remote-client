@@ -11,6 +11,13 @@
         />
 
     <include
+        layout="@layout/layout_remote_component_media_display_summary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        />
+
+    <include
         layout="@layout/layout_remote_component_media_buttons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
