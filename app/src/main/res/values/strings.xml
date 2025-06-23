@@ -103,6 +103,8 @@
     <string name="nav_button_accessibility_mouse">mouse control</string>
     <string name="nav_button_media">media</string>
     <string name="nav_button_accessibility_media">@string/nav_button_media</string>
+    <string name="nav_button_keyboard">keyboard</string>
+    <string name="nav_button_accessibility_keyboard">keyboard entry</string>
 
     <!-- pairing -->
     <string name="title_pairing_connecting">connecting…</string>
@@ -144,5 +146,17 @@
     <string name="media_display_timestamp_end_format">" / {0} "</string>
     <string name="media_display_timestamp_minutes">{0}:{1}</string>
     <string name="media_display_timestamp_hours">{0}:{1}:{2}</string>
+
+    <!-- keyboard -->
+    <string name="keyboard_auto_type_text_entry_hint">text entry</string>
+    <string name="keyboard_auto_type_submit_button">send to tv</string>
+    <string name="keyboard_home_button">home</string>
+    <string name="keyboard_up_arrow">up arrow</string>
+    <string name="keyboard_end_button">end</string>
+    <string name="keyboard_delete_button">del</string>
+    <string name="keyboard_left_arrow">left arrow</string>
+    <string name="keyboard_down_arrow">down arrow</string>
+    <string name="keyboard_right_arrow">right arrow</string>
+    <string name="keyboard_backspace">backspace</string>
 
 </resources>

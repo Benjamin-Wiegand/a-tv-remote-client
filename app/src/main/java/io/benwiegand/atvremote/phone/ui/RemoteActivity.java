@@ -11,7 +11,9 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -67,6 +69,7 @@ public class RemoteActivity extends ConnectingActivity {
     private static final int DPAD_BUTTON_REPEAT_INTERVAL = 50;
     private static final int SKIP_BUTTON_REPEAT_INTERVAL = 150;
     private static final int TRACK_BUTTON_REPEAT_INTERVAL = 150;
+    private static final int KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL = 50;
 
     private static final String KEY_STATE_SELECTED_LAYOUT = "selected_layout";
     private static final int DEFAULT_LAYOUT = R.id.dpad_selector_button;
@@ -79,7 +82,8 @@ public class RemoteActivity extends ConnectingActivity {
     private static final Map<Integer, LayoutOrientationSelector> LAYOUT_MAP = Map.of(
             R.id.dpad_selector_button,      new LayoutOrientationSelector(R.layout.layout_remote_standard, R.layout.layout_remote_standard_landscape),
             R.id.trackpad_selector_button,  new LayoutOrientationSelector(R.layout.layout_remote_mouse, R.layout.layout_remote_mouse_landscape),
-            R.id.media_selector_button,     new LayoutOrientationSelector(R.layout.layout_remote_media)
+            R.id.media_selector_button,     new LayoutOrientationSelector(R.layout.layout_remote_media),
+            R.id.keyboard_selector_button,  new LayoutOrientationSelector(R.layout.layout_remote_keyboard)
     );
 
     // connection
@@ -114,11 +118,15 @@ public class RemoteActivity extends ConnectingActivity {
 
         EdgeToEdge.enable(this);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.frame), (v, insets) -> {
-            Insets avoidZone = insets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            Insets avoidZone = insets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout() | WindowInsetsCompat.Type.ime());
 
             // the remote
+            View bottomNavigationView = v.findViewById(R.id.control_method_selector);
+            int remoteFrameBottomPadding = avoidZone.bottom - bottomNavigationView.getHeight();
+            if (remoteFrameBottomPadding < 0) remoteFrameBottomPadding = 0;
+
             v.findViewById(R.id.action_bar).setPadding(avoidZone.left, avoidZone.top, avoidZone.right, 0);
-            v.findViewById(R.id.remote_frame).setPadding(avoidZone.left, 0, avoidZone.right, 0);
+            v.findViewById(R.id.remote_frame).setPadding(avoidZone.left, 0, avoidZone.right, remoteFrameBottomPadding);
 
             // error screen
             if (errorView != null)
@@ -152,6 +160,7 @@ public class RemoteActivity extends ConnectingActivity {
             public void onGlobalLayout() {
                 Log.v(TAG, "global layout");
                 remoteView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                ViewCompat.requestApplyInsets(findViewById(R.id.frame));
                 refreshRemoteLayout();
             }
         });
@@ -388,6 +397,49 @@ public class RemoteActivity extends ConnectingActivity {
         });
     }
 
+    private void setupKeyboard() {
+        EditText autoTypeText = findViewById(R.id.auto_type_text);
+
+        ImageButton submitButton = findViewById(R.id.auto_type_submit_button);
+        if (autoTypeText != null && submitButton != null) {
+            submitButton.setOnClickListener(v -> {
+                if (inputHandler == null) return;
+                autoTypeText.setEnabled(false);
+                submitButton.setEnabled(false);
+                inputHandler.commitText(String.valueOf(autoTypeText.getText()), 1)
+                        .doOnResult(r -> {
+                            runOnUiThread(() -> {
+                                autoTypeText.setEnabled(true);
+                                submitButton.setEnabled(true);
+                            });
+                            if (r) {
+                                runOnUiThread(() -> autoTypeText.setText(""));
+                            } else {
+                                vibrator.vibrate(ATTENTION_VIBRATION_EFFECT);
+                                toast("failed to commit text");
+                            }
+                        })
+                        .doOnError(t -> {
+                            runOnUiThread(() -> {
+                                autoTypeText.setEnabled(true);
+                                submitButton.setEnabled(true);
+                            });
+                            handleActionError(t);
+                        })
+                        .callMeWhenDone();
+            });
+        }
+
+        setupRepeatableUpDownButtonWithResult(R.id.keyboard_arrow_up, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DPAD_UP, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
+        setupRepeatableUpDownButtonWithResult(R.id.keyboard_arrow_down, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DPAD_DOWN, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
+        setupRepeatableUpDownButtonWithResult(R.id.keyboard_arrow_left, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DPAD_LEFT, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
+        setupRepeatableUpDownButtonWithResult(R.id.keyboard_arrow_right, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DPAD_RIGHT, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
+        setupRepeatableUpDownButtonWithResult(R.id.keyboard_home_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_MOVE_HOME, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
+        setupRepeatableUpDownButtonWithResult(R.id.keyboard_end_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_MOVE_END, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
+        setupRepeatableUpDownButtonWithResult(R.id.keyboard_delete_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_FORWARD_DEL, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
+        setupRepeatableUpDownButtonWithResult(R.id.keyboard_backspace_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DEL, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
+    }
+
     private void setupRemoteButtons() {
         if (capabilities == null) return;
 
@@ -439,6 +491,9 @@ public class RemoteActivity extends ConnectingActivity {
 
         // trackpad
         setupTrackpad();
+
+        // keyboard
+        setupKeyboard();
     }
 
     private class PrimaryMediaSessionCallback implements MediaSessionTracker.MediaSessionCallback {

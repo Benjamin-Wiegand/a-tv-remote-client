@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    >
+
+    <Space
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_margin="12dp"
+        >
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginBottom="5dp"
+            android:hint="@string/keyboard_auto_type_text_entry_hint"
+            android:labelFor="@id/auto_type_text"
+            >
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/auto_type_text"
+                style="@style/Widget.MaterialComponents.TextInputEditText.OutlinedBox.Dense"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <ImageButton
+            android:id="@+id/auto_type_submit_button"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="12dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:srcCompat="@drawable/send"
+            android:contentDescription="@string/keyboard_auto_type_submit_button"
+            app:tint="?android:attr/colorPrimary" />
+
+    </LinearLayout>
+
+    <Space
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        />
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        >
+        <TableRow>
+
+            <io.benwiegand.atvremote.phone.ui.view.RemoteTextButton
+                android:id="@+id/keyboard_home_key"
+                style="@style/Widget.Theme.ATVRemote.RemoteTextButton"
+                android:layout_height="48dp"
+                android:layout_width="96dp"
+                android:layout_weight="1"
+                android:text="@string/keyboard_home_button"
+                />
+
+            <io.benwiegand.atvremote.phone.ui.view.RemoteImageButton
+                android:id="@+id/keyboard_arrow_up"
+                style="@style/Widget.Theme.ATVRemote.RemoteImageButton.KeyboardArrow"
+                android:layout_height="48dp"
+                android:layout_width="96dp"
+                android:layout_weight="1"
+                app:rotateDrawable="90"
+                android:src="@drawable/keyboard_arrow"
+                android:contentDescription="@string/keyboard_up_arrow"
+                />
+
+            <io.benwiegand.atvremote.phone.ui.view.RemoteTextButton
+                android:id="@+id/keyboard_end_key"
+                style="@style/Widget.Theme.ATVRemote.RemoteTextButton"
+                android:layout_height="48dp"
+                android:layout_width="96dp"
+                android:layout_weight="1"
+                android:text="@string/keyboard_end_button"
+                />
+
+            <io.benwiegand.atvremote.phone.ui.view.RemoteTextButton
+                android:id="@+id/keyboard_delete_key"
+                style="@style/Widget.Theme.ATVRemote.RemoteTextButton"
+                android:layout_height="48dp"
+                android:layout_width="96dp"
+                android:layout_weight="1"
+                android:text="@string/keyboard_delete_button"
+                />
+
+        </TableRow>
+        <TableRow>
+
+            <io.benwiegand.atvremote.phone.ui.view.RemoteImageButton
+                android:id="@+id/keyboard_arrow_left"
+                style="@style/Widget.Theme.ATVRemote.RemoteImageButton.KeyboardArrow"
+                android:layout_height="48dp"
+                android:layout_width="96dp"
+                android:layout_weight="1"
+                android:src="@drawable/keyboard_arrow"
+                android:contentDescription="@string/keyboard_left_arrow"
+                />
+
+            <io.benwiegand.atvremote.phone.ui.view.RemoteImageButton
+                android:id="@+id/keyboard_arrow_down"
+                style="@style/Widget.Theme.ATVRemote.RemoteImageButton.KeyboardArrow"
+                android:layout_height="48dp"
+                android:layout_width="96dp"
+                android:layout_weight="1"
+                app:rotateDrawable="270"
+                android:src="@drawable/keyboard_arrow"
+                android:contentDescription="@string/keyboard_down_arrow"
+                />
+
+            <io.benwiegand.atvremote.phone.ui.view.RemoteImageButton
+                android:id="@+id/keyboard_arrow_right"
+                style="@style/Widget.Theme.ATVRemote.RemoteImageButton.KeyboardArrow"
+                android:layout_height="48dp"
+                android:layout_width="96dp"
+                android:layout_weight="1"
+                app:rotateDrawable="180"
+                android:src="@drawable/keyboard_arrow"
+                android:contentDescription="@string/keyboard_right_arrow"
+                />
+
+            <io.benwiegand.atvremote.phone.ui.view.RemoteTextButton
+                android:id="@+id/keyboard_backspace_key"
+                style="@style/Widget.Theme.ATVRemote.RemoteTextButton"
+                android:layout_height="48dp"
+                android:layout_width="96dp"
+                android:layout_weight="1"
+                android:text="@string/keyboard_backspace"
+                />
+
+        </TableRow>
+    </TableLayout>
+
+</LinearLayout>
