@@ -11,17 +11,17 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+        <io.benwiegand.atvremote.phone.ui.view.RemoteImageButton
             android:id="@+id/volume_up_button"
-            style="@style/Widget.Theme.ATVRemote.RemoteButton"
+            style="@style/Widget.Theme.ATVRemote.RemoteImageButton"
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:contentDescription="@string/button_volume_up"
             app:srcCompat="@android:drawable/ic_lock_silent_mode_off" />
 
-        <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+        <io.benwiegand.atvremote.phone.ui.view.RemoteImageButton
             android:id="@+id/volume_down_button"
-            style="@style/Widget.Theme.ATVRemote.RemoteButton"
+            style="@style/Widget.Theme.ATVRemote.RemoteImageButton"
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:contentDescription="@string/button_volume_down"
@@ -29,9 +29,9 @@
 
     </LinearLayout>
 
-    <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+    <io.benwiegand.atvremote.phone.ui.view.RemoteImageButton
         android:id="@+id/mute_button"
-        style="@style/Widget.Theme.ATVRemote.RemoteButton"
+        style="@style/Widget.Theme.ATVRemote.RemoteImageButton"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:contentDescription="@string/button_mute_toggle"

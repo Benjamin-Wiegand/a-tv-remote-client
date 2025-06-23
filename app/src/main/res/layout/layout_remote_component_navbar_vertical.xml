@@ -13,9 +13,9 @@
         android:layout_weight="1"
         />
 
-    <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+    <io.benwiegand.atvremote.phone.ui.view.RemoteImageButton
         android:id="@+id/recent_button"
-        style="@style/Widget.Theme.ATVRemote.RemoteButton"
+        style="@style/Widget.Theme.ATVRemote.RemoteImageButton"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:layout_weight="0"
@@ -28,9 +28,9 @@
         android:layout_weight="1"
         />
 
-    <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+    <io.benwiegand.atvremote.phone.ui.view.RemoteImageButton
         android:id="@+id/home_button"
-        style="@style/Widget.Theme.ATVRemote.RemoteButton"
+        style="@style/Widget.Theme.ATVRemote.RemoteImageButton"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:layout_weight="0"
@@ -43,9 +43,9 @@
         android:layout_weight="1"
         />
 
-    <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+    <io.benwiegand.atvremote.phone.ui.view.RemoteImageButton
         android:id="@+id/back_button"
-        style="@style/Widget.Theme.ATVRemote.RemoteButton"
+        style="@style/Widget.Theme.ATVRemote.RemoteImageButton"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:layout_weight="0"

@@ -13,7 +13,7 @@
         android:alpha="0.4"
         android:background="@drawable/trackpad_surface" />
 
-    <io.benwiegand.atvremote.phone.ui.view.RemoteButton
+    <io.benwiegand.atvremote.phone.ui.view.RemoteImageButton
         android:id="@+id/trackpad_click_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

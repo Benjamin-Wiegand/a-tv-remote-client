@@ -48,6 +48,7 @@ import io.benwiegand.atvremote.phone.protocol.json.MediaStateEvent;
 import io.benwiegand.atvremote.phone.protocol.json.ReceiverCapabilities;
 import io.benwiegand.atvremote.phone.state.MediaSessionTracker;
 import io.benwiegand.atvremote.phone.ui.view.RemoteButton;
+import io.benwiegand.atvremote.phone.ui.view.RemoteImageButton;
 import io.benwiegand.atvremote.phone.ui.view.TrackpadSurface;
 import io.benwiegand.atvremote.phone.util.ErrorUtil;
 import io.benwiegand.atvremote.phone.util.UiUtil;
@@ -410,7 +411,7 @@ public class RemoteActivity extends ConnectingActivity {
         }
 
         // menu button (notifications/dashboard)
-        RemoteButton menuButton = findViewById(R.id.menu_button);
+        RemoteImageButton menuButton = findViewById(R.id.menu_button);
         if (menuButton != null) {
             if (capabilities.hasButton(ReceiverCapabilities.EXTRA_BUTTON_GTV_DASHBOARD)) {
                 setupExtraButton(menuButton, ReceiverCapabilities.EXTRA_BUTTON_GTV_DASHBOARD);
@@ -496,7 +497,7 @@ public class RemoteActivity extends ConnectingActivity {
 
         @Override
         public void onStateUpdated(MediaStateEvent stateEvent) {
-            RemoteButton pausePlayButton = findViewById(R.id.pause_button);
+            RemoteImageButton pausePlayButton = findViewById(R.id.pause_button);
             if (pausePlayButton == null) return;
 
             if (stateEvent == null) {
