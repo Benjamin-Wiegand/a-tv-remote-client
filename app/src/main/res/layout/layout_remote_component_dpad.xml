@@ -9,8 +9,8 @@
     <TableLayout
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -35,22 +35,10 @@
                 app:rotateDrawable="270"
                 app:srcCompat="@drawable/arrow" />
 
-            <FrameLayout
+            <Space
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
-                >
-
-                <io.benwiegand.atvremote.phone.ui.view.RemoteImageButton
-                    android:id="@+id/menu_button"
-                    style="@style/Widget.Theme.ATVRemote.RemoteImageButton"
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:layout_gravity="center"
-                    android:contentDescription="@string/button_notifications"
-                    app:srcCompat="@drawable/notifications" />
-
-            </FrameLayout>
+                android:layout_weight="1" />
 
         </TableRow>
 
@@ -114,7 +102,100 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1" />
 
-    </TableRow>
+        </TableRow>
+
+    </TableLayout>
+
+    <!-- I don't even know anymore -->
+    <TableLayout
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_horizontal"
+            android:layout_weight="1">
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                >
+
+                <io.benwiegand.atvremote.phone.ui.view.RemoteImageButton
+                    android:id="@+id/menu_button"
+                    style="@style/Widget.Theme.ATVRemote.RemoteImageButton"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/button_notifications"
+                    app:srcCompat="@drawable/notifications" />
+
+            </FrameLayout>
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_horizontal"
+            android:layout_weight="1">
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:layout_weight="1" />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_horizontal"
+            android:layout_weight="1">
+
+            <Space
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_weight="1" />
+
+            <Space
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_weight="1" />
+
+            <Space
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_weight="1" />
+
+        </TableRow>
 
     </TableLayout>
 
