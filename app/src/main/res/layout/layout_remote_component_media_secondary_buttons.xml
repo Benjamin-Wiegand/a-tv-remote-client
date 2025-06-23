@@ -20,7 +20,7 @@
         android:layout_height="64dp"
         android:layout_weight="0"
         android:contentDescription="@string/button_skip_backward"
-        app:srcCompat="@android:drawable/ic_media_rew"
+        app:srcCompat="@drawable/rewind"
         />
 
     <Space
@@ -36,7 +36,7 @@
         android:layout_height="64dp"
         android:layout_weight="0"
         android:contentDescription="@string/button_volume_down"
-        app:srcCompat="@android:drawable/ic_lock_silent_mode_off"
+        app:srcCompat="@drawable/volume"
         />
 
     <Space
@@ -52,7 +52,7 @@
         android:layout_height="64dp"
         android:layout_weight="0"
         android:contentDescription="@string/button_skip_forward"
-        app:srcCompat="@android:drawable/ic_media_ff"
+        app:srcCompat="@drawable/fast_forward"
         />
 
     <Space

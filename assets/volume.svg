@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="512"
+   height="512"
+   viewBox="0 0 512 512"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   sodipodi:docname="volume.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     inkscape:zoom="0.40368893"
+     inkscape:cx="352.99457"
+     inkscape:cy="606.90294"
+     inkscape:window-width="1920"
+     inkscape:window-height="1016"
+     inkscape:window-x="2048"
+     inkscape:window-y="1168"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     showgrid="false" />
+  <defs
+     id="defs1">
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect5522"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect5516"
+       is_visible="true"
+       lpeversion="1" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:42;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:7.1;stroke-dasharray:none;stroke-opacity:1"
+       d="m 149.85825,324.69319 c 0,0 72.78951,90.0796 98.42691,90.0796 V 256 97.22721 c -26.73605,0 -98.42691,90.07958 -98.42691,90.07958 h -43.98899 v 137.3864 z"
+       id="path2-2"
+       sodipodi:nodetypes="cccccccc" />
+    <path
+       id="path5409"
+       style="fill:none;stroke:#000000;stroke-width:42;stroke-dasharray:none"
+       d="m 342.81836,153.84888 c 26.14276,26.14275 42.31238,62.25863 42.31238,102.15112 0,39.89249 -16.16963,76.00837 -42.31238,102.15112"
+       sodipodi:nodetypes="csc" />
+    <path
+       id="path5409-9"
+       style="fill:none;stroke:#000000;stroke-width:41.9999;stroke-dasharray:none"
+       d="m 293.01931,195.64792 c 15.44544,15.44544 24.99865,36.78313 24.99865,60.35208 0,23.56895 -9.55321,44.90664 -24.99866,60.35208"
+       sodipodi:nodetypes="csc" />
+  </g>
+</svg>

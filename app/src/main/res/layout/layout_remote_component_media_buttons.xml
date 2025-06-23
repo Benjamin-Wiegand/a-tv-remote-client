@@ -20,7 +20,7 @@
         android:layout_height="64dp"
         android:layout_weight="0"
         android:contentDescription="@string/button_previous_track"
-        app:srcCompat="@android:drawable/ic_media_previous"
+        app:srcCompat="@drawable/prev_track"
         />
 
     <Space
@@ -36,7 +36,7 @@
         android:layout_height="64dp"
         android:layout_weight="0"
         android:contentDescription="@string/button_toggle_playing"
-        app:srcCompat="@android:drawable/ic_media_pause"
+        app:srcCompat="@drawable/playpause"
         />
 
     <Space
@@ -52,7 +52,7 @@
         android:layout_height="64dp"
         android:layout_weight="0"
         android:contentDescription="@string/button_next_track"
-        app:srcCompat="@android:drawable/ic_media_next"
+        app:srcCompat="@drawable/next_track"
         />
 
     <Space

@@ -10,21 +10,21 @@
 
     <item
         android:id="@+id/trackpad_selector_button"
-        android:icon="@drawable/trackpad"
+        android:icon="@drawable/mouse"
         android:title="@string/nav_button_mouse"
         android:contentDescription="@string/nav_button_accessibility_mouse"
         />
 
     <item
         android:id="@+id/keyboard_selector_button"
-        android:icon="@android:drawable/ic_menu_edit"
+        android:icon="@drawable/keyboard"
         android:title="@string/nav_button_keyboard"
         android:contentDescription="@string/nav_button_accessibility_keyboard"
         />
 
     <item
         android:id="@+id/media_selector_button"
-        android:icon="@android:drawable/ic_media_pause"
+        android:icon="@drawable/playpause"
         android:title="@string/nav_button_media"
         android:contentDescription="@string/nav_button_accessibility_media"
         />

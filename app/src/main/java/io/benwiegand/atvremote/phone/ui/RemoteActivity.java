@@ -557,10 +557,10 @@ public class RemoteActivity extends ConnectingActivity {
 
             if (stateEvent == null) {
                 // default to pause
-                pausePlayButton.setImageResource(android.R.drawable.ic_media_pause);
+                pausePlayButton.setImageResource(R.drawable.playpause);
             } else {
-                if (stateEvent.paused()) pausePlayButton.setImageResource(android.R.drawable.ic_media_play);
-                else if (stateEvent.playing()) pausePlayButton.setImageResource(android.R.drawable.ic_media_pause);
+                if (stateEvent.paused()) pausePlayButton.setImageResource(R.drawable.play);
+                else if (stateEvent.playing()) pausePlayButton.setImageResource(R.drawable.pause);
             }
         }
 

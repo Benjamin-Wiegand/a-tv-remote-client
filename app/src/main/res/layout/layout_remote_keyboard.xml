@@ -137,13 +137,14 @@
                 android:contentDescription="@string/keyboard_right_arrow"
                 />
 
-            <io.benwiegand.atvremote.phone.ui.view.RemoteTextButton
+            <io.benwiegand.atvremote.phone.ui.view.RemoteImageButton
                 android:id="@+id/keyboard_backspace_key"
-                style="@style/Widget.Theme.ATVRemote.RemoteTextButton"
+                style="@style/Widget.Theme.ATVRemote.RemoteImageButton.KeyboardArrow"
                 android:layout_height="48dp"
                 android:layout_width="96dp"
                 android:layout_weight="1"
-                android:text="@string/keyboard_backspace"
+                android:src="@drawable/backspace"
+                android:contentDescription="@string/keyboard_backspace"
                 />
 
         </TableRow>
