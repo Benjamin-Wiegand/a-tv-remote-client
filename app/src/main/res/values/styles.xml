@@ -21,7 +21,7 @@
     </style>
 
     <style name="Widget.Theme.ATVRemote.RemoteTextButton" parent="Widget.Theme.ATVRemote.RemoteButton.Base">
-
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
     </style>
 
 </resources>
