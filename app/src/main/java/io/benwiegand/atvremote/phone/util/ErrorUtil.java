@@ -12,6 +12,7 @@ import androidx.annotation.StringRes;
 import java.text.MessageFormat;
 
 import io.benwiegand.atvremote.phone.R;
+import io.benwiegand.atvremote.phone.protocol.RemoteProtocolException;
 import io.benwiegand.atvremote.phone.ui.ErrorMessageException;
 
 public class ErrorUtil {
@@ -67,7 +68,11 @@ public class ErrorUtil {
         descriptionText.setText(error.description(root.getContext()));
 
         View dropdown = root.findViewById(R.id.stack_trace_dropdown);
-        if (error.throwable() != null) {
+
+        // exceptions received over the connection don't have useful stack traces (yet)
+        boolean showStackTrace = error.throwable() != null
+                && !(error.throwable() instanceof RemoteProtocolException a && a.isReceivedOverConnection());
+        if (showStackTrace) {
             TextView stackTraceText = root.findViewById(R.id.stack_trace_text);
             stackTraceText.setText(getStackTrace(error.throwable()));
 

@@ -15,7 +15,7 @@
         android:importantForAccessibility="no"
         android:padding="16dp"
         app:srcCompat="@drawable/arrow"
-        app:tint="?android:attr/colorForeground"
+        app:tint="?android:attr/textColorTertiary"
         />
 
     <TextView
@@ -25,6 +25,7 @@
         android:layout_gravity="center_vertical"
         tools:text="show thing"
         android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+        android:textColor="?android:attr/textColorTertiary"
         />
 
 </LinearLayout>
