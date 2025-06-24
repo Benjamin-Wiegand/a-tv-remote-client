@@ -1,8 +1,11 @@
 package io.benwiegand.atvremote.phone.util;
 
+import static android.util.TypedValue.COMPLEX_UNIT_DIP;
+
 import android.animation.TimeInterpolator;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -144,6 +147,10 @@ public class UiUtil {
 
         // retract by default
         handler.retract(dropdown);
+    }
+
+    public static float dpToPx(Context context, float dp) {
+        return TypedValue.applyDimension(COMPLEX_UNIT_DIP, dp, context.getResources().getDisplayMetrics());
     }
 
 }

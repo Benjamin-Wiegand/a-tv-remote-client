@@ -74,6 +74,21 @@ public class RemoteActivity extends ConnectingActivity {
     private static final String KEY_STATE_SELECTED_LAYOUT = "selected_layout";
     private static final int DEFAULT_LAYOUT = R.id.dpad_selector_button;
 
+    // used to remove stuff to make the ui fit on small screens
+    private static final float DPAD_PADDING_HEIGHT_DP = 24;
+    private static final float MEDIA_SUMMARY_MIN_HEIGHT_DP = 48;
+    private static final float MEDIA_CONTROLS_MIN_HEIGHT_DP = 64;
+
+    // if this can't be met, use portrait layout.
+    private static final float LAYOUT_REMOTE_STANDARD_LANDSCAPE_MIN_WIDTH_DP = 192 /* dpad */ + 192 /* controls section */;
+
+    // if this can't be met, remove ui elements.
+    private static final float LAYOUT_REMOTE_STANDARD_PORTRAIT_MIN_HEIGHT_DP = 192 /* dpad */
+            + 64 /* navbar */
+            + DPAD_PADDING_HEIGHT_DP
+            + MEDIA_SUMMARY_MIN_HEIGHT_DP
+            + MEDIA_CONTROLS_MIN_HEIGHT_DP;
+
     private record LayoutOrientationSelector(@LayoutRes int portraitLayout, @LayoutRes int landscapeLayout) {
         LayoutOrientationSelector(@LayoutRes int layout) {
             this(layout, layout);
@@ -622,9 +637,45 @@ public class RemoteActivity extends ConnectingActivity {
             boolean portrait = remoteFrame.getHeight() > remoteFrame.getWidth();
             int layout = portrait ? selector.portraitLayout() : selector.landscapeLayout();
 
+            // dpad landscape mode needs a minimum width
+            if (layout == R.layout.layout_remote_standard_landscape) {
+                float minWidth = UiUtil.dpToPx(this, LAYOUT_REMOTE_STANDARD_LANDSCAPE_MIN_WIDTH_DP);
+                if (remoteFrame.getWidth() < minWidth) {
+                    layout = selector.portraitLayout();
+                }
+            }
+
             // inflate
             getLayoutInflater().inflate(layout, remoteFrame, true);
             setupRemoteButtons();
+
+            // remove things if it doesn't fit
+            // would be nice to do this dynamically at some point
+            if (layout == R.layout.layout_remote_standard) {
+                float height = remoteFrame.getHeight();
+                float minHeight = UiUtil.dpToPx(this, LAYOUT_REMOTE_STANDARD_PORTRAIT_MIN_HEIGHT_DP);
+
+                if (height < minHeight) {
+                    // remove dpad padding
+                    View dpad = findViewById(R.id.dpad);
+                    dpad.setPadding(dpad.getPaddingLeft(), 0, dpad.getPaddingRight(), 0);
+                    minHeight -= UiUtil.dpToPx(this, DPAD_PADDING_HEIGHT_DP);
+                }
+                if (height < minHeight) {
+                    // remove media summary
+                    findViewById(R.id.media_summary).setVisibility(View.GONE);
+                    minHeight -= UiUtil.dpToPx(this, MEDIA_SUMMARY_MIN_HEIGHT_DP);
+                }
+                if (height < minHeight) {
+                    // remove media section entirely
+                    findViewById(R.id.media_section).setVisibility(View.GONE);
+                    minHeight -= UiUtil.dpToPx(this, MEDIA_CONTROLS_MIN_HEIGHT_DP);
+                }
+                if (height < minHeight) {
+                    Log.w(TAG, "could not meet an acceptable UI for the screen size");
+                }
+
+            }
 
             // media
             if (mediaSessionTracker != null) {

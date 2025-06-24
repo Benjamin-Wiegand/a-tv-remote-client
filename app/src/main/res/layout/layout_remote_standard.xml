@@ -19,6 +19,7 @@
         >
 
         <include
+            android:id="@+id/media_summary"
             layout="@layout/layout_remote_component_media_display_summary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
