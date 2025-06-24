@@ -35,6 +35,8 @@
                 style="@style/Widget.MaterialComponents.TextInputEditText.OutlinedBox.Dense"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:imeActionLabel="@string/keyboard_auto_type_submit_button"
+                android:imeOptions="actionSend|flagNoEnterAction"
                 />
 
         </com.google.android.material.textfield.TextInputLayout>

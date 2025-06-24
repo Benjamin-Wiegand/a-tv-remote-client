@@ -1,5 +1,7 @@
 package io.benwiegand.atvremote.phone.ui;
 
+import static android.view.inputmethod.EditorInfo.IME_ACTION_SEND;
+
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -417,6 +419,12 @@ public class RemoteActivity extends ConnectingActivity {
 
         ImageButton submitButton = findViewById(R.id.auto_type_submit_button);
         if (autoTypeText != null && submitButton != null) {
+
+            autoTypeText.setOnEditorActionListener((v, actionId, event) -> {
+                if (actionId == IME_ACTION_SEND) return submitButton.performClick();
+                return false;
+            });
+
             submitButton.setOnClickListener(v -> {
                 if (inputHandler == null) return;
                 autoTypeText.setEnabled(false);
