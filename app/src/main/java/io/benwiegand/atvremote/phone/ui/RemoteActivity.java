@@ -57,6 +57,8 @@ import io.benwiegand.atvremote.phone.ui.view.TrackpadSurface;
 import io.benwiegand.atvremote.phone.util.ErrorUtil;
 import io.benwiegand.atvremote.phone.util.UiUtil;
 
+import static io.benwiegand.atvremote.phone.ui.view.RemoteButton.DownUpFeedbackType;
+
 public class RemoteActivity extends ConnectingActivity {
     private static final String TAG = RemoteActivity.class.getSimpleName();
 
@@ -67,11 +69,12 @@ public class RemoteActivity extends ConnectingActivity {
     private static final VibrationEffect ATTENTION_VIBRATION_EFFECT = VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK);
 
     private static final int BUTTON_REPEAT_DELAY = 420;
+
+    private static final int DEFAULT_BUTTON_REPEAT_INTERVAL = 50;
     private static final int VOLUME_BUTTON_REPEAT_INTERVAL = 100;
-    private static final int DPAD_BUTTON_REPEAT_INTERVAL = 50;
+    private static final int DPAD_BUTTON_REPEAT_INTERVAL = DEFAULT_BUTTON_REPEAT_INTERVAL;
     private static final int SKIP_BUTTON_REPEAT_INTERVAL = 150;
-    private static final int TRACK_BUTTON_REPEAT_INTERVAL = 150;
-    private static final int KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL = 50;
+    private static final int KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL = DEFAULT_BUTTON_REPEAT_INTERVAL;
 
     private static final String KEY_STATE_SELECTED_LAYOUT = "selected_layout";
     private static final int DEFAULT_LAYOUT = R.id.dpad_selector_button;
@@ -352,35 +355,40 @@ public class RemoteActivity extends ConnectingActivity {
         setupClickableButton(findViewById(buttonId), clickSender, longClickSender);
     }
 
-    private void setupDownUpButton(RemoteButton button, BiFunction<InputHandler, KeyEventType, Sec<Void>> sender) {
-        if (button == null) return;
-        button.setDownUpKeyEvent(wrapToHandleButtonResult(sender));
-    }
-
-    private void setupDownUpButton(@IdRes int id, BiFunction<InputHandler, KeyEventType, Sec<Void>> sender) {
-        setupDownUpButton(findViewById(id), sender);
-    }
-
     private void setupExtraButton(RemoteButton button, String buttonString) {
         setupClickableButton(button, ih -> ih.pressExtraButton(buttonString), null);
     }
 
-    private void setupRepeatableDownUpButton(RemoteButton button, BiFunction<InputHandler, KeyEventType, Sec<Void>> sender, int repeatInterval) {
+    private void setupDownUpButton(RemoteButton button, BiFunction<InputHandler, KeyEventType, Sec<Void>> sender, int repeatInterval, DownUpFeedbackType feedbackType) {
         if (button == null) return;
-        button.setDownUpKeyEvent(wrapToHandleButtonResult(sender), BUTTON_REPEAT_DELAY, repeatInterval);
+        button.setDownUpKeyEvent(wrapToHandleButtonResult(sender), BUTTON_REPEAT_DELAY, repeatInterval, feedbackType);
     }
 
-    private void setupRepeatableDownUpButton(@IdRes int buttonId, BiFunction<InputHandler, KeyEventType, Sec<Void>> sender, int repeatInterval) {
-        setupRepeatableDownUpButton(findViewById(buttonId), sender, repeatInterval);
+    private void setupDownUpButton(@IdRes int buttonId, BiFunction<InputHandler, KeyEventType, Sec<Void>> sender, int repeatInterval, DownUpFeedbackType feedbackType) {
+        setupDownUpButton(findViewById(buttonId), sender, repeatInterval, feedbackType);
     }
 
-    private void setupRepeatableDownUpButtonWithResult(@IdRes int buttonId, BiFunction<InputHandler, KeyEventType, Sec<Boolean>> sender, int repeatInterval) {
+    private void setupDownUpButton(RemoteButton button, BiFunction<InputHandler, KeyEventType, Sec<Void>> sender, DownUpFeedbackType feedbackType) {
+        setupDownUpButton(button, sender, DEFAULT_BUTTON_REPEAT_INTERVAL, feedbackType);
+    }
+
+    private void setupDownUpButton(@IdRes int buttonId, BiFunction<InputHandler, KeyEventType, Sec<Void>> sender, DownUpFeedbackType feedbackType) {
+        setupDownUpButton(findViewById(buttonId), sender, feedbackType);
+    }
+
+    private void setupDownUpButtonWithResult(@IdRes int buttonId, BiFunction<InputHandler, KeyEventType, Sec<Boolean>> sender, int repeatInterval, DownUpFeedbackType feedbackType) {
         RemoteButton button = findViewById(buttonId);
-        setupRepeatableDownUpButton(button, (ih, e) -> sender.apply(ih, e)
+        setupDownUpButton(button, (ih, e) -> sender.apply(ih, e)
                 .map(r -> {
                     if (!r) vibrator.vibrate(ATTENTION_VIBRATION_EFFECT);
                     return null;
-                }), repeatInterval);
+                }), repeatInterval, feedbackType);
+    }
+
+    private void setupNonRepeatingDownUpButton(@IdRes int buttonId, BiFunction<InputHandler, KeyEventType, Sec<Void>> sender) {
+        RemoteButton button = findViewById(buttonId);
+        if (button == null) return;
+        button.setDownUpKeyEvent(wrapToHandleButtonResult(sender), -1, -1, DownUpFeedbackType.SINGLE_CLICKABLE);
     }
 
     private void setupTrackpad() {
@@ -392,7 +400,7 @@ public class RemoteActivity extends ConnectingActivity {
             return inputHandler.cursorMove(x, y);
         });
 
-        setupDownUpButton(R.id.trackpad_click_button, InputHandler::leftClick);
+        setupNonRepeatingDownUpButton(R.id.trackpad_click_button, InputHandler::leftClick);
     }
 
     private void setupVolumeAdjustButton() {
@@ -402,9 +410,9 @@ public class RemoteActivity extends ConnectingActivity {
         volumeAdjustButton.setOnClickListener(v -> {
             View view = getLayoutInflater().inflate(R.layout.layout_remote_dialog_volume_adjustment, null, false);
 
-            setupRepeatableDownUpButton(view.findViewById(R.id.volume_up_button), InputHandler::volumeUp, VOLUME_BUTTON_REPEAT_INTERVAL);
-            setupRepeatableDownUpButton(view.findViewById(R.id.volume_down_button), InputHandler::volumeDown, VOLUME_BUTTON_REPEAT_INTERVAL);
-            setupDownUpButton(view.findViewById(R.id.mute_button), InputHandler::toggleMute);
+            setupDownUpButton(view.findViewById(R.id.volume_up_button), InputHandler::volumeUp, VOLUME_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.RAPID_FIRE);
+            setupDownUpButton(view.findViewById(R.id.volume_down_button), InputHandler::volumeDown, VOLUME_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.RAPID_FIRE);
+            setupDownUpButton(view.findViewById(R.id.mute_button), InputHandler::toggleMute, DownUpFeedbackType.SINGLE_CLICKABLE);
 
             new AlertDialog.Builder(this)
                     .setTitle(R.string.title_volume_dialog)
@@ -453,37 +461,30 @@ public class RemoteActivity extends ConnectingActivity {
             });
         }
 
-        setupRepeatableDownUpButtonWithResult(R.id.keyboard_arrow_up, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DPAD_UP, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
-        setupRepeatableDownUpButtonWithResult(R.id.keyboard_arrow_down, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DPAD_DOWN, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
-        setupRepeatableDownUpButtonWithResult(R.id.keyboard_arrow_left, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DPAD_LEFT, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
-        setupRepeatableDownUpButtonWithResult(R.id.keyboard_arrow_right, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DPAD_RIGHT, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
-        setupRepeatableDownUpButtonWithResult(R.id.keyboard_home_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_MOVE_HOME, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
-        setupRepeatableDownUpButtonWithResult(R.id.keyboard_end_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_MOVE_END, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
-        setupRepeatableDownUpButtonWithResult(R.id.keyboard_delete_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_FORWARD_DEL, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
-        setupRepeatableDownUpButtonWithResult(R.id.keyboard_backspace_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DEL, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
+        setupDownUpButtonWithResult(R.id.keyboard_arrow_up, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DPAD_UP, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.RAPID_FIRE);
+        setupDownUpButtonWithResult(R.id.keyboard_arrow_down, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DPAD_DOWN, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.RAPID_FIRE);
+        setupDownUpButtonWithResult(R.id.keyboard_arrow_left, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DPAD_LEFT, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.RAPID_FIRE);
+        setupDownUpButtonWithResult(R.id.keyboard_arrow_right, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DPAD_RIGHT, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.RAPID_FIRE);
+        setupDownUpButtonWithResult(R.id.keyboard_home_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_MOVE_HOME, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.RAPID_FIRE);
+        setupDownUpButtonWithResult(R.id.keyboard_end_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_MOVE_END, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.RAPID_FIRE);
+        setupDownUpButtonWithResult(R.id.keyboard_delete_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_FORWARD_DEL, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.RAPID_FIRE);
+        setupDownUpButtonWithResult(R.id.keyboard_backspace_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DEL, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.RAPID_FIRE);
     }
 
     private void setupRemoteButtons() {
         if (capabilities == null) return;
 
         // dpad
-        setupRepeatableDownUpButton(R.id.up_button, InputHandler::dpadUp, DPAD_BUTTON_REPEAT_INTERVAL);
-        setupRepeatableDownUpButton(R.id.down_button, InputHandler::dpadDown, DPAD_BUTTON_REPEAT_INTERVAL);
-        setupRepeatableDownUpButton(R.id.left_button, InputHandler::dpadLeft, DPAD_BUTTON_REPEAT_INTERVAL);
-        setupRepeatableDownUpButton(R.id.right_button, InputHandler::dpadRight, DPAD_BUTTON_REPEAT_INTERVAL);
-        setupDownUpButton(R.id.select_button, InputHandler::dpadSelect);
+        setupDownUpButton(R.id.up_button, InputHandler::dpadUp, DPAD_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.RAPID_FIRE);
+        setupDownUpButton(R.id.down_button, InputHandler::dpadDown, DPAD_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.RAPID_FIRE);
+        setupDownUpButton(R.id.left_button, InputHandler::dpadLeft, DPAD_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.RAPID_FIRE);
+        setupDownUpButton(R.id.right_button, InputHandler::dpadRight, DPAD_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.RAPID_FIRE);
+        setupDownUpButton(R.id.select_button, InputHandler::dpadSelect, DownUpFeedbackType.LONG_PRESSABLE);
 
         // nav bar
-        setupDownUpButton(R.id.back_button, InputHandler::navBack);
-        setupDownUpButton(R.id.recent_button, InputHandler::navRecent);
-
-        // home button (hold for dashboard on gtv)
-        // todo: the receiver should handle this on control methods that don't support up/down events
-        if (capabilities.hasButton(ReceiverCapabilities.EXTRA_BUTTON_GTV_DASHBOARD)) {
-            setupClickableButton(R.id.home_button, ih -> ih.navHome(KeyEventType.CLICK), i -> i.pressExtraButton(ReceiverCapabilities.EXTRA_BUTTON_GTV_DASHBOARD));
-        } else {
-            setupDownUpButton(R.id.home_button, InputHandler::navHome);
-        }
+        setupDownUpButton(R.id.back_button, InputHandler::navBack, DownUpFeedbackType.LONG_PRESSABLE);
+        setupDownUpButton(R.id.home_button, InputHandler::navHome, DownUpFeedbackType.LONG_PRESSABLE);
+        setupDownUpButton(R.id.recent_button, InputHandler::navRecent, DownUpFeedbackType.LONG_PRESSABLE);
 
         // menu button (notifications/dashboard)
         RemoteImageButton menuButton = findViewById(R.id.menu_button);
@@ -495,7 +496,7 @@ public class RemoteActivity extends ConnectingActivity {
                 setupExtraButton(menuButton, ReceiverCapabilities.EXTRA_BUTTON_LINEAGE_SYSTEM_OPTIONS);
                 menuButton.setImageResource(R.drawable.notifications);
             } else {
-                setupDownUpButton(menuButton, InputHandler::navNotifications);
+                setupDownUpButton(menuButton, InputHandler::navNotifications, DownUpFeedbackType.SINGLE_CLICKABLE);
                 menuButton.setImageResource(R.drawable.notifications);
             }
         }
@@ -506,11 +507,11 @@ public class RemoteActivity extends ConnectingActivity {
         setupVolumeAdjustButton();
 
         // media
-        setupRepeatableDownUpButton(R.id.skip_backward_button, InputHandler::skipBackward, SKIP_BUTTON_REPEAT_INTERVAL);
-        setupRepeatableDownUpButton(R.id.prev_track_button, InputHandler::prevTrack, TRACK_BUTTON_REPEAT_INTERVAL);
-        setupDownUpButton(R.id.pause_button, InputHandler::playPause);
-        setupRepeatableDownUpButton(R.id.next_track_button, InputHandler::nextTrack, TRACK_BUTTON_REPEAT_INTERVAL);
-        setupRepeatableDownUpButton(R.id.skip_forward_button, InputHandler::skipForward, SKIP_BUTTON_REPEAT_INTERVAL);
+        setupDownUpButton(R.id.skip_backward_button, InputHandler::skipBackward, SKIP_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.RAPID_FIRE);
+        setupDownUpButton(R.id.prev_track_button, InputHandler::prevTrack, DownUpFeedbackType.SINGLE_CLICKABLE);
+        setupDownUpButton(R.id.pause_button, InputHandler::playPause, DownUpFeedbackType.SINGLE_CLICKABLE);
+        setupDownUpButton(R.id.next_track_button, InputHandler::nextTrack, DownUpFeedbackType.SINGLE_CLICKABLE);
+        setupDownUpButton(R.id.skip_forward_button, InputHandler::skipForward, SKIP_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.RAPID_FIRE);
 
         // trackpad
         setupTrackpad();

@@ -5,6 +5,7 @@ import android.os.Vibrator;
 import android.view.MotionEvent;
 import android.view.View;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -41,26 +42,36 @@ public class RemoteButtonHandler implements RemoteButton {
     }
 
     @Override
-    public void setDownUpKeyEvent(Consumer<KeyEventType> onEvent, int repeatDelay, int repeatInterval) {
+    public void setDownUpKeyEvent(Consumer<KeyEventType> onEvent, int repeatDelay, int repeatInterval, DownUpFeedbackType feedbackType) {
+        AtomicInteger downCounter = new AtomicInteger();
         buttonHandler = new DownUpHandler(
                 superOnTouchEvent,
                 superPerformClick,
                 () -> {
                     onEvent.accept(KeyEventType.DOWN);
-                    vibrator.vibrate(DOWN_VIBRATION_EFFECT);
+
+                    int downCount = downCounter.getAndIncrement();
+                    if (downCount == 0) {
+                        vibrator.vibrate(DOWN_VIBRATION_EFFECT);
+                        return;
+                    }
+                    switch (feedbackType) {
+                        case LONG_PRESSABLE -> {
+                            if (downCount == 1)
+                                vibrator.vibrate(LONG_CLICK_VIBRATION_EFFECT);
+                        }
+                        case RAPID_FIRE -> vibrator.vibrate(DOWN_VIBRATION_EFFECT);
+                        case SINGLE_CLICKABLE -> {}
+                    }
                 },
                 () -> {
                     onEvent.accept(KeyEventType.UP);
+                    downCounter.set(0);
                     vibrator.vibrate(UP_VIBRATION_EFFECT);
                 },
                 repeatDelay,
                 repeatInterval);
         setLongClickable.accept(false);
-    }
-
-    @Override
-    public void setDownUpKeyEvent(Consumer<KeyEventType> onEvent) {
-        setDownUpKeyEvent(onEvent, -1, -1);
     }
 
     @Override

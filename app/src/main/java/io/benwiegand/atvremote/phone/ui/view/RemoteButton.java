@@ -7,14 +7,13 @@ import java.util.function.Consumer;
 import io.benwiegand.atvremote.phone.protocol.KeyEventType;
 
 public interface RemoteButton {
-    VibrationEffect CLICK_VIBRATION_EFFECT = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK);
-    VibrationEffect LONG_CLICK_VIBRATION_EFFECT = VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK);
-    VibrationEffect DOWN_VIBRATION_EFFECT = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK);
-    VibrationEffect UP_VIBRATION_EFFECT = VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK);
+    enum DownUpFeedbackType {
+        LONG_PRESSABLE,
+        RAPID_FIRE,
+        SINGLE_CLICKABLE
+    }
 
-
-    void setDownUpKeyEvent(Consumer<KeyEventType> onEvent, int repeatDelay, int repeatInterval);
-    void setDownUpKeyEvent(Consumer<KeyEventType> onEvent);
+    void setDownUpKeyEvent(Consumer<KeyEventType> onEvent, int repeatDelay, int repeatInterval, DownUpFeedbackType feedbackType);
     void setClickKeyEvent(Runnable onClick, Runnable onLongClick);
     void setClickKeyEvent(Runnable onClick);
 

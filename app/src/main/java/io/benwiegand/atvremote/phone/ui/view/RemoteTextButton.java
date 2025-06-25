@@ -31,13 +31,8 @@ public class RemoteTextButton extends AppCompatButton implements RemoteButton {
     }
 
     @Override
-    public void setDownUpKeyEvent(Consumer<KeyEventType> onEvent, int repeatDelay, int repeatInterval) {
-        remoteButtonHandler.setDownUpKeyEvent(onEvent, repeatDelay, repeatInterval);
-    }
-
-    @Override
-    public void setDownUpKeyEvent(Consumer<KeyEventType> onEvent) {
-        remoteButtonHandler.setDownUpKeyEvent(onEvent);
+    public void setDownUpKeyEvent(Consumer<KeyEventType> onEvent, int repeatDelay, int repeatInterval, DownUpFeedbackType feedbackType) {
+        remoteButtonHandler.setDownUpKeyEvent(onEvent, repeatDelay, repeatInterval, feedbackType);
     }
 
     @Override
