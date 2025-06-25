@@ -92,6 +92,7 @@
 
     <!-- volume dialog -->
     <string name="title_volume_dialog">Adjust Volume</string>
+    <string name="button_volume_controls">volume controls</string>
     <string name="button_volume_up">volume up</string>
     <string name="button_volume_down">volume down</string>
     <string name="button_mute_toggle">toggle mute</string>

@@ -69,21 +69,26 @@ public class RemoteButtonHandler implements RemoteButton {
                     downCounter.set(0);
                     vibrator.vibrate(UP_VIBRATION_EFFECT);
                 },
-                repeatDelay,
-                repeatInterval);
+                () -> {
+                    onEvent.accept(KeyEventType.CLICK);
+                    vibrator.vibrate(CLICK_VIBRATION_EFFECT);
+                },
+                repeatDelay, repeatInterval);
         setLongClickable.accept(false);
     }
 
     @Override
     public void setClickKeyEvent(Runnable onClick, Runnable onLongClick) {
+        Runnable clickHandler = () -> {
+            onClick.run();
+            vibrator.vibrate(CLICK_VIBRATION_EFFECT);
+        };
         buttonHandler = new DownUpHandler(
                 superOnTouchEvent,
                 superPerformClick,
-                () -> {
-                    onClick.run();
-                    vibrator.vibrate(CLICK_VIBRATION_EFFECT);
-                },
-                () -> {/* do nothing */});
+                clickHandler,
+                () -> {/* do nothing */},
+                clickHandler);
 
         setOnLongClickListener.accept(v -> {
             onLongClick.run();
