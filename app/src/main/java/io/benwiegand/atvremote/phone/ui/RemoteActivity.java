@@ -374,7 +374,7 @@ public class RemoteActivity extends ConnectingActivity {
         setupRepeatableDownUpButton(findViewById(buttonId), sender, repeatInterval);
     }
 
-    private void setupRepeatableUpDownButtonWithResult(@IdRes int buttonId, BiFunction<InputHandler, KeyEventType, Sec<Boolean>> sender, int repeatInterval) {
+    private void setupRepeatableDownUpButtonWithResult(@IdRes int buttonId, BiFunction<InputHandler, KeyEventType, Sec<Boolean>> sender, int repeatInterval) {
         RemoteButton button = findViewById(buttonId);
         setupRepeatableDownUpButton(button, (ih, e) -> sender.apply(ih, e)
                 .map(r -> {
@@ -453,14 +453,14 @@ public class RemoteActivity extends ConnectingActivity {
             });
         }
 
-        setupRepeatableUpDownButtonWithResult(R.id.keyboard_arrow_up, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DPAD_UP, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
-        setupRepeatableUpDownButtonWithResult(R.id.keyboard_arrow_down, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DPAD_DOWN, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
-        setupRepeatableUpDownButtonWithResult(R.id.keyboard_arrow_left, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DPAD_LEFT, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
-        setupRepeatableUpDownButtonWithResult(R.id.keyboard_arrow_right, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DPAD_RIGHT, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
-        setupRepeatableUpDownButtonWithResult(R.id.keyboard_home_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_MOVE_HOME, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
-        setupRepeatableUpDownButtonWithResult(R.id.keyboard_end_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_MOVE_END, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
-        setupRepeatableUpDownButtonWithResult(R.id.keyboard_delete_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_FORWARD_DEL, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
-        setupRepeatableUpDownButtonWithResult(R.id.keyboard_backspace_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DEL, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
+        setupRepeatableDownUpButtonWithResult(R.id.keyboard_arrow_up, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DPAD_UP, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
+        setupRepeatableDownUpButtonWithResult(R.id.keyboard_arrow_down, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DPAD_DOWN, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
+        setupRepeatableDownUpButtonWithResult(R.id.keyboard_arrow_left, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DPAD_LEFT, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
+        setupRepeatableDownUpButtonWithResult(R.id.keyboard_arrow_right, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DPAD_RIGHT, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
+        setupRepeatableDownUpButtonWithResult(R.id.keyboard_home_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_MOVE_HOME, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
+        setupRepeatableDownUpButtonWithResult(R.id.keyboard_end_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_MOVE_END, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
+        setupRepeatableDownUpButtonWithResult(R.id.keyboard_delete_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_FORWARD_DEL, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
+        setupRepeatableDownUpButtonWithResult(R.id.keyboard_backspace_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DEL, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL);
     }
 
     private void setupRemoteButtons() {
