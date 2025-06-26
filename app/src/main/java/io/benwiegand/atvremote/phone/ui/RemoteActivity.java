@@ -298,6 +298,10 @@ public class RemoteActivity extends ConnectingActivity {
         });
     }
 
+    private void toast(@StringRes int message) {
+        toast(getString(message));
+    }
+
     private void toast(Throwable t) {
         toast(ErrorUtil.getExceptionLine(this, t));
     }
@@ -451,7 +455,7 @@ public class RemoteActivity extends ConnectingActivity {
                                 runOnUiThread(() -> autoTypeText.setText(""));
                             } else {
                                 vibrator.vibrate(ATTENTION_VIBRATION_EFFECT);
-                                toast("failed to commit text");
+                                toast(R.string.keyboard_auto_type_error_commit_failed);
                             }
                         })
                         .doOnError(t -> {

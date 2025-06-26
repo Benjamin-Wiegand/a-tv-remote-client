@@ -161,5 +161,6 @@
     <string name="keyboard_backspace">backspace</string>
     <string name="keyboard_shift">shift</string>
     <string name="keyboard_action_button_default">submit</string>
+    <string name="keyboard_auto_type_error_commit_failed">failed to commit text</string>
 
 </resources>
