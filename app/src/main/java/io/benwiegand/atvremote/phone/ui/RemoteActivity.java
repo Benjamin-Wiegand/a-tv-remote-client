@@ -351,8 +351,12 @@ public class RemoteActivity extends ConnectingActivity {
         }
     }
 
-    private void setupClickableButton(@IdRes int buttonId, Function<InputHandler, Sec<Void>> clickSender, Function<InputHandler, Sec<Void>> longClickSender) {
-        setupClickableButton(findViewById(buttonId), clickSender, longClickSender);
+    private void setupClickableButtonWithResult(@IdRes int buttonId, Function<InputHandler, Sec<Boolean>> clickSender) {
+        setupClickableButton(findViewById(buttonId), i -> clickSender.apply(i)
+                .map(r -> {
+                    if (!r) vibrator.vibrate(ATTENTION_VIBRATION_EFFECT);
+                    return null;
+                }), null);
     }
 
     private void setupExtraButton(RemoteButton button, String buttonString) {
@@ -469,6 +473,9 @@ public class RemoteActivity extends ConnectingActivity {
         setupDownUpButtonWithResult(R.id.keyboard_end_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_MOVE_END, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.RAPID_FIRE);
         setupDownUpButtonWithResult(R.id.keyboard_delete_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_FORWARD_DEL, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.RAPID_FIRE);
         setupDownUpButtonWithResult(R.id.keyboard_backspace_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_DEL, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.RAPID_FIRE);
+        setupDownUpButtonWithResult(R.id.keyboard_shift_key, (ih, e) -> ih.sendKeyEvent(KeyEvent.KEYCODE_SHIFT_LEFT, e), KEYBOARD_EXTRA_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.SINGLE_CLICKABLE);
+
+        setupClickableButtonWithResult(R.id.keyboard_action_button, InputHandler::performDefaultEditorAction);
     }
 
     private void setupRemoteButtons() {

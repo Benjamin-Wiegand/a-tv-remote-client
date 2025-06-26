@@ -159,5 +159,7 @@
     <string name="keyboard_down_arrow">down arrow</string>
     <string name="keyboard_right_arrow">right arrow</string>
     <string name="keyboard_backspace">backspace</string>
+    <string name="keyboard_shift">shift</string>
+    <string name="keyboard_action_button_default">submit</string>
 
 </resources>

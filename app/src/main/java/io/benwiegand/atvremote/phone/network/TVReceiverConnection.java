@@ -491,6 +491,11 @@ public class TVReceiverConnection implements Closeable {
         public Sec<Boolean> sendKeyEvent(int keyCode, KeyEventType type) {
             return sendOperationForBooleanResponse(OP_KEY_EVENT + " " + gson.toJson(new KeyEventParams(keyCode, type)));
         }
+
+        @Override
+        public Sec<Boolean> performDefaultEditorAction() {
+            return sendOperationForBooleanResponse(OP_KEYBOARD_DEFAULT_EDITOR_ACTION);
+        }
     }
 
     public boolean isDead() {

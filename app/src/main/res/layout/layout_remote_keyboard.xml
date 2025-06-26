@@ -67,6 +67,15 @@
         <TableRow>
 
             <io.benwiegand.atvremote.phone.ui.view.RemoteTextButton
+                android:id="@+id/keyboard_delete_key"
+                style="@style/Widget.Theme.ATVRemote.RemoteTextButton"
+                android:layout_height="48dp"
+                android:layout_width="96dp"
+                android:layout_weight="1"
+                android:text="@string/keyboard_delete_button"
+                />
+
+            <io.benwiegand.atvremote.phone.ui.view.RemoteTextButton
                 android:id="@+id/keyboard_home_key"
                 style="@style/Widget.Theme.ATVRemote.RemoteTextButton"
                 android:layout_height="48dp"
@@ -95,17 +104,27 @@
                 android:text="@string/keyboard_end_button"
                 />
 
-            <io.benwiegand.atvremote.phone.ui.view.RemoteTextButton
-                android:id="@+id/keyboard_delete_key"
-                style="@style/Widget.Theme.ATVRemote.RemoteTextButton"
+            <io.benwiegand.atvremote.phone.ui.view.RemoteImageButton
+                android:id="@+id/keyboard_backspace_key"
+                style="@style/Widget.Theme.ATVRemote.RemoteImageButton.KeyboardArrow"
                 android:layout_height="48dp"
                 android:layout_width="96dp"
                 android:layout_weight="1"
-                android:text="@string/keyboard_delete_button"
+                android:src="@drawable/backspace"
+                android:contentDescription="@string/keyboard_backspace"
                 />
 
         </TableRow>
         <TableRow>
+
+            <io.benwiegand.atvremote.phone.ui.view.RemoteTextButton
+                android:id="@+id/keyboard_shift_key"
+                style="@style/Widget.Theme.ATVRemote.RemoteTextButton"
+                android:layout_height="48dp"
+                android:layout_width="96dp"
+                android:layout_weight="1"
+                android:text="@string/keyboard_shift"
+                />
 
             <io.benwiegand.atvremote.phone.ui.view.RemoteImageButton
                 android:id="@+id/keyboard_arrow_left"
@@ -139,14 +158,13 @@
                 android:contentDescription="@string/keyboard_right_arrow"
                 />
 
-            <io.benwiegand.atvremote.phone.ui.view.RemoteImageButton
-                android:id="@+id/keyboard_backspace_key"
-                style="@style/Widget.Theme.ATVRemote.RemoteImageButton.KeyboardArrow"
+            <io.benwiegand.atvremote.phone.ui.view.RemoteTextButton
+                android:id="@+id/keyboard_action_button"
+                style="@style/Widget.Theme.ATVRemote.RemoteTextButton"
                 android:layout_height="48dp"
                 android:layout_width="96dp"
                 android:layout_weight="1"
-                android:src="@drawable/backspace"
-                android:contentDescription="@string/keyboard_backspace"
+                android:text="@string/keyboard_action_button_default"
                 />
 
         </TableRow>

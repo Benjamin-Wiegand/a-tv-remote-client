@@ -51,4 +51,5 @@ public interface InputHandler {
     Sec<Boolean> commitText(String input, int newCursorPosition);
     Sec<Boolean> deleteSurroundingText(int beforeLength, int afterLength);
     Sec<Boolean> sendKeyEvent(int keyCode, KeyEventType type);
+    Sec<Boolean> performDefaultEditorAction();
 }
