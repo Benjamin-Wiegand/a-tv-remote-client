@@ -590,8 +590,7 @@ public class RemoteActivity extends ConnectingActivity {
             RemoteImageButton pausePlayButton = findViewById(R.id.pause_button);
             if (pausePlayButton == null) return;
 
-            if (stateEvent == null) {
-                // default to pause
+            if (stateEvent == null || stateEvent.paused() == null || stateEvent.playing() == null) {
                 pausePlayButton.setImageResource(R.drawable.playpause);
             } else {
                 if (stateEvent.paused()) pausePlayButton.setImageResource(R.drawable.play);

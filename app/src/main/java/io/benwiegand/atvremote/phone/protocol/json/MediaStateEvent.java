@@ -1,8 +1,10 @@
 package io.benwiegand.atvremote.phone.protocol.json;
 
+import androidx.annotation.Nullable;
+
 public record MediaStateEvent(
         String id,
-        Integer state,
-        Boolean playing,
-        Boolean paused
+        @Nullable Integer state,
+        @Nullable Boolean playing,
+        @Nullable Boolean paused
 ) { }
