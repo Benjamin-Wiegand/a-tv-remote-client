@@ -41,6 +41,7 @@ import io.benwiegand.atvremote.phone.helper.ConnectionCounter;
 import io.benwiegand.atvremote.phone.helper.FlatConnectionServiceCallback;
 import io.benwiegand.atvremote.phone.network.ConnectionService;
 import io.benwiegand.atvremote.phone.network.TVReceiverConnection;
+import io.benwiegand.atvremote.phone.protocol.KeyEventType;
 import io.benwiegand.atvremote.phone.protocol.PairingData;
 import io.benwiegand.atvremote.phone.protocol.PairingManager;
 import io.benwiegand.atvremote.phone.ui.ErrorMessageException;
@@ -372,7 +373,7 @@ public class ConnectionTest {
             InputHandler forwarder = connection.getInputForwarder();
 
             // just look for a success response for now
-            Sec<Void> testOp = forwarder.dpadUp();
+            Sec<Void> testOp = forwarder.dpadUp(KeyEventType.CLICK);
             block(testOp, 2, TimeUnit.SECONDS);
             assertTrue("expected test operation to work", testOp.isSuccessful());
 
