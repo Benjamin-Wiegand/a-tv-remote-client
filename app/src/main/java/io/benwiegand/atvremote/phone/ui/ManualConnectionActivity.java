@@ -15,6 +15,8 @@ import io.benwiegand.atvremote.phone.R;
 
 public class ManualConnectionActivity extends DynamicColorsCompatActivity {
 
+    private static final boolean DEBUG_AUTOFILL = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,6 +39,11 @@ public class ManualConnectionActivity extends DynamicColorsCompatActivity {
             return true;
         });
 
+        if (DEBUG_AUTOFILL) {
+            EditText hostnameText = findViewById(R.id.hostname_text);
+            hostnameText.setText("127.0.0.1");
+            portText.setText("6969");
+        }
     }
 
     private void submit() {
