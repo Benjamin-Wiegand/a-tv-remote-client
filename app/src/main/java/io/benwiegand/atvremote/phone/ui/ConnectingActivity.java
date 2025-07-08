@@ -61,20 +61,6 @@ public abstract class ConnectingActivity extends DynamicColorsCompatActivity imp
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        if (binder != null)
-            binder.foreground();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (binder != null)
-            binder.background();
-    }
-
-    @Override
     protected void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "onDestroy()");

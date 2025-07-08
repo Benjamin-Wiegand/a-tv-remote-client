@@ -45,12 +45,14 @@ public class ConnectionService extends Service {
 
     // ui
     private Callback uiCallback = null;
+    private ConnectionNotificationManager connectionNotificationManager = null;
 
     @Override
     public void onCreate() {
         Log.d(TAG, "onCreate()");
         super.onCreate();
         connectionThreadPool = new ThreadPoolExecutor(0, 2, 5, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
+        connectionNotificationManager = new ConnectionNotificationManager(this);
     }
 
     @Override
@@ -125,6 +127,13 @@ public class ConnectionService extends Service {
             call.accept(uiCallback);
         } catch (Throwable t) {
             Log.wtf(TAG, "ui callback threw!!!", t);
+            throw t;
+        }
+
+        try {
+            call.accept(connectionNotificationManager);
+        } catch (Throwable t) {
+            Log.wtf(TAG, "notification callback threw!!!", t);
             throw t;
         }
     }
@@ -347,20 +356,6 @@ public class ConnectionService extends Service {
         }
 
         /**
-         * transfer context to foreground notification
-         */
-        public void background() {
-            // todo
-        }
-
-        /**
-         * transfer context back from foreground notification
-         */
-        public void foreground() {
-            // todo
-        }
-
-        /**
          * opens a connection to the given TV if one does not already exist.
          * init() must be called first.
          * the result is provided to the registered UI Callback:
@@ -387,6 +382,9 @@ public class ConnectionService extends Service {
                 }
 
                 connectionSpec = spec;
+                connectionNotificationManager.setDeviceName(spec.deviceName());
+                connectionNotificationManager.onConnecting();
+                connectionNotificationManager.startForegroundNotification();
                 scheduleLocked(ConnectionService.this::connect);
             }
         }

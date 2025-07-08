@@ -39,6 +39,9 @@
     <string name="connection_status_ready">connected</string>
     <string name="connection_status_connection_lost">connection lost</string>
 
+    <!-- notification -->
+    <string name="background_connection_notification_channel_name">TV Connection</string>
+
     <!-- protocol errors -->
     <string name="protocol_error_unspecified">tv replied: unspecified error</string>
     <string name="protocol_error_unauthorized">tv replied: unauthorized</string>
