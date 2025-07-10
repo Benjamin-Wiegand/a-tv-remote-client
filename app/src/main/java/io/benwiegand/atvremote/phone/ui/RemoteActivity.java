@@ -200,8 +200,26 @@ public class RemoteActivity extends ConnectingActivity {
             mediaSessionTracker.destroy();
     }
 
+    private boolean shouldReconnect() {
+        return !isFinishing() && !isDestroyed() && isForeground();
+    }
+
+    private void scheduleImmediateReconnect() {
+        handler.postDelayed(this::connect, 0);
+    }
+
     private void scheduleReconnect() {
         handler.postDelayed(this::connect, CONNECT_RETRY_DELAY);
+    }
+
+    private void tryReconnect() {
+        if (shouldReconnect()) {
+            scheduleReconnect();
+        } else {
+            setConnectionStatus(R.string.connection_status_connection_lost, false, false);
+            runOnUiThread(() -> findViewById(R.id.connection_lost_modal)
+                    .setVisibility(View.VISIBLE));
+        }
     }
 
     private void connect() {
@@ -260,7 +278,7 @@ public class RemoteActivity extends ConnectingActivity {
     public void onConnectError(Throwable t) {
         if (t instanceof IOException) {
             toast(t);
-            scheduleReconnect();
+            tryReconnect();
         } else if (t instanceof RequiresPairingException) {
             Log.i(TAG, "not paired, starting pairing: " + t.getMessage());
             Intent intent = new Intent(this, PairingActivity.class)
@@ -283,7 +301,7 @@ public class RemoteActivity extends ConnectingActivity {
 
         if (isFinishing() || isDestroyed()) return;
         if (t != null) toast(t);
-        connect();
+        tryReconnect();
     }
 
 
@@ -316,6 +334,9 @@ public class RemoteActivity extends ConnectingActivity {
 
             findViewById(R.id.disabled_overlay)
                     .setVisibility(allowInput ? View.GONE : View.VISIBLE);
+
+            if (connecting) findViewById(R.id.connection_lost_modal)
+                    .setVisibility(View.GONE);
         });
     }
 
@@ -728,6 +749,8 @@ public class RemoteActivity extends ConnectingActivity {
             return true;
         });
 
+        View reconnectButton = findViewById(R.id.reconnect_button);
+        reconnectButton.setOnClickListener(v -> scheduleImmediateReconnect());
     }
 
 }

@@ -9,6 +9,7 @@
     <string name="button_back">go back</string>
     <string name="button_retry">retry</string>
     <string name="button_connect">connect</string>
+    <string name="button_reconnect">reconnect</string>
 
     <!-- misc actions -->
     <string name="button_keystore_delete_and_retry">delete keys</string>

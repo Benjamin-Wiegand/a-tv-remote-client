@@ -36,6 +36,7 @@ public abstract class ConnectingActivity extends DynamicColorsCompatActivity imp
     protected String deviceName;
     protected String remoteHostname;
     protected int remotePort;
+    private boolean foreground = true;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -58,6 +59,22 @@ public abstract class ConnectingActivity extends DynamicColorsCompatActivity imp
         startService(serviceIntent);
         boolean bindResult = bindService(serviceIntent, connectionServiceConnection, BIND_IMPORTANT | BIND_AUTO_CREATE);
         assert bindResult;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        foreground = true;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        foreground = false;
+    }
+
+    protected boolean isForeground() {
+        return foreground;
     }
 
     @Override
