@@ -14,6 +14,7 @@ import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -220,9 +221,11 @@ public class UiTest {
         // launch the launcher activity (discovery activity)
         TVDiscoveryActivity discoveryActivity = launchActivity(in, TVDiscoveryActivity.class);
 
-        UiAutomationPermissionGranter granter = new UiAutomationPermissionGranter();
-        granter.addPermissions(POST_NOTIFICATIONS);
-        granter.requestPermissions();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            UiAutomationPermissionGranter granter = new UiAutomationPermissionGranter();
+            granter.addPermissions(POST_NOTIFICATIONS);
+            granter.requestPermissions();
+        }
 
         // go to the manual connection screen
         Sec<ManualConnectionActivity> manualConnectionActivitySec = listenForActivity(in, ManualConnectionActivity.class, 3000);
