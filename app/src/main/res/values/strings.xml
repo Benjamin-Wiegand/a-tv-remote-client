@@ -43,6 +43,10 @@
     <!-- notification -->
     <string name="background_connection_notification_channel_name">TV Connection</string>
 
+    <!-- notification permission -->
+    <string name="permission_rationale_notifications_title">Connection notification</string>
+    <string name="permission_rationale_notifications_description">A TV Remote can keep the connection to your TV alive while you use other apps. For this, please grant permission to post notifications.</string>
+
     <!-- protocol errors -->
     <string name="protocol_error_unspecified">tv replied: unspecified error</string>
     <string name="protocol_error_unauthorized">tv replied: unauthorized</string>

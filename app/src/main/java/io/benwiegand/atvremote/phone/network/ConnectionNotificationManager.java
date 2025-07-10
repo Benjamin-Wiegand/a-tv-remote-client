@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
+import android.util.Log;
 
 import androidx.annotation.StringRes;
 
@@ -14,6 +15,7 @@ import io.benwiegand.atvremote.phone.R;
 import io.benwiegand.atvremote.phone.ui.RemoteActivity;
 
 public class ConnectionNotificationManager implements ConnectionService.Callback {
+    private static final String TAG = ConnectionNotificationManager.class.getSimpleName();
     private static final String BACKGROUND_CONNECTION_NOTIFICATION_CHANNEL = "connection";
 
     private final Object lock = new Object();
@@ -51,7 +53,11 @@ public class ConnectionNotificationManager implements ConnectionService.Callback
                 .setSubText(deviceName)
                 .build();
 
-        context.startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
+        try {
+            context.startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
+        } catch (Throwable t) {
+            Log.e(TAG, "failed to start foreground context", t);
+        }
     }
 
     private void updateNotification() {

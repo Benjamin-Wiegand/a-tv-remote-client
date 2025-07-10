@@ -1,5 +1,6 @@
 package io.benwiegand.atvremote.phone;
 
+import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -23,6 +24,7 @@ import androidx.annotation.StringRes;
 import androidx.core.util.Supplier;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.permission.UiAutomationPermissionGranter;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -217,6 +219,10 @@ public class UiTest {
     private Activity[] toRemoteFromLauncherStack(Instrumentation in) throws Throwable {
         // launch the launcher activity (discovery activity)
         TVDiscoveryActivity discoveryActivity = launchActivity(in, TVDiscoveryActivity.class);
+
+        UiAutomationPermissionGranter granter = new UiAutomationPermissionGranter();
+        granter.addPermissions(POST_NOTIFICATIONS);
+        granter.requestPermissions();
 
         // go to the manual connection screen
         Sec<ManualConnectionActivity> manualConnectionActivitySec = listenForActivity(in, ManualConnectionActivity.class, 3000);

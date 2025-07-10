@@ -1,11 +1,15 @@
 package io.benwiegand.atvremote.phone.ui;
 
+import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static io.benwiegand.atvremote.phone.network.discovery.ServiceExplorer.FAILURE_THE_DOCUMENTATION_LIES;
 import static io.benwiegand.atvremote.phone.protocol.ProtocolConstants.MDNS_SERVICE_TYPE;
 
+import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -14,6 +18,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.RequiresApi;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -63,6 +68,25 @@ public class TVDiscoveryActivity extends DynamicColorsCompatActivity implements 
         mainView.findViewById(R.id.manual_connection_button)
                 .setOnClickListener(v -> launchManualConnection());
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            handleNotificationPermission();
+        }
+
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
+    private void handleNotificationPermission() {
+        if (checkSelfPermission(POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return;
+        if (shouldShowRequestPermissionRationale(POST_NOTIFICATIONS)) {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.permission_rationale_notifications_title)
+                    .setMessage(R.string.permission_rationale_notifications_description)
+                    .setPositiveButton(R.string.button_ok, (d, i) -> requestPermissions(new String[]{POST_NOTIFICATIONS}, 0))
+                    .setNegativeButton(R.string.button_cancel, null)
+                    .show();
+        } else {
+            requestPermissions(new String[]{POST_NOTIFICATIONS}, 0);
+        }
     }
 
     private void launchManualConnection() {
