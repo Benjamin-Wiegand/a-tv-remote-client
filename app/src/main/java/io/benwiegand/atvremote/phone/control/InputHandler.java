@@ -42,6 +42,8 @@ public interface InputHandler {
     Sec<Void> leftClick(KeyEventType type);
     Sec<Void> cursorContext();
 
+    Sec<Void> powerButton(KeyEventType type);
+
     Sec<Void> scrollVertical(double trajectory, boolean glide);
     Sec<Void> scrollHorizontal(double trajectory, boolean glide);
 

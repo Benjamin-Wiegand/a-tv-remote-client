@@ -24,6 +24,7 @@ public record ReceiverCapabilities(HashSet<String> supportedFeatures, HashSet<St
         features.add(SUPPORTED_FEATURE_MEDIA_CONTROLS);
         features.add(SUPPORTED_FEATURE_MEDIA_SESSIONS);
         features.add(SUPPORTED_FEATURE_MOUSE);
+        features.add(SUPPORTED_FEATURE_POWER_BUTTON);
 
         return new ReceiverCapabilities(features, new HashSet<>());
     }
@@ -36,6 +37,9 @@ public record ReceiverCapabilities(HashSet<String> supportedFeatures, HashSet<St
     public static final String SUPPORTED_FEATURE_MEDIA_CONTROLS = "MEDIA_CONTROLS";
     public static final String SUPPORTED_FEATURE_MEDIA_SESSIONS = "MEDIA_SESSIONS";
     public static final String SUPPORTED_FEATURE_MOUSE = "MOUSE";
+
+    // everything-dependent
+    public static final String SUPPORTED_FEATURE_POWER_BUTTON = "POWER_BUTTON";
 
     // google tv
     public static final String EXTRA_BUTTON_GTV_DASHBOARD = "DASHBOARD_BUTTON";

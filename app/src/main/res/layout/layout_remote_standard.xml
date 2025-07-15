@@ -5,6 +5,18 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
 
+    <include
+        android:id="@+id/top_bar"
+        layout="@layout/layout_remote_component_top_bar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintWidth_min="192dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/media_section"
+        app:layout_constraintLeft_toLeftOf="@id/dpad"
+        app:layout_constraintRight_toRightOf="@id/dpad"
+        />
+
     <LinearLayout
         android:id="@+id/media_section"
         android:layout_width="0dp"
@@ -14,7 +26,7 @@
         app:layout_constraintBottom_toTopOf="@id/dpad"
         app:layout_constraintLeft_toLeftOf="@id/dpad"
         app:layout_constraintRight_toRightOf="@id/dpad"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/top_bar"
         app:layout_constraintVertical_chainStyle="packed"
         >
 
@@ -52,6 +64,18 @@
         android:layout_height="wrap_content"
         app:layout_constraintWidth_min="192dp"
         app:layout_constraintTop_toBottomOf="@id/dpad"
+        app:layout_constraintBottom_toTopOf="@id/bottom_bar"
+        app:layout_constraintLeft_toLeftOf="@id/dpad"
+        app:layout_constraintRight_toRightOf="@id/dpad"
+        />
+
+    <include
+        android:id="@+id/bottom_bar"
+        layout="@layout/layout_remote_component_bottom_bar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintWidth_min="192dp"
+        app:layout_constraintTop_toBottomOf="@id/navigation_bar"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="@id/dpad"
         app:layout_constraintRight_toRightOf="@id/dpad"

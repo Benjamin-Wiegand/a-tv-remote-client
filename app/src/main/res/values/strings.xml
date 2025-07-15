@@ -97,6 +97,7 @@
     <string name="button_navigate_home">home</string>
     <string name="button_navigate_recent">recent</string>
     <string name="button_trackpad_left_click">left click</string>
+    <string name="button_power">power</string>
 
     <!-- volume dialog -->
     <string name="title_volume_dialog">Adjust Volume</string>

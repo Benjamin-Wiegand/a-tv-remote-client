@@ -83,6 +83,8 @@ public class RemoteActivity extends ConnectingActivity {
     private static final float DPAD_PADDING_HEIGHT_DP = 24;
     private static final float MEDIA_SUMMARY_MIN_HEIGHT_DP = 48;
     private static final float MEDIA_CONTROLS_MIN_HEIGHT_DP = 64;
+    private static final float TOP_BAR_MIN_HEIGHT_DP = 48;
+    private static final float BOTTOM_BAR_MIN_HEIGHT_DP = 48;
 
     // if this can't be met, use portrait layout.
     private static final float LAYOUT_REMOTE_STANDARD_LANDSCAPE_MIN_WIDTH_DP = 192 /* dpad */ + 192 /* controls section */;
@@ -92,7 +94,9 @@ public class RemoteActivity extends ConnectingActivity {
             + 64 /* navbar */
             + DPAD_PADDING_HEIGHT_DP
             + MEDIA_SUMMARY_MIN_HEIGHT_DP
-            + MEDIA_CONTROLS_MIN_HEIGHT_DP;
+            + MEDIA_CONTROLS_MIN_HEIGHT_DP
+            + TOP_BAR_MIN_HEIGHT_DP
+            + BOTTOM_BAR_MIN_HEIGHT_DP;
 
     private record LayoutOrientationSelector(@LayoutRes int portraitLayout, @LayoutRes int landscapeLayout) {
         LayoutOrientationSelector(@LayoutRes int layout) {
@@ -420,6 +424,12 @@ public class RemoteActivity extends ConnectingActivity {
         button.setDownUpKeyEvent(wrapToHandleButtonResult(sender), -1, -1, DownUpFeedbackType.SINGLE_CLICKABLE);
     }
 
+    private void hideButton(@IdRes int buttonId) {
+        View button = findViewById(buttonId);
+        if (button == null) return;
+        button.setVisibility(View.INVISIBLE);
+    }
+
     private void setupTrackpad() {
         // trackpad
         TrackpadSurface trackpadSurface = findViewById(R.id.trackpad_surface);
@@ -544,6 +554,13 @@ public class RemoteActivity extends ConnectingActivity {
         setupDownUpButton(R.id.pause_button, InputHandler::playPause, DownUpFeedbackType.SINGLE_CLICKABLE);
         setupDownUpButton(R.id.next_track_button, InputHandler::nextTrack, DownUpFeedbackType.SINGLE_CLICKABLE);
         setupDownUpButton(R.id.skip_forward_button, InputHandler::skipForward, SKIP_BUTTON_REPEAT_INTERVAL, DownUpFeedbackType.RAPID_FIRE);
+
+        // power
+        if (capabilities.hasFeature(ReceiverCapabilities.SUPPORTED_FEATURE_POWER_BUTTON)) {
+            setupDownUpButton(R.id.power_button, InputHandler::powerButton, DownUpFeedbackType.LONG_PRESSABLE);
+        } else {
+            hideButton(R.id.power_button);
+        }
 
         // trackpad
         setupTrackpad();
@@ -702,6 +719,12 @@ public class RemoteActivity extends ConnectingActivity {
                     minHeight -= UiUtil.dpToPx(this, DPAD_PADDING_HEIGHT_DP);
                 }
                 if (height < minHeight) {
+                    // remove bottom bar
+                    // (this should go further down when the bottom bar is actually useful)
+                    findViewById(R.id.bottom_bar).setVisibility(View.GONE);
+                    minHeight -= UiUtil.dpToPx(this, BOTTOM_BAR_MIN_HEIGHT_DP);
+                }
+                if (height < minHeight) {
                     // remove media summary
                     findViewById(R.id.media_summary).setVisibility(View.GONE);
                     minHeight -= UiUtil.dpToPx(this, MEDIA_SUMMARY_MIN_HEIGHT_DP);
@@ -710,6 +733,11 @@ public class RemoteActivity extends ConnectingActivity {
                     // remove media section entirely
                     findViewById(R.id.media_section).setVisibility(View.GONE);
                     minHeight -= UiUtil.dpToPx(this, MEDIA_CONTROLS_MIN_HEIGHT_DP);
+                }
+                if (height < minHeight) {
+                    // remove top bar
+                    findViewById(R.id.top_bar).setVisibility(View.GONE);
+                    minHeight -= UiUtil.dpToPx(this, TOP_BAR_MIN_HEIGHT_DP);
                 }
                 if (height < minHeight) {
                     Log.w(TAG, "could not meet an acceptable UI for the screen size");

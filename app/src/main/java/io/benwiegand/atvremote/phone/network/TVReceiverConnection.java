@@ -459,6 +459,11 @@ public class TVReceiverConnection implements Closeable {
         }
 
         @Override
+        public Sec<Void> powerButton(KeyEventType type) {
+            return sendBasicOperation(OP_POWER_BUTTON + " " + type);
+        }
+
+        @Override
         public Sec<Void> scrollVertical(double trajectory, boolean glide) {
             return null;
             // TODO
