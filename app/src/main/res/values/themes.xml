@@ -47,12 +47,17 @@
         <item name="colorSecondaryVariant">@color/material_dynamic_secondary30</item>
 
         <!-- ui elements -->
-        <item name="android:progressTint">@color/material_dynamic_primary40</item>
-        <item name="android:indeterminateTint">@color/material_dynamic_primary40</item>
+        <item name="android:progressTint">@color/material_dynamic_secondary40</item>
+        <item name="android:indeterminateTint">@color/material_dynamic_secondary40</item>
 
         <!-- surfaces -->
         <item name="colorSurfaceContainer">@color/material_dynamic_neutral_variant90</item>
-        <item name="android:windowBackground">@color/material_dynamic_neutral_variant100</item>
+        <item name="android:windowBackground">@color/material_dynamic_secondary99</item>
+        <item name="colorOnSurface">@color/material_dynamic_neutral_variant10</item>                <!-- BottomNavBar - inactive -->
+
+        <!-- text -->
+        <item name="android:textColorPrimary">@color/material_dynamic_neutral_variant10</item>
+        <item name="android:textColorSecondary">@color/material_dynamic_neutral_variant20</item>
     </style>
 
     <style name="Theme.ATVRemote.VeryDark.DynamicColors" parent="Theme.ATVRemote.DynamicColors">
